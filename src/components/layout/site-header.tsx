@@ -86,11 +86,11 @@ export function SiteHeader() {
               </li>
             ))}
           </ul>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
             <span data-nav-item>
-              <Link href={ROUTES.signIn} className={linkClass}>
-                Sign In
-              </Link>
+              <Button asChild size="sm" variant="ghost">
+                <Link href={ROUTES.signIn}>Sign In</Link>
+              </Button>
             </span>
             <span data-nav-item>
               <Button asChild size="sm">
@@ -141,7 +141,7 @@ export function SiteHeader() {
                 <Dialog.Close asChild>
                   <Link
                     href={ROUTES.signIn}
-                    className="border-line rounded-sm border py-3 text-center font-medium"
+                    className="border-ink rounded-sm border py-3 text-center font-semibold"
                   >
                     Sign In
                   </Link>
