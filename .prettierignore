@@ -1,0 +1,5 @@
+.next
+node_modules
+prototype
+package-lock.json
+docs/SCREEN_INVENTORY.md

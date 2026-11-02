@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+/* Design tokens. Tailwind generates utilities from these: bg-ink, text-muted, font-display, ... */
+@theme {
+  --color-ink: #0f2a2d;
+  --color-ink-2: #17383c;
+  --color-ink-line: #2c4a4e;
+  --color-paper: #f7f4ee;
+  --color-paper-2: #efeae0;
+  --color-surface: #fffdf9;
+  --color-line: #ddd6c8;
+  --color-muted: #566768;
+  --color-accent: #b8501e;
+  --color-accent-ink: #9a4116;
+  --color-accent-light: #f2a766;
+  --color-ok: #2d7556;
+  --color-bad: #a93a3a;
+  --color-warn: #a8650f;
+  --color-on-dark: #b4c4c3;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --shadow-window: 0 1px 2px rgb(15 42 45 / 0.06), 0 28px 56px -24px rgb(15 42 45 / 0.32);
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* lg starts just above 960px: desktop nav, sticky showcase and multi-column layouts */
+  --breakpoint-lg: 61.0625rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 84px;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-paper);
+    color: #16282b;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    color: var(--color-ink);
+    letter-spacing: -0.015em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  .on-dark :focus-visible {
+    outline-color: var(--color-accent-light);
+  }
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ---------- Motion gating ----------
+   "Before" states exist only while JS is running (.js) and the visitor accepts motion.
+   If scripts fail, the layout script removes .js after 3s so everything is visible. */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal],
+  .js [data-stagger] > *,
+  .js [data-hero-state="pending"] [data-hero],
+  .js [data-nav-state="pending"] [data-nav-item] {
+    opacity: 0;
+  }
+  .js [data-word],
+  .js [data-hero-state="pending"] [data-hero="line"] {
+    transform: translateY(110%);
+  }
+  .js .diagram-line {
+    stroke-dashoffset: 1;
+  }
+  .js .diagram-node {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.diagram-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+/* ---------- Product showcase: stacked by default, sticky on desktop when motion is allowed ---------- */
+.stage-text,
+.stage-pv .pv-i {
+  transition:
+    opacity 0.5s var(--ease-soft),
+    transform 0.6s var(--ease-soft);
+}
+
+@media (min-width: 61.0625rem) and (prefers-reduced-motion: no-preference) {
+  .js .showcase-track {
+    height: 440vh;
+    position: relative;
+  }
+  .js .showcase-sticky {
+    position: sticky;
+    top: 72px;
+    height: calc(100vh - 72px);
+    min-height: 560px;
+    display: flex;
+    align-items: center;
+  }
+  .js .showcase-inner {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 1.5rem;
+    height: min(640px, 100%);
+  }
+  .js .showcase-stages {
+    position: relative;
+  }
+  .js .stage {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.5s var(--ease-soft),
+      visibility 0s 0.5s;
+  }
+  .js .stage[data-active="true"] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 0.5s var(--ease-soft),
+      visibility 0s;
+  }
+  .js .stage .stage-pv {
+    transform: translateY(24px) scale(0.985);
+    transition: transform 0.7s var(--ease-soft);
+  }
+  .js .stage[data-active="true"] .stage-pv {
+    transform: none;
+  }
+  .js .stage .stage-text {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  .js .stage[data-active="true"] .stage-text {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0.05s;
+  }
+  .js .stage .pv-i {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  .js .stage[data-active="true"] .pv-i {
+    opacity: 1;
+    transform: none;
+  }
+  .js .stage[data-active="true"] .pv-i:nth-child(1) {
+    transition-delay: 0.15s;
+  }
+  .js .stage[data-active="true"] .pv-i:nth-child(2) {
+    transition-delay: 0.28s;
+  }
+  .js .stage[data-active="true"] .pv-i:nth-child(3) {
+    transition-delay: 0.41s;
+  }
+  .js .showcase-nav {
+    display: flex;
+  }
+}

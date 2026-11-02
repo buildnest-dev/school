@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SchoolOS — One school management platform for every school</title>
+<meta name="description" content="A unified operating system for schools: admissions, academics, attendance, fees, staff and parent communication, with a separate workspace for every institution.">
+<meta name="theme-color" content="#0f2a2d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230f2a2d'/%3E%3Cpath d='M9 22V10h6.5a3.5 3.5 0 0 1 0 7H9' fill='none' stroke='%23f2a766' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/styles.css">
+<script>
+  /* Animations are an enhancement: if the script fails to run, drop the .js gate so nothing stays hidden. */
+  document.documentElement.classList.add('js');
+  setTimeout(function () { if (!window.__ok) document.documentElement.classList.remove('js'); }, 3000);
+</script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-setup" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/></symbol>
+    <symbol id="i-admissions" viewBox="0 0 24 24"><path d="M15 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19 8v6M16 11h6"/></symbol>
+    <symbol id="i-campus" viewBox="0 0 24 24"><path d="M3 21h18M5 21V9l5-3v15M10 21V6l9 4v11M13 12h3M13 16h3"/></symbol>
+    <symbol id="i-safety" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4"/></symbol>
+    <symbol id="i-fees" viewBox="0 0 24 24"><path d="M7 5h10M7 9h10M9 5c4 0 5 5 0 5H7l7 9"/></symbol>
+    <symbol id="i-exams" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h6"/></symbol>
+    <symbol id="i-timetable" viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M9 10v10M15 14v6M8 3v3M16 3v3"/></symbol>
+    <symbol id="i-certs" viewBox="0 0 24 24"><path d="M12 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10M9 13l-1 8 4-2 4 2-1-8"/></symbol>
+    <symbol id="i-staff" viewBox="0 0 24 24"><path d="M4 8h16v11H4zM9 8V5h6v3M4 13h16"/></symbol>
+    <symbol id="i-comms" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4zM8 9h8M8 12h5"/></symbol>
+    <symbol id="i-learning" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5M9 7h6"/></symbol>
+    <symbol id="i-analytics" viewBox="0 0 24 24"><path d="M4 20h16M7 20v-7M12 20V6M17 20v-10"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><path d="M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><path d="M3 5h18v4H3zM5 9v10h14V9M10 13h4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<!-- 1. NAVIGATION -->
+<header class="site-header" id="top">
+  <div class="container nav">
+    <a class="brand" href="#top" aria-label="SchoolOS home">
+      <span class="brand-mark" aria-hidden="true">S</span>
+      <span class="brand-name" data-brand>SchoolOS</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="nav-toggle-label">Menu</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><i></i><i></i></span>
+    </button>
+    <nav id="site-nav" class="nav-panel" aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="#concept">Platform</a></li>
+        <li><a href="#roles">Solutions</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#resources">Resources</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a class="nav-signin" href="#sign-in" data-placeholder="Sign in is not part of this landing page yet.">Sign In</a>
+        <a class="btn btn-primary btn-sm" href="#demo">Book a Demo</a>
+      </div>
+    </nav>
+  </div>
+  <div class="progress" aria-hidden="true"></div>
+</header>
+
+<main id="main">
+
+<!-- 2. HERO -->
+<section class="hero" id="platform" aria-labelledby="hero-title">
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="container hero-top">
+    <p class="eyebrow stg" style="--d:150">A unified operating system for schools</p>
+    <h1 id="hero-title">
+      <span class="ln"><span style="--d:300">One platform.</span></span>
+      <span class="ln"><span style="--d:430">Every school.</span></span>
+      <span class="ln"><span style="--d:560"><em>A better way to run education.</em></span></span>
+    </h1>
+    <div class="hero-sub">
+      <p class="lede stg" style="--d:850">Manage admissions, academics, attendance, fees, staff, and parent communication through one connected platform—configured for every institution, built to scale.</p>
+      <div class="cta-row stg" style="--d:1000">
+        <a class="btn btn-primary" href="#demo">Book a Demo <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost" href="#concept">Explore the Platform</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container hero-stage">
+    <div class="px px-sheet" data-depth="-0.035" aria-hidden="true"></div>
+    <figure class="hero-fig">
+      <div class="app app-hero" id="hero-app" data-school="northfield" aria-label="Illustrative school administration dashboard with sample data">
+        <div class="app-bar">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="ws" role="group" aria-label="Sample school workspaces">
+            <button type="button" data-ws="northfield" aria-pressed="true">Northfield Academy</button>
+            <button type="button" data-ws="riverstone" aria-pressed="false">Riverstone Public School</button>
+          </div>
+          <button type="button" class="grp-btn" id="grp-btn" aria-pressed="false">Group view</button>
+        </div>
+        <div class="app-body">
+          <aside class="rail" aria-hidden="true">
+            <span class="rail-item is-on"></span><span class="rail-item"></span><span class="rail-item"></span><span class="rail-item"></span><span class="rail-item"></span>
+          </aside>
+          <div class="app-main">
+            <div class="school-head pi" style="--d:1350">
+              <span class="logo-chip" id="w-initial" aria-hidden="true">N</span>
+              <div><strong id="w-name">Northfield Academy</strong><span id="w-classes">Classes 1–12 · 38 sections</span></div>
+              <span class="app-bar-pill">AY 2026–27</span>
+            </div>
+
+            <div id="view-school" class="view" aria-live="polite">
+              <div class="kpis">
+                <div class="kpi pi" style="--d:1500">
+                  <span class="kpi-label">Enrollment</span>
+                  <strong class="kpi-value" id="k-enroll" data-fmt="int" data-v="1248">1,248</strong>
+                  <span class="kpi-sub" id="k-enroll-sub">+36 this term</span>
+                  <svg class="spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,22 15,20 30,21 45,16 60,17 75,11 90,12 105,6 120,4"/></svg>
+                </div>
+                <div class="kpi pi" style="--d:1650">
+                  <span class="kpi-label">Present today</span>
+                  <strong class="kpi-value" id="k-present" data-fmt="pct" data-v="94.2">94.2%</strong>
+                  <span class="kpi-sub" id="k-present-sub">1,176 of 1,248 students</span>
+                  <div class="bar"><span id="k-present-bar" style="width:94.2%"></span></div>
+                </div>
+                <div class="kpi pi" style="--d:1800">
+                  <span class="kpi-label">Fees collected</span>
+                  <strong class="kpi-value" id="k-fees" data-fmt="lakh" data-v="38.6">₹38.6L</strong>
+                  <span class="kpi-sub" id="k-fees-sub">of ₹52.0L due · Term 2</span>
+                  <div class="bar"><span id="k-fees-bar" style="width:74%"></span></div>
+                </div>
+              </div>
+              <div class="panel-row3">
+                <section class="panel pi" style="--d:1950">
+                  <h3 class="panel-title">Attendance by wing <span>Today</span></h3>
+                  <ul class="hbars" id="wings">
+                    <li><span>Primary</span><i><b style="width:96%"></b></i><em>96%</em></li>
+                    <li><span>Middle</span><i><b style="width:93%"></b></i><em>93%</em></li>
+                    <li><span>Secondary</span><i><b style="width:91%"></b></i><em>91%</em></li>
+                    <li><span>Sr. Secondary</span><i><b style="width:95%"></b></i><em>95%</em></li>
+                  </ul>
+                </section>
+                <section class="panel pi" style="--d:2100">
+                  <h3 class="panel-title">Academic tasks <span class="count">3</span></h3>
+                  <ul class="checks">
+                    <li><i class="tag tag-red">Due</i>Publish Unit Test 2 timetable</li>
+                    <li><i class="tag tag-amber">Today</i>Review 3 leave requests</li>
+                    <li><i class="tag">Fri</i>Finalise Class 9 sections</li>
+                  </ul>
+                </section>
+                <section class="panel pi" style="--d:2250">
+                  <h3 class="panel-title">Upcoming <span>Next 7 days</span></h3>
+                  <ul class="rows">
+                    <li><span class="date">24<small>Oct</small></span><span>Unit Test 2 begins</span></li>
+                    <li><span class="date">26<small>Oct</small></span><span>Parent meeting · Classes 1–5</span></li>
+                    <li><span class="date">28<small>Oct</small></span><span>Annual sports day</span></li>
+                  </ul>
+                </section>
+              </div>
+            </div>
+
+            <div id="view-group" class="view" hidden>
+              <section class="panel">
+                <h3 class="panel-title">School group overview <span>Authorized group administrators</span></h3>
+                <table class="grp-table">
+                  <caption class="sr">Sample consolidated figures by campus</caption>
+                  <thead><tr><th scope="col">Campus</th><th scope="col">Students</th><th scope="col">Present today</th><th scope="col">Fees collected</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">Northfield Academy</th><td>1,248</td><td>94.2%</td><td>74%</td></tr>
+                    <tr><th scope="row">Riverstone Public School</th><td>862</td><td>91.8%</td><td>70%</td></tr>
+                    <tr><th scope="row">Lakeview Junior Campus</th><td>410</td><td>95.1%</td><td>78%</td></tr>
+                  </tbody>
+                  <tfoot><tr><th scope="row">Group total</th><td>2,520</td><td colspan="2">Consolidated, read-only view</td></tr></tfoot>
+                </table>
+                <p class="ledger-note">Each campus workspace keeps its own users, records and permissions. Sample data.</p>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="px notif-px" data-depth="0.05">
+          <div class="notif" role="status">
+            <span class="notif-dot" aria-hidden="true"></span>
+            <div><strong>Fee receipt issued</strong><span>₹14,500 · Class 6B · just now</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="caption">Illustrative interface with fictional schools and sample data. Workspace switching here is a visual demonstration only.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- 3. UNIVERSAL PLATFORM CONCEPT -->
+<section class="section" id="concept" aria-labelledby="concept-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>
+        <p class="eyebrow reveal">Universal platform</p>
+        <h2 id="concept-title" class="mask">Software for many schools, not a website for one.</h2>
+      </div>
+      <p class="muted reveal">Each institution subscribes to the same platform and works inside its own configured workspace, with its own branding, structure, users and permissions.</p>
+    </div>
+
+    <ol class="flow stagger" id="flow">
+      <li class="flow-step">
+        <span class="flow-n">01</span>
+        <div class="flow-vis"><div class="core"><svg class="ico" aria-hidden="true"><use href="#i-setup"/></svg>Shared platform</div></div>
+        <h3>One shared platform</h3>
+        <p>A single product, maintained centrally, so every school benefits from the same improvements.</p>
+      </li>
+      <li class="flow-step">
+        <span class="flow-n">02</span>
+        <div class="flow-vis ws-stack">
+          <div class="ws-tile" style="--c:#b8501e">Northfield Academy</div>
+          <div class="ws-tile" style="--c:#2b5fa8">Riverstone Public School</div>
+          <div class="ws-tile" style="--c:#2d7556">Lakeview Junior Campus</div>
+        </div>
+        <h3>Separate school workspaces</h3>
+        <p>Each school configures its own classes, boards, fee plans, calendar and branding. Workspaces are designed to stay isolated from one another.</p>
+      </li>
+      <li class="flow-step">
+        <span class="flow-n">03</span>
+        <div class="flow-vis roles-vis"><span>Principal</span><span>Teacher</span><span>Accounts</span><span>Parent</span><span>Student</span></div>
+        <h3>Role-specific access</h3>
+        <p>People are invited into their school's workspace and see only what their role allows.</p>
+      </li>
+      <li class="flow-step">
+        <span class="flow-n">04</span>
+        <div class="flow-vis ops-vis"><span>Admissions</span><span>Attendance</span><span>Fees</span><span>Exams</span><span>Notices</span></div>
+        <h3>Connected daily operations</h3>
+        <p>Records flow between modules, so the same information is entered once and used everywhere it is needed.</p>
+      </li>
+    </ol>
+
+    <p class="boundary reveal"><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg><span><strong>The boundary is the point.</strong> Platform administration is meant to operate the service, not to browse a school's private records, and one school should never reach another's data.</span></p>
+  </div>
+</section>
+
+<!-- 4. CAPABILITIES -->
+<section class="section section-alt" id="features" aria-labelledby="features-title">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow reveal">Core product capabilities</p>
+      <h2 id="features-title" class="mask">Everything a school runs on, in one workspace.</h2>
+    </div>
+
+    <div class="feat-lead stagger">
+      <article class="feat feat-big">
+        <svg class="ico ico-lg" aria-hidden="true"><use href="#i-setup"/></svg>
+        <h3>School onboarding &amp; configuration</h3>
+        <p>Set up a school's workspace: branding, academic structure, classes and sections, then invite the people who will use it.</p>
+        <ul class="feat-points"><li>Guided workspace setup</li><li>Roles and permissions per school</li></ul>
+      </article>
+      <article class="feat feat-big">
+        <svg class="ico ico-lg" aria-hidden="true"><use href="#i-admissions"/></svg>
+        <h3>Admissions &amp; student records</h3>
+        <p>Carry an enquiry through to an enrolled student and keep every profile complete and current.</p>
+        <ul class="feat-points"><li>Enquiry-to-enrollment pipeline</li><li>Guardian and document records</li></ul>
+      </article>
+      <article class="feat feat-big">
+        <svg class="ico ico-lg" aria-hidden="true"><use href="#i-campus"/></svg>
+        <h3>Multi-campus administration</h3>
+        <p>Give authorized group leaders a consolidated view while each campus keeps its own operational boundaries.</p>
+        <ul class="feat-points"><li>Group-level overview</li><li>Campus-level workspaces</li></ul>
+      </article>
+    </div>
+
+    <ul class="feat-list stagger">
+      <li><svg class="ico" aria-hidden="true"><use href="#i-safety"/></svg><h3>Attendance &amp; student safety</h3><p>Mark attendance in minutes and spot absences early enough to follow up with families.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-timetable"/></svg><h3>Academic planning &amp; timetables</h3><p>Plan around teachers, rooms and periods, and see clashes before they reach a classroom.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-fees"/></svg><h3>Fees &amp; financial administration</h3><p>Define fee structures, record payments and see outstanding dues without separate sheets.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-exams"/></svg><h3>Examinations &amp; report cards</h3><p>Schedule assessments, enter marks once and produce consistent report cards.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-certs"/></svg><h3>Certificates &amp; official documents</h3><p>Issue bonafide, transfer and other certificates from verified student records.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-staff"/></svg><h3>Staff coordination</h3><p>Coordinate leave, substitutions and routine tasks so the day starts organized.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-comms"/></svg><h3>Parent &amp; student communication</h3><p>Send notices and updates to the right class, section or family from one place.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-learning"/></svg><h3>Learning materials &amp; assignments</h3><p>Share notes and homework, and keep track of what has been set.</p></li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-analytics"/></svg><h3>Reports &amp; analytics</h3><p>Turn day-to-day records into reports leadership can review without manual compilation.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 5. SCROLL-DRIVEN PRODUCT SHOWCASE -->
+<section class="section showcase-section" id="showcase" aria-labelledby="show-title">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow reveal">Inside the platform</p>
+      <h2 id="show-title" class="mask">One workspace, four views of the school.</h2>
+    </div>
+  </div>
+  <div class="showcase" id="showcase-track">
+    <div class="show-sticky">
+      <div class="container show-inner">
+        <ol class="show-nav" aria-label="Product tour stages">
+          <li><button type="button" data-go="0" aria-current="true"><span>01</span>Institution</button></li>
+          <li><button type="button" data-go="1"><span>02</span>Academics</button></li>
+          <li><button type="button" data-go="2"><span>03</span>Finance &amp; workflows</button></li>
+          <li><button type="button" data-go="3"><span>04</span>Communication</button></li>
+          <li class="show-bar" aria-hidden="true"><i></i></li>
+        </ol>
+        <div class="stages">
+
+          <article class="stage is-active" data-stage="0" aria-labelledby="st0">
+            <div class="stage-text">
+              <p class="eyebrow">Stage 01</p>
+              <h3 id="st0">Institution overview, set up in a few clear steps.</h3>
+              <p>School administrators configure the workspace once: structure, roles and campuses, with a plain view of what is still to do.</p>
+            </div>
+            <div class="app app-light stage-pv">
+              <div class="app-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="app-bar-title">Northfield Academy · Workspace setup</span><span class="app-bar-pill">Sample</span></div>
+              <div class="pv-body">
+                <div class="panel pv-i"><h4 class="panel-title">Setup progress <span>3 of 4</span></h4>
+                  <ul class="setup">
+                    <li class="done"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Workspace created</li>
+                    <li class="done"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Branding and academic structure</li>
+                    <li class="done"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Classes and sections</li>
+                    <li class="now"><span class="ring" aria-hidden="true"></span>Invite authorized users</li>
+                  </ul>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Users by role <span>Invited</span></h4>
+                  <ul class="hbars">
+                    <li><span>Administrators</span><i><b style="width:12%"></b></i><em>3</em></li>
+                    <li><span>Teachers</span><i><b style="width:88%"></b></i><em>64</em></li>
+                    <li><span>Accounts</span><i><b style="width:18%"></b></i><em>4</em></li>
+                  </ul>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Campuses <span>Group</span></h4>
+                  <ul class="rows"><li><span class="date">1<small>Main</small></span><span>Northfield Academy</span></li><li><span class="date">2<small>Jr.</small></span><span>Lakeview Junior Campus</span></li></ul>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="stage" data-stage="1" aria-labelledby="st1">
+            <div class="stage-text">
+              <p class="eyebrow">Stage 02</p>
+              <h3 id="st1">Academics, timetable, exams and attendance together.</h3>
+              <p>Plan the week, schedule assessments and watch attendance from the same place, with clashes flagged before the bell.</p>
+            </div>
+            <div class="app app-light stage-pv">
+              <div class="app-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="app-bar-title">Class 8B · This week</span><span class="app-bar-pill">Sample</span></div>
+              <div class="pv-body">
+                <div class="panel pv-i"><h4 class="panel-title">Timetable <span>Mon–Fri</span></h4>
+                  <table class="tt">
+                    <caption class="sr">Sample timetable for Class 8B</caption>
+                    <thead><tr><th></th><th scope="col">Mon</th><th scope="col">Tue</th><th scope="col">Wed</th><th scope="col">Thu</th><th scope="col">Fri</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">P1</th><td>Maths</td><td>Eng</td><td>Sci</td><td>Maths</td><td>Hin</td></tr>
+                      <tr><th scope="row">P2</th><td>Eng</td><td>Sci</td><td>Maths</td><td>SSt</td><td>Eng</td></tr>
+                      <tr><th scope="row">P3</th><td>Sci</td><td>Maths</td><td class="clash">Maths!</td><td>Eng</td><td>Art</td></tr>
+                    </tbody>
+                  </table>
+                  <p class="flag pv-i"><i class="tag tag-red">Clash</i>Wed P3 · teacher double-booked</p>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Attendance <span>This week</span></h4>
+                  <ul class="hbars">
+                    <li><span>Mon</span><i><b style="width:95%"></b></i><em>95%</em></li>
+                    <li><span>Tue</span><i><b style="width:93%"></b></i><em>93%</em></li>
+                    <li><span>Wed</span><i><b style="width:96%"></b></i><em>96%</em></li>
+                  </ul>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Examinations <span>Unit Test 2</span></h4>
+                  <ul class="rows"><li><span class="date">24<small>Oct</small></span><span>Science · Class 9</span></li><li><span class="date">26<small>Oct</small></span><span>Maths · Class 10</span></li></ul>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="stage" data-stage="2" aria-labelledby="st2">
+            <div class="stage-text">
+              <p class="eyebrow">Stage 03</p>
+              <h3 id="st2">Fees, certificates and approvals with a visible trail.</h3>
+              <p>Record payments, track dues and move requests through each step with a clear owner and status.</p>
+            </div>
+            <div class="app app-light stage-pv">
+              <div class="app-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="app-bar-title">Accounts &amp; administration</span><span class="app-bar-pill">Sample</span></div>
+              <div class="pv-body">
+                <div class="panel pv-i"><h4 class="panel-title">Fee ledger <span>Today</span></h4>
+                  <ul class="ledger-mini">
+                    <li><span>Receipt 2041 · Class 6B</span><b>₹14,500</b></li>
+                    <li><span>Receipt 2042 · Class 3A</span><b>₹9,800</b></li>
+                    <li><span>Receipt 2043 · Class 10C</span><b>₹18,200</b></li>
+                  </ul>
+                  <div class="bar bar-accent"><span style="width:74%"></span></div>
+                  <p class="kpi-sub">74% of Term 2 collected</p>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Transfer certificate · Class 8 <span>Request #118</span></h4>
+                  <ol class="wf">
+                    <li class="done">Requested</li><li class="done">Verified</li><li class="now">Approval</li><li>Issued</li>
+                  </ol>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Approvals <span class="count">3</span></h4>
+                  <ul class="checks"><li><i class="tag tag-amber">Today</i>Fee concession · Class 7B</li><li><i class="tag">Fri</i>Staff leave · 22–23 Oct</li></ul>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="stage" data-stage="3" aria-labelledby="st3">
+            <div class="stage-text">
+              <p class="eyebrow">Stage 04</p>
+              <h3 id="st3">Families and students stay informed, with reports for leaders.</h3>
+              <p>Notices reach the right audience, parents see their own child's information, and leadership reviews reports without manual compilation.</p>
+            </div>
+            <div class="app app-light stage-pv">
+              <div class="app-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="app-bar-title">Parent &amp; student view</span><span class="app-bar-pill">Sample</span></div>
+              <div class="pv-body">
+                <div class="panel pv-i"><h4 class="panel-title">Notice · Class 7B <span>09:15</span></h4>
+                  <p class="msg">Unit Test 2 begins on 24 Oct. Syllabus and timetable are attached.</p>
+                  <p class="msg msg-me">Noted, thank you. <span>Parent of Aarav</span></p>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Aarav Mehta · Class 7B <span>Student profile</span></h4>
+                  <ul class="hbars">
+                    <li><span>Attendance</span><i><b style="width:96%"></b></i><em>96%</em></li>
+                    <li><span>Term 1 marks</span><i><b style="width:82%"></b></i><em>82%</em></li>
+                  </ul>
+                </div>
+                <div class="panel pv-i"><h4 class="panel-title">Report · Class 7 results <span>Principal</span></h4>
+                  <div class="mini-cols" aria-hidden="true"><i style="height:48%"></i><i style="height:62%"></i><i style="height:55%"></i><i style="height:74%"></i><i style="height:68%"></i><i style="height:82%"></i></div>
+                  <p class="kpi-sub">Average by section · sample data</p>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. ROLES -->
+<section class="section section-alt" id="roles" aria-labelledby="roles-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>
+        <p class="eyebrow reveal">Designed for every school role</p>
+        <h2 id="roles-title" class="mask">Everyone sees what is theirs.</h2>
+      </div>
+      <p class="muted reveal">Access is role-based: each person sees only the information and actions permitted for their role inside their school's workspace.</p>
+    </div>
+
+    <div class="tabs roles reveal-m" data-tabs data-orientation="vertical">
+      <div class="tablist" role="tablist" aria-label="Choose a role" aria-orientation="vertical">
+        <button role="tab" id="rt-1" aria-controls="rp-1" aria-selected="true" type="button">Owners &amp; management</button>
+        <button role="tab" id="rt-2" aria-controls="rp-2" aria-selected="false" tabindex="-1" type="button">Principals &amp; administrators</button>
+        <button role="tab" id="rt-3" aria-controls="rp-3" aria-selected="false" tabindex="-1" type="button">Teachers</button>
+        <button role="tab" id="rt-4" aria-controls="rp-4" aria-selected="false" tabindex="-1" type="button">Accountants &amp; office staff</button>
+        <button role="tab" id="rt-5" aria-controls="rp-5" aria-selected="false" tabindex="-1" type="button">Parents</button>
+        <button role="tab" id="rt-6" aria-controls="rp-6" aria-selected="false" tabindex="-1" type="button">Students</button>
+      </div>
+      <div class="role-stage">
+        <div class="tabpanel role-panel" role="tabpanel" id="rp-1" aria-labelledby="rt-1">
+          <div class="role-text"><h3>A clear view of the whole institution.</h3><p>Enrollment, collections and campus performance without waiting for a compiled report. Authorized group owners can compare campuses.</p></div>
+          <div class="app app-light role-pv"><div class="app-bar"><span class="app-bar-title">Owner home</span><span class="app-bar-pill">Sample</span></div>
+            <ul class="role-rows"><li><span>Enrollment this term</span><b>+36</b></li><li><span>Fee collection vs plan</span><b>74%</b></li><li><span>Campuses reporting today</span><b>3 of 3</b></li></ul></div>
+        </div>
+        <div class="tabpanel role-panel" role="tabpanel" id="rp-2" aria-labelledby="rt-2" hidden>
+          <div class="role-text"><h3>Run the day from one queue.</h3><p>Approvals, timetable conflicts, staff leave and school-wide updates in one place, each with an owner and a status.</p></div>
+          <div class="app app-light role-pv"><div class="app-bar"><span class="app-bar-title">Administrator home</span><span class="app-bar-pill">Sample</span></div>
+            <ul class="role-rows"><li><span>Pending approvals</span><b>5</b></li><li><span>Timetable conflicts</span><b>2</b></li><li><span>Staff on leave tomorrow</span><b>3</b></li></ul></div>
+        </div>
+        <div class="tabpanel role-panel" role="tabpanel" id="rp-3" aria-labelledby="rt-3" hidden>
+          <div class="role-text"><h3>Classroom tools without the paperwork.</h3><p>Teachers see their own timetable and classes, mark attendance, enter marks and share materials.</p></div>
+          <div class="app app-light role-pv"><div class="app-bar"><span class="app-bar-title">Teacher home</span><span class="app-bar-pill">Sample</span></div>
+            <ul class="role-rows"><li><span>Next class</span><b>8B · P3</b></li><li><span>Attendance to mark</span><b>2 classes</b></li><li><span>Marks due</span><b>Unit Test 2</b></li></ul></div>
+        </div>
+        <div class="tabpanel role-panel" role="tabpanel" id="rp-4" aria-labelledby="rt-4" hidden>
+          <div class="role-text"><h3>Fees and records, reconciled.</h3><p>Record receipts, follow dues and process concessions and certificate requests with a clear trail.</p></div>
+          <div class="app app-light role-pv"><div class="app-bar"><span class="app-bar-title">Accounts home</span><span class="app-bar-pill">Sample</span></div>
+            <ul class="role-rows"><li><span>Receipts today</span><b>18</b></li><li><span>Dues this week</span><b>₹2.4L</b></li><li><span>Concession requests</span><b>2</b></li></ul></div>
+        </div>
+        <div class="tabpanel role-panel" role="tabpanel" id="rp-5" aria-labelledby="rt-5" hidden>
+          <div class="role-text"><h3>Their child's school life, clearly.</h3><p>Parents see their own child's attendance, results, fee dues and school notices, and can raise requests.</p></div>
+          <div class="app app-light role-pv"><div class="app-bar"><span class="app-bar-title">Parent home</span><span class="app-bar-pill">Sample</span></div>
+            <ul class="role-rows"><li><span>Attendance this month</span><b>96%</b></li><li><span>Fee due</span><b>₹14,500</b></li><li><span>New notices</span><b>2</b></li></ul></div>
+        </div>
+        <div class="tabpanel role-panel" role="tabpanel" id="rp-6" aria-labelledby="rt-6" hidden>
+          <div class="role-text"><h3>What is due, and what is next.</h3><p>Students see their timetable, assignments, materials and results, and nothing meant for staff.</p></div>
+          <div class="app app-light role-pv"><div class="app-bar"><span class="app-bar-title">Student home</span><span class="app-bar-pill">Sample</span></div>
+            <ul class="role-rows"><li><span>Today's classes</span><b>6</b></li><li><span>Homework due</span><b>2</b></li><li><span>Next exam</span><b>24 Oct</b></li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. ACADEMIC-YEAR CONTINUITY -->
+<section class="section" id="academic-year" aria-labelledby="year-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>
+        <p class="eyebrow reveal">Academic-year continuity</p>
+        <h2 id="year-title" class="mask">Close one year. Open the next. Keep what happened.</h2>
+      </div>
+      <p class="muted reveal">Year-end is designed as a guided plan: promotions, sections, fee plans, calendars and exam setup are prepared together while historical records stay available.</p>
+    </div>
+
+    <ol class="timeline-h stagger" id="timeline">
+      <li><span class="tl-dot" aria-hidden="true"></span><span class="tl-n">Step 1</span><h3>Close the year</h3><p>Finalise results and dues for the outgoing year.</p></li>
+      <li><span class="tl-dot" aria-hidden="true"></span><span class="tl-n">Step 2</span><h3>Plan promotions</h3><p>Review who moves up, class by class, before applying.</p></li>
+      <li><span class="tl-dot" aria-hidden="true"></span><span class="tl-n">Step 3</span><h3>Allocate sections</h3><p>Distribute students across the new sections.</p></li>
+      <li><span class="tl-dot" aria-hidden="true"></span><span class="tl-n">Step 4</span><h3>Fee plans &amp; calendar</h3><p>Set up updated fee structures and the academic calendar.</p></li>
+      <li><span class="tl-dot" aria-hidden="true"></span><span class="tl-n">Step 5</span><h3>Exam configuration</h3><p>Prepare assessment schemes for the new year.</p></li>
+    </ol>
+
+    <div class="preserved reveal-m">
+      <div class="preserved-head"><svg class="ico" aria-hidden="true"><use href="#i-archive"/></svg><strong>2025–26 · Closed</strong><span>Historical records remain available for reference</span></div>
+      <ul class="preserved-list">
+        <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>Final results and report cards</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>Fee receipts and dues ledger</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>Attendance registers</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg>Certificates issued</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8. MULTI-CAMPUS VISIBILITY -->
+<section class="section section-dark" id="campuses" aria-labelledby="campus-title">
+  <div class="container campus">
+    <div class="campus-copy">
+      <p class="eyebrow reveal">Multi-campus visibility</p>
+      <h2 id="campus-title" class="mask">One view across campuses. Boundaries between them.</h2>
+      <p class="muted reveal">Authorized school-group leaders can see consolidated figures. Each campus works in its own workspace, with its own users and permissions.</p>
+      <ul class="campus-points reveal">
+        <li><strong>Group level</strong>Consolidated, read-oriented overview for authorized administrators.</li>
+        <li><strong>Campus level</strong>Day-to-day operations stay with each campus's own staff.</li>
+        <li><strong>Role-based</strong>What anyone can see is set by their role, not by where they log in from.</li>
+      </ul>
+    </div>
+    <figure class="campus-vis reveal-m" id="campus-vis">
+      <svg viewBox="0 0 480 420" role="img" aria-label="Diagram: a group overview connected to three separate campus workspaces, each inside its own boundary.">
+        <g class="lines" fill="none" stroke="#f2a766" stroke-width="1.5">
+          <path class="ln-draw" d="M240 112 C240 190 80 190 80 262" pathLength="1"/>
+          <path class="ln-draw" d="M240 112 L240 262" pathLength="1"/>
+          <path class="ln-draw" d="M240 112 C240 190 400 190 400 262" pathLength="1"/>
+        </g>
+        <g class="node-group">
+          <rect x="140" y="40" width="200" height="72" rx="6" fill="#17383c" stroke="#f2a766"/>
+          <text x="240" y="70" text-anchor="middle" class="t-h">Group overview</text>
+          <text x="240" y="92" text-anchor="middle" class="t-s">2,520 students · sample</text>
+        </g>
+        <g class="node-campus" style="--k:0">
+          <rect x="16" y="262" width="128" height="120" rx="6" fill="none" stroke="#5d7b7e" stroke-dasharray="4 4"/>
+          <text x="80" y="294" text-anchor="middle" class="t-h">Northfield</text>
+          <text x="80" y="316" text-anchor="middle" class="t-s">Own workspace</text>
+          <text x="80" y="352" text-anchor="middle" class="t-s">Attendance 94.2%</text>
+        </g>
+        <g class="node-campus" style="--k:1">
+          <rect x="176" y="262" width="128" height="120" rx="6" fill="none" stroke="#5d7b7e" stroke-dasharray="4 4"/>
+          <text x="240" y="294" text-anchor="middle" class="t-h">Riverstone</text>
+          <text x="240" y="316" text-anchor="middle" class="t-s">Own workspace</text>
+          <text x="240" y="352" text-anchor="middle" class="t-s">Attendance 91.8%</text>
+        </g>
+        <g class="node-campus" style="--k:2">
+          <rect x="336" y="262" width="128" height="120" rx="6" fill="none" stroke="#5d7b7e" stroke-dasharray="4 4"/>
+          <text x="400" y="294" text-anchor="middle" class="t-h">Lakeview Jr.</text>
+          <text x="400" y="316" text-anchor="middle" class="t-s">Own workspace</text>
+          <text x="400" y="352" text-anchor="middle" class="t-s">Attendance 95.1%</text>
+        </g>
+        <text x="240" y="408" text-anchor="middle" class="t-s">Dashed outline = workspace boundary</text>
+      </svg>
+      <figcaption class="caption caption-dark">Illustrative diagram with fictional schools.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- 9. TRUST, SECURITY, CONTROL -->
+<section class="section" id="trust" aria-labelledby="trust-title">
+  <div class="container trust">
+    <div class="trust-head">
+      <p class="eyebrow reveal">Trust, security &amp; control</p>
+      <h2 id="trust-title" class="mask">Built around the idea that school data is private.</h2>
+      <p class="muted reveal">These describe what the platform is being designed to provide. They are product goals, not certifications or verified guarantees.</p>
+    </div>
+    <ul class="trust-list stagger">
+      <li><span class="goal">Design goal</span><h3>Tenant isolation</h3><p>Each school's data is intended to be separated from every other school's.</p></li>
+      <li><span class="goal">Design goal</span><h3>Role-based permissions</h3><p>People should see and do only what their role permits.</p></li>
+      <li><span class="goal">Design goal</span><h3>Controlled access</h3><p>Administrators decide who is invited, and with which access.</p></li>
+      <li><span class="goal">Design goal</span><h3>Historical records</h3><p>Closed academic years are meant to remain available for reference.</p></li>
+      <li><span class="goal">Design goal</span><h3>Auditability</h3><p>Important actions are intended to leave a reviewable trail.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10. FINAL CTA -->
+<section class="section section-dark cta" id="demo" aria-labelledby="cta-title">
+  <div class="container cta-grid">
+    <div>
+      <p class="eyebrow reveal">Get started</p>
+      <h2 id="cta-title" class="mask">Your schools. Their own workspaces. One connected platform.</h2>
+      <p class="lede reveal">Bring everyday school operations into a more organized, connected, and scalable system.</p>
+      <div class="cta-row reveal">
+        <a class="btn btn-light" href="#inquiry-name">Book a Demo <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-outline-light" href="#platform">Explore the Platform</a>
+      </div>
+    </div>
+
+    <form class="inquiry reveal-m" id="inquiry" novalidate aria-labelledby="inq-title">
+      <h3 id="inq-title">Request a demo</h3>
+      <div class="field"><label for="inquiry-name">Your name</label><input id="inquiry-name" name="name" type="text" autocomplete="name" required aria-describedby="err-name"><p class="err" id="err-name" hidden>Please enter your name.</p></div>
+      <div class="field"><label for="inquiry-email">Work email</label><input id="inquiry-email" name="email" type="email" autocomplete="email" required aria-describedby="err-email"><p class="err" id="err-email" hidden>Please enter a valid email address.</p></div>
+      <div class="field"><label for="inquiry-school">School or group name</label><input id="inquiry-school" name="school" type="text" autocomplete="organization" required aria-describedby="err-school"><p class="err" id="err-school" hidden>Please enter your school or group name.</p></div>
+      <div class="field"><label for="inquiry-role">Your role</label>
+        <select id="inquiry-role" name="role"><option>Owner / committee</option><option>Principal / administrator</option><option>Teacher / coordinator</option><option>Accounts / office staff</option><option>Other</option></select></div>
+      <button class="btn btn-light btn-block" type="submit">Send request</button>
+      <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+      <p class="form-note">Demo form only: submitting is checked in your browser and is not sent anywhere. A configured backend or form service is needed before real requests can be received.</p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<!-- 11. FOOTER -->
+<footer class="site-footer" id="about">
+  <div class="container footer-grid">
+    <div class="footer-about">
+      <a class="brand brand-on-dark" href="#top" aria-label="SchoolOS home"><span class="brand-mark" aria-hidden="true">S</span><span class="brand-name" data-brand>SchoolOS</span></a>
+      <p>One school management platform for independent schools and school groups, with a separate workspace for every institution.</p>
+      <p class="contact-ph">Contact: <span>[email address to be added]</span></p>
+    </div>
+    <nav aria-label="Product"><h2 class="foot-h">Product</h2><ul>
+      <li><a href="#concept">Platform</a></li><li><a href="#features">Features</a></li><li><a href="#showcase">Product tour</a></li><li><a href="#demo">Book a Demo</a></li></ul></nav>
+    <nav aria-label="Solutions"><h2 class="foot-h">Solutions</h2><ul>
+      <li><a href="#roles">By role</a></li><li><a href="#academic-year">Academic year</a></li><li><a href="#campuses">Multi-campus groups</a></li><li><a href="#trust">Trust &amp; control</a></li></ul></nav>
+    <nav aria-label="Resources" id="resources"><h2 class="foot-h">Resources</h2><ul>
+      <li><a href="#guides" data-placeholder="Guides are not published yet.">Guides</a></li><li><a href="#faq" data-placeholder="The FAQ is not published yet.">FAQ</a></li><li><a href="#help" data-placeholder="The help centre is not published yet.">Help centre</a></li><li><a href="#contact" data-placeholder="Contact details have not been added yet.">Contact</a></li></ul></nav>
+  </div>
+  <div class="container footer-base">
+    <p>© <span id="year">2026</span> <span data-brand>SchoolOS</span>. All rights reserved.</p>
+    <ul>
+      <li><a href="#privacy" data-placeholder="The Privacy Policy page is not published yet.">Privacy Policy</a></li>
+      <li><a href="#terms" data-placeholder="The Terms of Service page is not published yet.">Terms of Service</a></li>
+    </ul>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="js/main.js"></script>
+</body>
+</html>

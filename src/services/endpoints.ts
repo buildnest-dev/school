@@ -1,0 +1,60 @@
+import type { ResourceKey } from "./types";
+
+/**
+ * PROPOSED endpoint paths relative to NEXT_PUBLIC_API_BASE_URL. These are proposals for the backend
+ * developer to accept or change (see docs/API_INTEGRATION.md); no backend implements them yet.
+ */
+export const RESOURCE_PATHS: Record<ResourceKey, string> = {
+  students: "/students",
+  staff: "/staff",
+  enquiries: "/admissions/enquiries",
+  campuses: "/campuses",
+  invoices: "/fees/invoices",
+  feeHeads: "/fees/structure",
+  vendors: "/vendors",
+  certificateRequests: "/certificates/requests",
+  issueRegister: "/certificates/register",
+  notices: "/notices",
+  calendar: "/calendar/events",
+  leaves: "/staff/leave-requests",
+  approvals: "/approvals",
+  eventPlans: "/events",
+  queries: "/parent-queries",
+  books: "/library/books",
+  loans: "/library/loans",
+  vehicles: "/transport/vehicles",
+  routes: "/transport/routes",
+  exams: "/exams/datesheet",
+  tenants: "/platform/tenants",
+  onboarding: "/platform/onboarding",
+  support: "/platform/support-requests",
+  audit: "/audit-events",
+};
+
+export const ENDPOINTS = {
+  dashboardSchool: "/dashboards/school",
+  dashboardPlatform: "/platform/dashboard",
+  platformStatus: "/platform/status",
+  studentLedger: (studentId: string) => `/students/${studentId}/ledger`,
+  teacherHome: "/teacher/home",
+  teacherClasses: "/teacher/classes",
+  teacherTimetable: "/teacher/timetable",
+  teacherSyllabus: "/teacher/syllabus-progress",
+  teacherLeaves: "/teacher/leave-requests",
+  attendanceSheet: (classId: string, date: string) => `/attendance/classes/${classId}/${date}`,
+  homework: "/homework",
+  marksSheet: (classId: string) => `/marks/classes/${classId}`,
+  notices: "/notices",
+  leaveRequests: "/staff/leave-requests",
+  approvalDecision: (id: string) => `/approvals/${id}/decision`,
+  certificateRequests: "/certificates/requests",
+  certificateVerify: (certNo: string) => `/certificates/verify/${encodeURIComponent(certNo)}`,
+  rolloverChecks: "/rollover/checks",
+  rolloverPreview: "/rollover/preview",
+  rolloverSections: "/rollover/sections",
+  rolloverSubmit: "/rollover/submissions",
+  familyChildren: "/me/children",
+  child: (childId: string, part: string) => `/me/children/${childId}/${part}`,
+  ptmSlots: "/me/ptm-slots",
+  ptmBook: (slotId: string) => `/me/ptm-slots/${slotId}/booking`,
+} as const;
