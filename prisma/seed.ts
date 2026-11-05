@@ -183,11 +183,88 @@ async function demoSchool() {
       },
     });
   }
+
+  // Subjects for every class, one exam, and a couple of notices.
+  const classes = await prisma.classLevel.findMany({ where: { tenantId: tenant.id } });
+  for (const c of classes) {
+    for (const name of ["English", "Mathematics", "Science"]) {
+      await prisma.subject.upsert({
+        where: { classId_name: { classId: c.id, name } },
+        update: {},
+        create: { tenantId: tenant.id, classId: c.id, name },
+      });
+    }
+  }
+  await prisma.exam.create({
+    data: { tenantId: tenant.id, yearId: year.id, name: "Term 1", maxMarks: 100 },
+  });
+  await prisma.notice.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        title: "Annual sports day",
+        body: "Annual sports day will be held on 14 November.",
+        status: "published",
+        authorName: "Anita Sharma",
+        publishedAt: new Date("2026-10-20"),
+      },
+      {
+        tenantId: tenant.id,
+        title: "Draft: winter timings",
+        body: "School timings change from 1 December.",
+        status: "draft",
+        authorName: "Anita Sharma",
+      },
+    ],
+  });
+  const firstInvoice = await prisma.invoice.findFirstOrThrow({ where: { tenantId: tenant.id } });
+  await prisma.payment.create({
+    data: {
+      tenantId: tenant.id,
+      invoiceId: firstInvoice.id,
+      amountPaise: 500_000,
+      mode: "upi",
+      reference: "DEMO-UPI-0001",
+    },
+  });
+}
+
+/** A second, unrelated school: used to prove one school can never see another school's data. */
+async function otherSchool() {
+  const tenant = await prisma.tenant.upsert({
+    where: { slug: "other-school" },
+    update: {},
+    create: { slug: "other-school", name: "Other Academy (fictional)", plan: "trial" },
+  });
+  const user = await prisma.user.upsert({
+    where: { email: "principal@other.test" },
+    update: {},
+    create: {
+      email: "principal@other.test",
+      name: "Neha Rao",
+      passwordHash: await bcrypt.hash(DEV_PASSWORD, 10),
+    },
+  });
+  await prisma.membership.upsert({
+    where: { userId_tenantId: { userId: user.id, tenantId: tenant.id } },
+    update: {},
+    create: { userId: user.id, tenantId: tenant.id, role: "principal" },
+  });
+  const c = await prisma.classLevel.create({
+    data: { tenantId: tenant.id, name: "Class 8", stage: "middle", position: 10 },
+  });
+  const s = await prisma.section.create({
+    data: { tenantId: tenant.id, classId: c.id, name: "A" },
+  });
+  await prisma.student.create({
+    data: { tenantId: tenant.id, admissionNo: "OA-0001", name: "Kabir Joshi", sectionId: s.id },
+  });
 }
 
 async function main() {
   await reference();
   await demoSchool();
+  await otherSchool();
   console.log("Seeded. Dev logins use password:", DEV_PASSWORD);
 }
 
