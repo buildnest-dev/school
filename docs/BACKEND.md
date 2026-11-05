@@ -47,10 +47,19 @@ Shared database, shared schema. Every school-owned table has `tenantId`. The ten
 | GET/PUT   | `/api/marks/classes/:sectionId`            | principal, teacher (owner read)                                       |
 | GET       | `/api/fees/invoices`                       | owner, principal, accountant                                          |
 | POST      | `/api/fees/invoices/:id/payments`          | owner, principal, accountant                                          |
+| GET       | `/api/boards`                              | signed in (all 42 boards: national, international, open, state)       |
+| GET/PUT   | `/api/school/boards`                       | read: staff; write: owner, principal (exactly one default board)      |
+| PUT       | `/api/school/boards/:boardId/scale`        | owner, principal (scale must cover 0-100, no gaps/overlaps; null resets) |
+| GET/POST  | `/api/exams`                               | read: staff; create: owner, principal (board must be one the school follows) |
+| POST      | `/api/exams/:id/publish`                   | owner, principal (refused while any mark sheet is missing)            |
+| GET       | `/api/report-cards/classes/:sectionId`     | staff always; parents never (class sheets are staff-only)             |
+| GET       | `/api/report-cards/students/:studentId`    | staff; parents only for their own child and only once published       |
 | GET/POST  | `/api/notices`                             | read: signed in; create: owner, principal                             |
 
 ## Not built yet
 
-Staff, timetable, homework, library, transport, certificates, report cards with board grade scales, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes (currently any teacher in the school can mark any class).
+Staff, timetable, homework, library, transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes (currently any teacher in the school can mark any class).
+
+Report cards count only submitted mark sheets; a subject below the exam pass mark fails the exam; ranks share on ties; results stay hidden from parents until published. Student-role logins are not possible yet (Student has no user link).
 
 Boards and grade scales are editable defaults in the database, not an authoritative copy of each board's rules.

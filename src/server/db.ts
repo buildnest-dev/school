@@ -40,7 +40,7 @@ export function tenantDb(tenantId: string) {
         prisma.classLevel.findMany({
           where: w(),
           orderBy: { position: "asc" },
-          include: { sections: true },
+          include: { sections: true, subjects: true },
         }),
     },
     invoices: {

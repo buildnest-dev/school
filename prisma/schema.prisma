@@ -75,10 +75,12 @@ model Tenant {
 }
 
 model TenantBoard {
-  tenantId String
-  boardId  String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  board    Board  @relation(fields: [boardId], references: [id])
+  tenantId   String
+  boardId    String
+  isDefault  Boolean @default(false) // the board whose grading applies when an exam names none
+  gradeScale String? // school override (JSON); null = the board default
+  tenant     Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  board      Board   @relation(fields: [boardId], references: [id])
 
   @@id([tenantId, boardId])
 }
@@ -298,15 +300,18 @@ model MarkSheet {
 }
 
 model Exam {
-  id       String       @id @default(cuid())
-  tenantId String
-  yearId   String
-  name     String // Term 1, Unit Test 2, Half-yearly ...
-  maxMarks Int          @default(100)
-  boardId  String? // grading scale to apply; null = tenant default board
-  tenant   Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  year     AcademicYear @relation(fields: [yearId], references: [id])
-  marks    Mark[]
+  id          String       @id @default(cuid())
+  tenantId    String
+  yearId      String
+  name        String // Term 1, Unit Test 2, Half-yearly ...
+  maxMarks    Int          @default(100)
+  passPercent Int          @default(33)
+  published   Boolean      @default(false) // results are visible to parents/students only once published
+  publishedAt DateTime?
+  boardId     String? // grading scale to apply; null = tenant default board
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  year        AcademicYear @relation(fields: [yearId], references: [id])
+  marks       Mark[]
 
   @@index([tenantId])
 }

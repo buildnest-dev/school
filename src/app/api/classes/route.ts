@@ -12,6 +12,7 @@ export const GET = handle(async () => {
       name: c.name,
       stage: c.stage,
       sections: c.sections.map((s) => ({ id: s.id, name: s.name })),
+      subjects: c.subjects.map((s) => ({ id: s.id, name: s.name })),
     })),
   );
 });

@@ -69,8 +69,8 @@ async function demoSchool() {
   const cbse = await prisma.board.findUniqueOrThrow({ where: { code: "CBSE" } });
   await prisma.tenantBoard.upsert({
     where: { tenantId_boardId: { tenantId: tenant.id, boardId: cbse.id } },
-    update: {},
-    create: { tenantId: tenant.id, boardId: cbse.id },
+    update: { isDefault: true },
+    create: { tenantId: tenant.id, boardId: cbse.id, isDefault: true },
   });
 
   const year = await prisma.academicYear.upsert({
@@ -254,6 +254,10 @@ async function otherSchool() {
     where: { slug: "other-school" },
     update: {},
     create: { slug: "other-school", name: "Other Academy (fictional)", plan: "trial" },
+  });
+  const icse = await prisma.board.findUniqueOrThrow({ where: { code: "ICSE" } });
+  await prisma.tenantBoard.create({
+    data: { tenantId: tenant.id, boardId: icse.id, isDefault: true },
   });
   const user = await prisma.user.upsert({
     where: { email: "principal@other.test" },
