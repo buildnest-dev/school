@@ -6,3 +6,8 @@ next-env.d.ts
 test-results
 playwright-report
 .env*.local
+
+# local SQLite database and generated Prisma client
+*.db
+*.db-journal
+src/generated
