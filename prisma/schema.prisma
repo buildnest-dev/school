@@ -57,20 +57,21 @@ model Tenant {
   timezone   String   @default("Asia/Kolkata")
   createdAt  DateTime @default(now())
 
-  boards    TenantBoard[]
-  campuses  Campus[]
-  users     Membership[]
-  years     AcademicYear[]
-  classes   ClassLevel[]
-  students  Student[]
-  guardians Guardian[]
-  staff     Staff[]
-  subjects  Subject[]
-  feeHeads  FeeHead[]
-  invoices  Invoice[]
-  notices   Notice[]
-  exams     Exam[]
-  auditLogs AuditLog[]
+  boards     TenantBoard[]
+  campuses   Campus[]
+  users      Membership[]
+  years      AcademicYear[]
+  classes    ClassLevel[]
+  students   Student[]
+  guardians  Guardian[]
+  staff      Staff[]
+  subjects   Subject[]
+  feeHeads   FeeHead[]
+  invoices   Invoice[]
+  notices    Notice[]
+  exams      Exam[]
+  auditLogs  AuditLog[]
+  admissions Admission[]
 }
 
 model TenantBoard {
@@ -232,9 +233,11 @@ model Guardian {
   relation String // father | mother | guardian
   phone    String?
   email    String?
+  userId   String? // login of this guardian (role parent); links parents to their children
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   students Student[]
 
+  @@index([userId])
   @@index([tenantId])
 }
 
@@ -395,4 +398,26 @@ model AuditLog {
   tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, at])
+}
+
+// Admission pipeline: new -> documents -> review -> decision -> enrolled | declined.
+// "enrolled" is only reached through the admit endpoint, which creates the Student.
+model Admission {
+  id            String    @id @default(cuid())
+  tenantId      String
+  studentName   String
+  dob           DateTime?
+  gender        String?
+  applyingForId String? // ClassLevel id
+  guardianName  String
+  guardianPhone String
+  guardianEmail String?
+  source        String    @default("walk-in") // walk-in | website | referral | phone | other
+  stage         String    @default("new")
+  notes         String?
+  studentId     String?   @unique // set once enrolled
+  createdAt     DateTime  @default(now())
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, stage])
 }

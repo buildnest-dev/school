@@ -1,10 +1,69 @@
 import { NextResponse } from "next/server";
-import { requireTenant } from "@/server/auth";
+import { z } from "zod";
+import { HttpError, requireTenant } from "@/server/auth";
 import { prisma, tenantDb } from "@/server/db";
-import { handle } from "@/server/http";
+import { assertSameOrigin, handle } from "@/server/http";
+import { sectionOr404 } from "@/server/lib";
+import { checkLocation, nextAdmissionNo, studentDetail, studentInclude } from "@/server/students";
+import { guardianInput, studentFields } from "@/server/validators";
 import type { Student } from "@/types";
 
 const STAFF_ROLES = ["school_owner", "principal", "teacher", "accountant"] as const;
+
+const CreateBody = studentFields.extend({
+  guardian: guardianInput,
+  /** Set true after the user has seen the "possible duplicate" warning and still wants to add. */
+  confirmDuplicate: z.boolean().optional(),
+});
+
+/** POST /api/students: direct admission by the office (the admissions pipeline uses its own admit endpoint). */
+export const POST = handle(async (req: Request) => {
+  assertSameOrigin(req);
+  const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
+  const b = CreateBody.parse(await req.json());
+  await sectionOr404(tenantId, b.sectionId);
+  await checkLocation(b.stateId, b.districtId);
+
+  const dup = await prisma.student.findFirst({
+    where: { tenantId, name: b.name, dob: new Date(b.dob), status: "active" },
+  });
+  if (dup && !b.confirmDuplicate)
+    throw new HttpError(
+      409,
+      "possible_duplicate",
+      `A student named ${b.name} with this date of birth already exists (${dup.admissionNo}).`,
+    );
+
+  const { guardian, confirmDuplicate: _c, ...f } = b;
+  void _c;
+  const created = await prisma.$transaction(async (tx) => {
+    const g = await tx.guardian.create({ data: { tenantId, ...guardian } });
+    const s = await tx.student.create({
+      data: {
+        ...f,
+        dob: new Date(f.dob),
+        tenantId,
+        admissionNo: await nextAdmissionNo(tx, tenantId),
+        guardianId: g.id,
+      },
+      include: studentInclude,
+    });
+    await tx.auditLog.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        action: "student.create",
+        entity: "student",
+        entityId: s.id,
+      },
+    });
+    return s;
+  });
+  return NextResponse.json(
+    { ok: true, mode: "api", id: created.id, student: studentDetail(created) },
+    { status: 201 },
+  );
+});
 
 /** GET /api/students?q=&page=&pageSize=&sort=&order=&filter[status]= — tenant comes from the session only. */
 export const GET = handle(async (req: Request) => {

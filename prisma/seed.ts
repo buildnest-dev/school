@@ -134,12 +134,14 @@ async function demoSchool() {
 
   const first = ["Aarav", "Ananya", "Vihaan", "Diya", "Reyansh", "Isha", "Arjun", "Meera"];
   const last = ["Verma", "Iyer", "Reddy", "Das", "Khan", "Mehta", "Gupta", "Nair"];
+  const parentUser = await prisma.user.findUniqueOrThrow({ where: { email: "parent@demo.test" } });
   const guardian = await prisma.guardian.create({
     data: {
       tenantId: tenant.id,
+      userId: parentUser.id,
       name: "Suresh Patel",
       relation: "father",
-      phone: "+91 90000 00000",
+      phone: "+91 9876543210",
     },
   });
   let n = 0;
@@ -227,6 +229,23 @@ async function demoSchool() {
       reference: "DEMO-UPI-0001",
     },
   });
+
+  const c1 = await prisma.classLevel.findFirstOrThrow({
+    where: { tenantId: tenant.id, name: "Class 1" },
+  });
+  const stages = ["new", "documents", "review", "decision"];
+  for (const [i, stage] of stages.entries()) {
+    await prisma.admission.create({
+      data: {
+        tenantId: tenant.id,
+        studentName: ["Riya Menon", "Dev Kapoor", "Sana Sheikh", "Om Tiwari"][i]!,
+        applyingForId: c1.id,
+        guardianName: "Parent " + (i + 1),
+        guardianPhone: "+91 98" + String(76543210 + i),
+        stage,
+      },
+    });
+  }
 }
 
 /** A second, unrelated school: used to prove one school can never see another school's data. */

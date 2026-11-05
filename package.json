@@ -13,7 +13,7 @@
     "test:e2e": "playwright test",
     "docs:inventory": "node scripts/gen-screen-inventory.mjs",
     "db:reset": "node scripts/db-reset.mjs",
-    "test:api": "npm run db:reset && playwright test e2e/api.spec.ts --project=chromium"
+    "test:api": "npm run db:reset && playwright test e2e/api.spec.ts e2e/api-students.spec.ts --project=chromium --workers=1"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",
