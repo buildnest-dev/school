@@ -197,6 +197,51 @@ async function demoSchool() {
       });
     }
   }
+  // Staff directory (fictional) and the bell schedule.
+  const teacherUser = await prisma.user.findUniqueOrThrow({
+    where: { email: "teacher@demo.test" },
+  });
+  const acctUser = await prisma.user.findUniqueOrThrow({
+    where: { email: "accountant@demo.test" },
+  });
+  const staffSeed: [string, string, string, string, string | null][] = [
+    ["EMP-2026-0001", "Priya Nair", "teacher", "Senior Teacher, Mathematics", teacherUser.id],
+    ["EMP-2026-0002", "Rahul Menon", "teacher", "Teacher, English", null],
+    ["EMP-2026-0003", "Sunita Rao", "teacher", "Teacher, Science", null],
+    ["EMP-2026-0004", "Vikram Singh", "accountant", "Accounts Officer", acctUser.id],
+  ];
+  for (const [employeeNo, name, role, designation, userId] of staffSeed) {
+    await prisma.staff.upsert({
+      where: { tenantId_employeeNo: { tenantId: tenant.id, employeeNo } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        employeeNo,
+        name,
+        role,
+        designation,
+        userId,
+        joinedOn: new Date("2024-06-03"),
+      },
+    });
+  }
+  const bell: [number, string, string, string, boolean][] = [
+    [1, "Period 1", "08:00", "08:40", false],
+    [2, "Period 2", "08:40", "09:20", false],
+    [3, "Period 3", "09:20", "10:00", false],
+    [4, "Break", "10:00", "10:20", true],
+    [5, "Period 4", "10:20", "11:00", false],
+    [6, "Period 5", "11:00", "11:40", false],
+    [7, "Period 6", "11:40", "12:20", false],
+    [8, "Period 7", "12:20", "13:00", false],
+  ];
+  for (const [slot, label, startsAt, endsAt, isBreak] of bell) {
+    await prisma.bellSlot.upsert({
+      where: { tenantId_slot: { tenantId: tenant.id, slot } },
+      update: {},
+      create: { tenantId: tenant.id, slot, label, startsAt, endsAt, isBreak },
+    });
+  }
   await prisma.exam.create({
     data: { tenantId: tenant.id, yearId: year.id, name: "Term 1", maxMarks: 100 },
   });

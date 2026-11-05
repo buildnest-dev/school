@@ -65,6 +65,8 @@ model Tenant {
   students   Student[]
   guardians  Guardian[]
   staff      Staff[]
+  bellSlots  BellSlot[]
+  periods    Period[]
   subjects   Subject[]
   feeHeads   FeeHead[]
   invoices   Invoice[]
@@ -176,6 +178,7 @@ model Section {
   class          ClassLevel   @relation(fields: [classId], references: [id], onDelete: Cascade)
   students       Student[]
   attendance     Attendance[]
+  periods        Period[]
 
   @@unique([classId, name])
   @@index([tenantId])
@@ -190,6 +193,7 @@ model Subject {
   tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   class    ClassLevel @relation(fields: [classId], references: [id], onDelete: Cascade)
   marks    Mark[]
+  periods  Period[]
 
   @@unique([classId, name])
   @@index([tenantId])
@@ -244,15 +248,61 @@ model Guardian {
 }
 
 model Staff {
+  id            String    @id @default(cuid())
+  tenantId      String
+  employeeNo    String // EMP-<year>-0001, generated
+  name          String
+  role          String // teacher | accountant | admin | librarian | driver | other
+  designation   String?
+  department    String?
+  qualification String?
+  phone         String?
+  email         String?
+  joinedOn      DateTime?
+  status        String    @default("active") // active | inactive
+  userId        String? // login of this staff member, when they have one
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  periods       Period[]
+
+  @@unique([tenantId, employeeNo])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+// ---------- Timetable ----------
+
+// The school's bell schedule: slot 1..12 with clock times (HH:MM, 24h).
+model BellSlot {
   id       String  @id @default(cuid())
   tenantId String
-  name     String
-  role     String
-  phone    String?
-  email    String?
-  userId   String?
+  slot     Int
+  label    String
+  startsAt String
+  endsAt   String
+  isBreak  Boolean @default(false)
   tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, slot])
+}
+
+// One lesson. day: 1 = Monday ... 7 = Sunday. The unique indexes make double-booking a section
+// or a teacher impossible even under concurrent writes.
+model Period {
+  id        String  @id @default(cuid())
+  tenantId  String
+  sectionId String
+  day       Int
+  slot      Int
+  subjectId String
+  staffId   String?
+  room      String?
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  staff     Staff?  @relation(fields: [staffId], references: [id], onDelete: SetNull)
+
+  @@unique([sectionId, day, slot])
+  @@unique([tenantId, staffId, day, slot])
   @@index([tenantId])
 }
 

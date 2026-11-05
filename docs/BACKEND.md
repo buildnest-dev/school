@@ -54,11 +54,19 @@ Shared database, shared schema. Every school-owned table has `tenantId`. The ten
 | POST      | `/api/exams/:id/publish`                   | owner, principal (refused while any mark sheet is missing)            |
 | GET       | `/api/report-cards/classes/:sectionId`     | staff always; parents never (class sheets are staff-only)             |
 | GET       | `/api/report-cards/students/:studentId`    | staff; parents only for their own child and only once published       |
+| GET/POST  | `/api/staff`                               | owner, principal (employee no. EMP-<year>-0001 generated; phone/email unique per school) |
+| GET/PATCH | `/api/staff/:id`                           | owner, principal (inactive = removed from timetable and class-teacher roles) |
+| GET/PUT   | `/api/timetable/bell-schedule`             | read: signed in; write: owner, principal (no overlaps; slots with lessons cannot be removed) |
+| GET/PUT   | `/api/timetable/sections/:sectionId`       | read: staff, parent of a child in that class; write: owner, principal (replaces the week atomically) |
+| GET       | `/api/timetable/staff/:staffId`            | owner, principal; a teacher only their own week                       |
+| PUT       | `/api/sections/:sectionId/class-teacher`   | owner, principal (active teacher of the same school, or null)         |
 | GET/POST  | `/api/notices`                             | read: signed in; create: owner, principal                             |
 
 ## Not built yet
 
-Staff, timetable, homework, library, transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes (currently any teacher in the school can mark any class).
+Homework, library, transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes (currently any teacher in the school can mark any class).
+
+Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
 
 Report cards count only submitted mark sheets; a subject below the exam pass mark fails the exam; ranks share on ties; results stay hidden from parents until published. Student-role logins are not possible yet (Student has no user link).
 
