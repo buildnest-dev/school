@@ -74,13 +74,19 @@ Shared database, shared schema. Every school-owned table has `tenantId`. The ten
 | GET/PATCH | `/api/transport/routes/:id`                | route detail with riders; edit (a route with riders cannot be switched off or lose its vehicle) |
 | PUT       | `/api/transport/routes/:id/stops`          | replaces stops in travel order (pickup times must increase; a stop with riders cannot be removed) |
 | GET/PUT   | `/api/transport/students/:studentId`       | read: transport staff, or a parent for their own child (route, stop, times, vehicle, driver); assign/move/remove: transport staff (seat limit, route must be running) |
+| GET/POST  | `/api/certificates`                        | owner, principal: all; parent: own children. Request a bonafide / character / transfer certificate (a parent needs a purpose and cannot ask for a transfer certificate; one waiting request per student and type) |
+| GET       | `/api/certificates/:id`                    | owner, principal, or the parent of that student; includes the printable document once issued |
+| POST      | `/api/certificates/:id/issue`              | owner, principal. Copies the student's details into the certificate and numbers it (BON/2026/0001, CHR/..., TC/...). Transfer needs leavingDate, reasonForLeaving, conduct; refused while fees, library books or fines are pending; then marks the student transferred and removes them from transport |
+| POST      | `/api/certificates/:id/reject`             | owner, principal (reason required, shown to the parent) |
+| POST      | `/api/certificates/:id/cancel`             | owner, principal (issued only; serial stays on record; does not re-enrol a student) |
+| GET       | `/api/public/certificates/verify`          | public, rate-limited: ?school=<slug>&serial=<no>; answers valid true/false with a masked student name |
 | GET/POST  | `/api/notices`                             | read: signed in; create: owner, principal                             |
 
 ## Not built yet
 
-Certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
+Academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
 
-Transport fees are stored on the route for information only and are not invoiced automatically; there is no live bus tracking. Deactivating or re-roling a driver takes them off their route. Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
+Certificates are text only: there is no PDF, signature or school letterhead yet. Transport fees are stored on the route for information only and are not invoiced automatically; there is no live bus tracking. Deactivating or re-roling a driver takes them off their route. Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
 
 Report cards count only submitted mark sheets; a subject below the exam pass mark fails the exam; ranks share on ties; results stay hidden from parents until published. Student-role logins are not possible yet (Student has no user link).
 

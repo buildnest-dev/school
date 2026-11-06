@@ -57,28 +57,29 @@ model Tenant {
   timezone   String   @default("Asia/Kolkata")
   createdAt  DateTime @default(now())
 
-  boards     TenantBoard[]
-  campuses   Campus[]
-  users      Membership[]
-  years      AcademicYear[]
-  classes    ClassLevel[]
-  students   Student[]
-  guardians  Guardian[]
-  staff      Staff[]
-  bellSlots  BellSlot[]
-  homework   Homework[]
-  books      Book[]
-  vehicles   Vehicle[]
-  routes     TransportRoute[]
-  loans      Loan[]
-  periods    Period[]
-  subjects   Subject[]
-  feeHeads   FeeHead[]
-  invoices   Invoice[]
-  notices    Notice[]
-  exams      Exam[]
-  auditLogs  AuditLog[]
-  admissions Admission[]
+  boards       TenantBoard[]
+  campuses     Campus[]
+  users        Membership[]
+  years        AcademicYear[]
+  classes      ClassLevel[]
+  students     Student[]
+  guardians    Guardian[]
+  staff        Staff[]
+  bellSlots    BellSlot[]
+  homework     Homework[]
+  books        Book[]
+  vehicles     Vehicle[]
+  certificates Certificate[]
+  routes       TransportRoute[]
+  loans        Loan[]
+  periods      Period[]
+  subjects     Subject[]
+  feeHeads     FeeHead[]
+  invoices     Invoice[]
+  notices      Notice[]
+  exams        Exam[]
+  auditLogs    AuditLog[]
+  admissions   Admission[]
 }
 
 model TenantBoard {
@@ -237,6 +238,7 @@ model Student {
   homeworkRows HomeworkStatus[]
   loans        Loan[]
   transport    StudentTransport?
+  certificates Certificate[]
 
   @@unique([tenantId, admissionNo])
   @@index([tenantId, sectionId])
@@ -638,4 +640,30 @@ model StudentTransport {
   stop      RouteStop      @relation(fields: [stopId], references: [id], onDelete: Restrict)
 
   @@index([tenantId, routeId])
+}
+
+// ---------- Certificates ----------
+
+// A request becomes an issued certificate only when the principal issues it. The student's details
+// are copied into `data` at that moment, so later edits never change a certificate already issued.
+model Certificate {
+  id              String    @id @default(cuid())
+  tenantId        String
+  studentId       String
+  type            String // bonafide | character | transfer
+  status          String // requested | issued | rejected | cancelled
+  purpose         String?
+  requestedById   String
+  requestedByName String
+  serialNo        String? // BON/2026/0001, set when issued
+  issuedOn        DateTime?
+  issuedByName    String?
+  data            String? // JSON snapshot
+  decisionNote    String? // reason for rejecting or cancelling
+  createdAt       DateTime  @default(now())
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, serialNo])
+  @@index([tenantId, studentId])
 }

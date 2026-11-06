@@ -269,8 +269,10 @@ test("publish releases results to the linked parent only", async () => {
   expect(card.scale[0].name).toBe("A1");
 
   const all = await (await principal.get("/api/students?pageSize=100")).json();
+  // Only the seeded Class 8/9 students are the parent's; other specs add unrelated students elsewhere.
   const sheetOwner = all.items.find(
-    (s: { id: string }) => !kids.some((k: { id: string }) => k.id === s.id),
+    (s: { id: string; classSection: string }) =>
+      /^Class [89] /.test(s.classSection) && !kids.some((k: { id: string }) => k.id === s.id),
   );
   expect(sheetOwner).toBeUndefined(); // the seeded guardian is linked to all seeded students
   expect((await other.get(`/api/report-cards/students/${kids[0].id}`)).status()).toBe(404);
