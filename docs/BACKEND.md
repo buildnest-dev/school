@@ -105,11 +105,15 @@ Imports: `POST /api/imports/students` (CSV, checked line by line, nothing saved)
 
 Online payments: `POST /api/fees/invoices/:id/pay` (parent) creates an attempt against a **stub** order; `POST /api/webhooks/razorpay` verifies the HMAC signature (`RAZORPAY_WEBHOOK_SECRET`), processes each event id once, checks the amount, then records the payment and a ledger entry. A browser redirect never marks anything paid. Writes accept an `Idempotency-Key` header on invoice and school creation. Roles added: vice principal, admission officer, HR, reception (HR and reception have no endpoints yet).
 
+Finance additions: `POST /api/fees/invoices/generate` bills a section or class at once (`preview:true` shows totals first; a school-wide percent plus a sibling percent, siblings found by shared guardian or guardian phone; a student already billed that title is skipped). `POST /api/fees/payments/:id/refunds` asks for a refund, `POST /api/fees/refunds/:id/decision` approves or rejects it and must be a different person (owner or principal); approval posts a negative payment and, for online payments, a negative ledger entry. No money is sent back automatically. `GET /api/fees/payments/:id/receipt` gives receipt data with a number that never changes. `POST /api/fees/reminders` e-mails overdue guardians (dry run by default, not again within the gap). `GET /api/me/invoices` lists a parent's invoices.
+
+Authenticator sign-in: `POST /api/auth/mfa/setup|enable|disable`; once on, login needs `code` (6 digits, each code works once). It is optional per user and not yet forced for any role.
+
 ## Not built yet
 
 - **Platform billing:** subscription invoices, payout runs and settlement reports for schools. The ledger table exists and collects online payments only.
-- **Refunds, instalments, concessions, fee reminders, receipts.**
-- **MFA** for privileged users, Excel (.xlsx) import, Hindi/English text, approval flows for notices and fee waivers, leave requests, offline attendance sync.
+- **Instalment plans, automatic gateway refunds, PDF receipts, SMS/WhatsApp reminders.**
+- **Forcing MFA** for privileged roles and recovery codes; Excel (.xlsx) import, Hindi/English text, approval flows for notices and fee waivers, leave requests, offline attendance sync.
 - **E-mail/SMS delivery:** mail is written to the Outbox table through `sendMail()` in `src/server/accounts.ts`; connect a provider (SES, SendGrid, ...) there and set `MAIL_PROVIDER`. No SMS yet. Needs a provider account.
 - **Payment gateway** (Razorpay etc.): order creation is a stub and needs gateway keys; the signed callback is built and tested with a test secret only.
 - **File uploads** (photos, documents): needs a storage choice.

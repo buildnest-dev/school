@@ -4,7 +4,9 @@ import { cookies } from "next/headers";
 import type { Role, SessionUser } from "@/types";
 import { isWrite } from "./context";
 import { prisma } from "./db";
+import { decryptSecret } from "./secret";
 import { effectiveSubscription, isReadOnly } from "./subscription";
+import { verifyCode } from "./totp";
 
 const COOKIE = "sid";
 const TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
@@ -20,13 +22,26 @@ export interface Auth {
 /** Constant-ish time: compare against a dummy hash when the user is unknown so timing does not reveal accounts. */
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 10);
 
-export async function login(email: string, password: string, tenantSlug?: string) {
+export async function login(
+  email: string,
+  password: string,
+  tenantSlug?: string,
+  code?: string,
+): Promise<true | null | "mfa_required" | "mfa_invalid"> {
   const user = await prisma.user.findUnique({
     where: { email: email.trim().toLowerCase() },
     include: { memberships: { include: { tenant: true } } },
   });
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !ok || !user.active) return null;
+
+  // Second step for people who turned on an authenticator app. A code works only once.
+  if (user.totpEnabled && user.totpCipher) {
+    if (!code) return "mfa_required";
+    const step = verifyCode(decryptSecret(user.totpCipher), code);
+    if (step === null || step <= user.totpLastStep) return "mfa_invalid";
+    await prisma.user.update({ where: { id: user.id }, data: { totpLastStep: step } });
+  }
 
   let tenantId: string | null = null;
   if (!user.isPlatformAdmin) {

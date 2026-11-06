@@ -121,6 +121,9 @@ model User {
   passwordHash    String
   isPlatformAdmin Boolean         @default(false)
   active          Boolean         @default(true)
+  totpCipher      String? // authenticator secret, encrypted (src/server/secret.ts)
+  totpEnabled     Boolean         @default(false)
+  totpLastStep    Int             @default(0) // last accepted 30-second step, so a code works once
   createdAt       DateTime        @default(now())
   memberships     Membership[]
   sessions        Session[]
@@ -421,19 +424,22 @@ model FeeHead {
 }
 
 model Invoice {
-  id          String       @id @default(cuid())
-  tenantId    String
-  yearId      String
-  studentId   String
-  number      String
-  title       String
-  amountPaise Int
-  dueOn       DateTime
-  createdAt   DateTime     @default(now())
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  year        AcademicYear @relation(fields: [yearId], references: [id])
-  student     Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  payments    Payment[]
+  id             String       @id @default(cuid())
+  tenantId       String
+  yearId         String
+  studentId      String
+  number         String
+  title          String
+  amountPaise    Int // what is payable, after any discount
+  grossPaise     Int? // before discount, when one was applied
+  discountPaise  Int          @default(0)
+  discountReason String?
+  dueOn          DateTime
+  createdAt      DateTime     @default(now())
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  year           AcademicYear @relation(fields: [yearId], references: [id])
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  payments       Payment[]
 
   @@unique([tenantId, number])
   @@index([tenantId, studentId])
@@ -447,9 +453,11 @@ model Payment {
   mode             String // cash | upi | cheque | dd | netbanking | card
   reference        String? // UPI txn id, cheque no. ...
   gatewayPaymentId String?  @unique // set when the payment came from a verified gateway callback
+  receiptNo        String? // assigned when a receipt is first issued
   paidOn           DateTime @default(now())
   invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, receiptNo])
   @@index([tenantId, invoiceId])
 }
 
@@ -791,4 +799,31 @@ model IdempotencyKey {
   createdAt    DateTime @default(now())
 
   @@unique([scope, operation, key])
+}
+
+/// A refund of (part of) a payment. Needs a second person to approve; approval posts a negative payment.
+model Refund {
+  id            String    @id @default(cuid())
+  tenantId      String
+  paymentId     String
+  amountPaise   Int
+  reason        String
+  status        String    @default("requested") // requested | approved | rejected
+  requestedById String
+  decidedById   String?
+  decidedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([tenantId, status])
+  @@index([paymentId])
+}
+
+/// One reminder sent for an overdue invoice, so the same family is not nagged every day.
+model FeeReminder {
+  id        String   @id @default(cuid())
+  tenantId  String
+  invoiceId String
+  sentAt    DateTime @default(now())
+
+  @@index([tenantId, invoiceId])
 }

@@ -38,3 +38,36 @@ export async function invoiceOr404(tenantId: string, id: string) {
 
 export const paidOf = (inv: { payments: { amountPaise: number }[] }) =>
   inv.payments.reduce((s, p) => s + p.amountPaise, 0);
+
+/** Amount after taking off percentages one after another, rounded to the nearest paise. */
+export function netAfter(grossPaise: number, percents: number[]) {
+  let v = grossPaise;
+  for (const p of percents) v = Math.round(v * (1 - p / 100));
+  return v;
+}
+
+/** RCPT-<year>-<00001...>; the caller retries if the unique index reports a clash. */
+export async function nextReceiptNo(tx: Tx, tenantId: string) {
+  const prefix = `RCPT-${new Date().getUTCFullYear()}-`;
+  const last = await tx.payment.findFirst({
+    where: { tenantId, receiptNo: { startsWith: prefix } },
+    orderBy: { receiptNo: "desc" },
+    select: { receiptNo: true },
+  });
+  const n = last?.receiptNo ? Number(last.receiptNo.slice(prefix.length)) + 1 : 1;
+  return `${prefix}${String(n).padStart(5, "0")}`;
+}
+
+export const invoiceStatus = (
+  amountPaise: number,
+  paidPaise: number,
+  dueOn: Date,
+  now = new Date(),
+) =>
+  paidPaise >= amountPaise
+    ? "paid"
+    : dueOn < now
+      ? "overdue"
+      : paidPaise > 0
+        ? "partial"
+        : "pending";
