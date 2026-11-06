@@ -37,3 +37,24 @@ describe("netAfter", () => {
     expect(netAfter(100_000, [100])).toBe(0);
   });
 });
+
+import { brevoRequest } from "../src/server/accounts";
+
+describe("brevoRequest", () => {
+  const m = { to: "a@b.example", subject: "Hi", body: "Hello" };
+  it("is off without a key or a sender", () => {
+    expect(brevoRequest(m, {})).toBeNull();
+    expect(brevoRequest(m, { BREVO_API_KEY: "k" })).toBeNull();
+  });
+  it("builds the Brevo transactional request", () => {
+    const r = brevoRequest(m, { BREVO_API_KEY: "k", MAIL_FROM: "no-reply@zaqsa.com" })!;
+    expect(r.url).toBe("https://api.brevo.com/v3/smtp/email");
+    expect(r.init.headers["api-key"]).toBe("k");
+    expect(JSON.parse(r.init.body)).toEqual({
+      sender: { name: "ZAQSA", email: "no-reply@zaqsa.com" },
+      to: [{ email: "a@b.example" }],
+      subject: "Hi",
+      textContent: "Hello",
+    });
+  });
+});

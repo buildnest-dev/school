@@ -125,7 +125,7 @@ Not built from the ZAQSA overview: one customer account that belongs to several 
 - **Platform billing:** subscription invoices, payout runs and settlement reports for schools. The ledger table exists and collects online payments only.
 - **Instalment plans, automatic gateway refunds, PDF receipts, SMS/WhatsApp reminders.**
 - **Forcing MFA** for privileged roles and recovery codes; Excel (.xlsx) import, Hindi/English text, approval flows for notices and fee waivers, leave requests, offline attendance sync.
-- **E-mail/SMS delivery:** mail is written to the Outbox table through `sendMail()` in `src/server/accounts.ts`; connect a provider (SES, SendGrid, ...) there and set `MAIL_PROVIDER`. No SMS yet. Needs a provider account.
+- **E-mail:** every message is stored in the Outbox table (`status` stored, sent or failed). Set `BREVO_API_KEY` and `MAIL_FROM` (a sender verified in Brevo; free plan is 300 a day) and `sendMail()` in `src/server/accounts.ts` also sends it through Brevo; a failed send is recorded and never breaks the request. Not tested against the live Brevo service (needs a key). No SMS yet.
 - **Payment gateway** (Razorpay etc.): order creation is a stub and needs gateway keys; the signed callback is built and tested with a test secret only.
 - **File uploads** (photos, documents): needs a storage choice.
 - **Production setup:** switch Prisma to PostgreSQL, a shared store (Redis) for the login/reset throttle, deployment.

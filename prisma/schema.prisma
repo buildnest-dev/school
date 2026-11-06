@@ -712,12 +712,16 @@ model PasswordToken {
 // Every e-mail the system sends. With no mail provider configured this is the only delivery:
 // development reads it back; production needs a real provider (see docs/BACKEND.md).
 model Outbox {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   tenantId  String?
   toEmail   String
   subject   String
   body      String
-  createdAt DateTime @default(now())
+  /// stored (no provider set) | sent | failed
+  status    String    @default("stored")
+  sentAt    DateTime?
+  error     String?
+  createdAt DateTime  @default(now())
 
   @@index([toEmail])
 }

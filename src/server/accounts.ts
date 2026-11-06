@@ -14,9 +14,31 @@ export const strongPassword = z
   .regex(/[A-Za-z]/, "Include a letter")
   .regex(/\d/, "Include a digit");
 
+/** The Brevo transactional e-mail request for a message, or null when no key/sender is set. */
+export function brevoRequest(
+  m: { to: string; subject: string; body: string },
+  env: { BREVO_API_KEY?: string; MAIL_FROM?: string; MAIL_FROM_NAME?: string },
+) {
+  if (!env.BREVO_API_KEY || !env.MAIL_FROM) return null;
+  return {
+    url: "https://api.brevo.com/v3/smtp/email",
+    init: {
+      method: "POST",
+      headers: { "api-key": env.BREVO_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: env.MAIL_FROM_NAME ?? "ZAQSA", email: env.MAIL_FROM },
+        to: [{ email: m.to }],
+        subject: m.subject,
+        textContent: m.body,
+      }),
+    },
+  };
+}
+
 /**
- * Sends an e-mail. No provider is wired in yet, so the message is stored in the Outbox table.
- * When a provider is chosen (SES, SendGrid, ...) only this function changes.
+ * Sends an e-mail. Every message is first stored in the Outbox (the record of what was sent). When
+ * BREVO_API_KEY and MAIL_FROM are set it is also sent through Brevo and marked sent or failed; a
+ * delivery failure never breaks the request that triggered it. Without them it stays "stored".
  */
 export async function sendMail(m: {
   tenantId?: string;
@@ -24,9 +46,29 @@ export async function sendMail(m: {
   subject: string;
   body: string;
 }) {
-  await prisma.outbox.create({
+  const row = await prisma.outbox.create({
     data: { tenantId: m.tenantId, toEmail: m.to, subject: m.subject, body: m.body },
   });
+  const { BREVO_API_KEY, MAIL_FROM, MAIL_FROM_NAME } = process.env;
+  const req = brevoRequest(m, { BREVO_API_KEY, MAIL_FROM, MAIL_FROM_NAME });
+  if (!req) return;
+  try {
+    const res = await fetch(req.url, { ...req.init, signal: AbortSignal.timeout(10_000) });
+    await prisma.outbox.update({
+      where: { id: row.id },
+      data: res.ok
+        ? { status: "sent", sentAt: new Date() }
+        : { status: "failed", error: `Brevo answered ${res.status}` },
+    });
+  } catch (e) {
+    await prisma.outbox.update({
+      where: { id: row.id },
+      data: {
+        status: "failed",
+        error: e instanceof Error ? e.message.slice(0, 200) : "send failed",
+      },
+    });
+  }
 }
 
 /** Creates a one-time token and returns the plain value (only ever sent by e-mail). */
