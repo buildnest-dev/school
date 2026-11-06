@@ -25,33 +25,37 @@ export const POST = handle(async (req: Request) => {
   const campus = await prisma.campus.findFirst({ where: { tenantId }, orderBy: { name: "asc" } });
   let classes = 0;
   let sections = 0;
+  // Few round trips on purpose: a remote database makes one query per class and section slow.
   await prisma.$transaction(async (tx) => {
-    for (const c of wanted) {
-      let level = await tx.classLevel.findUnique({
-        where: { tenantId_name: { tenantId, name: c.name } },
+    const names = wanted.map((c) => c.name);
+    const existing = new Set(
+      (await tx.classLevel.findMany({ where: { tenantId, name: { in: names } } })).map(
+        (l) => l.name,
+      ),
+    );
+    const fresh = wanted.filter((c) => !existing.has(c.name));
+    if (fresh.length)
+      await tx.classLevel.createMany({
+        data: fresh.map((c) => ({
+          tenantId,
+          campusId: campus?.id,
+          name: c.name,
+          stage: c.stage,
+          position: c.position,
+        })),
       });
-      if (!level) {
-        level = await tx.classLevel.create({
-          data: {
-            tenantId,
-            campusId: campus?.id,
-            name: c.name,
-            stage: c.stage,
-            position: c.position,
-          },
-        });
-        classes++;
-      }
-      for (const name of b.sections) {
-        const have = await tx.section.findUnique({
-          where: { classId_name: { classId: level.id, name } },
-        });
-        if (!have) {
-          await tx.section.create({ data: { tenantId, classId: level.id, name } });
-          sections++;
-        }
-      }
-    }
+    classes = fresh.length;
+    const levels = await tx.classLevel.findMany({
+      where: { tenantId, name: { in: names } },
+      include: { sections: true },
+    });
+    const rows = levels.flatMap((l) =>
+      b.sections
+        .filter((name) => !l.sections.some((x) => x.name === name))
+        .map((name) => ({ tenantId, classId: l.id, name })),
+    );
+    if (rows.length) await tx.section.createMany({ data: rows });
+    sections = rows.length;
     await tx.auditLog.create({
       data: { tenantId, userId: user.id, action: "classes.standard", entity: "classLevel" },
     });

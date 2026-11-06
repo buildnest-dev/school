@@ -124,14 +124,17 @@ Not built from the ZAQSA overview: one customer account that belongs to several 
 
 Development and the tests stay on SQLite (`prisma/schema.prisma`). Production uses the same models on PostgreSQL: `scripts/make-pg-schema.mjs` writes `prisma/schema.postgres.prisma` (git-ignored) with only the database type switched. `DATABASE_URL` picks the driver at run time (`src/server/adapter.ts`): a `postgresql://` address uses PostgreSQL, anything else the SQLite file. Text search is case-insensitive on both (`like()` in `src/server/db.ts`). The login and form attempt limits now live in the `RateLimit` table, because an in-memory counter would restart with every serverless call.
 
+Neon project "School" (Singapore) is linked through `neon.ts`; the `production` branch is the default and is empty. `neon deploy` and `neon env pull` write `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct, used to create tables) and `NEON_BRANCH` into `.env.local` (git-ignored).
+
 Steps:
 
-1. On neon.com create a project. Copy the **pooled** connection string and the **direct** (unpooled) one.
-2. On this machine, create the tables once: set `DATABASE_URL` (pooled) and `DIRECT_URL` (direct) in `.env.local`, then run `npm run db:push:pg` and `npm run db:seed:pg` (the seed adds reference data, the demo school and the demo logins with the shared dev password, so skip the seed for a real launch and create the first platform admin yourself).
-3. In Vercel, import the repository. `vercel.json` already sets the build to `npm run build:vercel` (generates the PostgreSQL client, then builds). Add the environment variables: `DATABASE_URL` (pooled), `BANK_ENC_KEY` (a long random secret, 32+ characters; keep it, bank details cannot be read without it), `RAZORPAY_WEBHOOK_SECRET` when payments are connected, `BREVO_API_KEY`, `MAIL_FROM`, `MAIL_FROM_NAME`, `ZAQSA_BASE_DOMAIN`.
-4. Run the test suite only against a throw-away Neon database or branch: the tests create data and `npm run db:reset` is for SQLite only.
+1. Work on a branch, never on `production`: `neon checkout dev --create` (expires after 7 days, set by `neon.ts`) points `.env.local` at it.
+2. Create the tables: `npm run db:push:pg`; demo data (demo logins with the shared dev password) only on a branch that is not production: `npm run db:seed:pg` (it refuses when `NEON_BRANCH` is `production`). Before the first run, and after switching back from SQLite, generate the PostgreSQL client: `npx prisma generate --schema prisma/schema.postgres.prisma`. Switch back to SQLite with `npx prisma generate`.
+3. `npm run db:reset` always uses the local SQLite file, even when `.env.local` holds a Neon address. To run the app or the SQLite tests locally while `.env.local` has Neon, start it with `DATABASE_URL=file:./prisma/dev.db` in front.
+4. Run the test suite only on a throw-away branch (`neon branches reset dev --parent` empties it; Prisma blocks `db push --force-reset` from an AI agent).
+5. In Vercel, import the repository. `vercel.json` sets the build to `npm run build:vercel` (generates the PostgreSQL client, then builds). Add these environment variables: `DATABASE_URL` (pooled, from the production branch: `neon checkout production`, then read it from `.env.local`; paste it into Vercel yourself), `BANK_ENC_KEY` (long random secret; keep it, bank details cannot be read without it), `RAZORPAY_WEBHOOK_SECRET` when payments are connected, `BREVO_API_KEY`, `MAIL_FROM`, `MAIL_FROM_NAME`, `ZAQSA_BASE_DOMAIN`. Create the production tables once with `npm run db:push:pg` while `.env.local` points at production, and do not seed it.
 
-Tables are created with `prisma db push`; there is no migration history yet, so schema changes on a live database need care. Not yet tested against a live PostgreSQL: only the SQLite suite and schema validation have been run.
+Tables are created with `prisma db push`; there is no migration history yet, so schema changes on a live database need care. Verified: the full API suite (111 tests) passes against a Neon branch, and `next build` passes. Not verified: an actual Vercel deployment. The pg library prints a notice about `sslmode=require` becoming stricter in a future version.
 
 ## Not built yet
 

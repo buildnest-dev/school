@@ -7,7 +7,12 @@ const globalForDb = globalThis as unknown as { prisma?: PrismaClient };
 
 /** Shared Prisma client (one per process; reused across hot reloads in development). */
 export const prisma: PrismaClient =
-  globalForDb.prisma ?? new PrismaClient({ adapter: makeAdapter(url) });
+  globalForDb.prisma ??
+  new PrismaClient({
+    adapter: makeAdapter(url),
+    // Prisma's default of 5 seconds is too short once the database is across a network.
+    transactionOptions: { maxWait: 15_000, timeout: 30_000 },
+  });
 
 if (process.env.NODE_ENV !== "production") globalForDb.prisma = prisma;
 

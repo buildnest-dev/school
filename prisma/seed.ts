@@ -2,14 +2,20 @@
  * Development seed: reference data (boards, states, districts) plus ONE fictional demo school.
  * The demo logins below are for local development only. Never run this against production.
  */
+import { config } from "dotenv";
 import { makeAdapter } from "../src/server/adapter";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { ALL_BOARDS } from "../src/data/boards";
 import { STATES_AND_DISTRICTS, UT_NAMES } from "../src/data/india-geo";
 
+config({ path: ".env.local" });
+config();
+if (process.env.NEON_BRANCH === "production")
+  throw new Error("Refusing to seed the production branch: this seed holds demo logins.");
+
 const prisma = new PrismaClient({
-  adapter: makeAdapter(process.env.DATABASE_URL ?? "file:./prisma/dev.db"),
+  adapter: makeAdapter(process.env.DATABASE_URL || "file:./prisma/dev.db"),
 });
 
 const DEV_PASSWORD = "ChangeMe#2026";

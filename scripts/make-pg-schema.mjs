@@ -4,10 +4,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 const src = readFileSync("prisma/schema.prisma", "utf8");
-const out = src.replace(
-  /datasource db \{[^}]*\}/,
-  'datasource db {\n  provider = "postgresql"\n}',
-);
+const out = src.replace(/datasource db \{[^}]*\}/, 'datasource db {\n  provider = "postgresql"\n}');
 if (out === src) throw new Error("Could not find the datasource block in prisma/schema.prisma");
 writeFileSync(
   "prisma/schema.postgres.prisma",
