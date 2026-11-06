@@ -170,13 +170,21 @@ test("marks use the exam's max marks; fill every sheet of every class", async ()
   const over = classes.find((c) => c.name === "Class 8")!;
   const sec = over.sections[0]!;
   const sheet = await (
-    await teacher.get(
+    await principal.get(
       `/api/marks/classes/${sec.id}?examId=${examId}&subjectId=${over.subjects[0]!.id}`,
     )
   ).json();
   expect(sheet.maxMarks).toBe(50);
+  // The demo teacher has no class on the timetable, so cannot touch these marks.
+  expect(
+    (
+      await teacher.get(
+        `/api/marks/classes/${sec.id}?examId=${examId}&subjectId=${over.subjects[0]!.id}`,
+      )
+    ).status(),
+  ).toBe(403);
   const ids: string[] = sheet.roster.map((r: { id: string }) => r.id);
-  const tooHigh = await teacher.put(
+  const tooHigh = await principal.put(
     `/api/marks/classes/${sec.id}?examId=${examId}&subjectId=${over.subjects[0]!.id}`,
     {
       data: { marks: { [ids[0]!]: 51 }, submit: false },
@@ -190,14 +198,14 @@ test("marks use the exam's max marks; fill every sheet of every class", async ()
     for (const s of c.sections) {
       for (const sub of c.subjects) {
         const q = `examId=${examId}&subjectId=${sub.id}`;
-        const sh = await (await teacher.get(`/api/marks/classes/${s.id}?${q}`)).json();
+        const sh = await (await principal.get(`/api/marks/classes/${s.id}?${q}`)).json();
         const marks = Object.fromEntries(
           sh.roster.map((r: { id: string }, i: number) => [
             r.id,
             c.name === "Class 8" && s.name === "A" && i === 0 && sub.name === "Science" ? 10 : 40,
           ]),
         );
-        const put = await teacher.put(`/api/marks/classes/${s.id}?${q}`, {
+        const put = await principal.put(`/api/marks/classes/${s.id}?${q}`, {
           data: { marks, submit: true },
         });
         expect(put.status(), `${c.name}${s.name} ${sub.name}`).toBe(200);

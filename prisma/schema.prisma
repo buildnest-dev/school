@@ -107,15 +107,16 @@ model Campus {
 // ---------- Identity ----------
 
 model User {
-  id              String       @id @default(cuid())
-  email           String       @unique
+  id              String          @id @default(cuid())
+  email           String          @unique
   name            String
   passwordHash    String
-  isPlatformAdmin Boolean      @default(false)
-  active          Boolean      @default(true)
-  createdAt       DateTime     @default(now())
+  isPlatformAdmin Boolean         @default(false)
+  active          Boolean         @default(true)
+  createdAt       DateTime        @default(now())
   memberships     Membership[]
   sessions        Session[]
+  tokens          PasswordToken[]
 }
 
 // A user can belong to several schools with a role in each.
@@ -229,6 +230,7 @@ model Student {
   districtId   String?
   address      String?
   status       String            @default("active") // active | alumni | transferred
+  userId       String? // login of the student, when they have one
   tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   section      Section?          @relation(fields: [sectionId], references: [id])
   guardian     Guardian?         @relation(fields: [guardianId], references: [id])
@@ -666,4 +668,33 @@ model Certificate {
 
   @@unique([tenantId, serialNo])
   @@index([tenantId, studentId])
+}
+
+// ---------- Accounts ----------
+
+// One-time links for setting or resetting a password. Only the SHA-256 of the token is stored.
+model PasswordToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  purpose   String // reset | invite
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Every e-mail the system sends. With no mail provider configured this is the only delivery:
+// development reads it back; production needs a real provider (see docs/BACKEND.md).
+model Outbox {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  toEmail   String
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([toEmail])
 }

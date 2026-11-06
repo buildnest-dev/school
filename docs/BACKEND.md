@@ -80,14 +80,29 @@ Shared database, shared schema. Every school-owned table has `tenantId`. The ten
 | POST      | `/api/certificates/:id/reject`             | owner, principal (reason required, shown to the parent) |
 | POST      | `/api/certificates/:id/cancel`             | owner, principal (issued only; serial stays on record; does not re-enrol a student) |
 | GET       | `/api/public/certificates/verify`          | public, rate-limited: ?school=<slug>&serial=<no>; answers valid true/false with a masked student name |
+| GET       | `/api/academic-years`                      | owner, principal, teacher, accountant                                  |
+| POST      | `/api/academic-years/rollover`             | owner, principal. Starts a new year and promotes every active student to the next class (same section letter, created if missing); last class becomes alumni; `holdBack` students repeat; `preview: true` changes nothing; one transaction |
+| POST      | `/api/auth/forgot-password`                | public, throttled. Same answer whether or not the e-mail exists; 1-hour one-time link by e-mail |
+| POST      | `/api/auth/reset-password`                 | public. Token + new password (10+ chars, letter and digit, not containing the e-mail name); link works once; signs the user out everywhere |
+| POST      | `/api/auth/change-password`                | signed in; needs current password; other devices are signed out |
+| POST      | `/api/staff/:id/login`                     | owner, principal. Creates a teacher / accountant / librarian / transport login and e-mails an invite so the person sets their own password (principal/owner roles are never granted here) |
+| POST      | `/api/students/:id/guardian-login`         | owner, principal. Parent login for the student's guardian |
+| POST      | `/api/students/:id/login`                  | owner, principal. Student login (current students) |
+| GET       | `/api/dev/outbox?to=`                      | development only (404 in production or when MAIL_PROVIDER is set): reads the e-mails the system "sent" |
 | GET/POST  | `/api/notices`                             | read: signed in; create: owner, principal                             |
 
 ## Not built yet
 
-Academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
+- **Platform admin** (creating, suspending and billing schools): waiting for product decisions.
+- **E-mail/SMS delivery:** mail is written to the Outbox table through `sendMail()` in `src/server/accounts.ts`; connect a provider (SES, SendGrid, ...) there and set `MAIL_PROVIDER`. No SMS yet. Needs a provider account.
+- **Payment gateway** (Razorpay etc.): payments are only recorded. Needs gateway keys.
+- **File uploads** (photos, documents): needs a storage choice.
+- **Production setup:** switch Prisma to PostgreSQL, a shared store (Redis) for the login/reset throttle, deployment.
 
-Certificates are text only: there is no PDF, signature or school letterhead yet. Transport fees are stored on the route for information only and are not invoiced automatically; there is no live bus tracking. Deactivating or re-roling a driver takes them off their route. Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
+Teachers work only with classes they teach (timetable or class teacher) for attendance, marks and homework; the owner and principal are never limited. Rollover moves students only; it does not copy fees, exams, timetables or class teachers. Passwords are never set by the school: staff, parents and students receive an invite link. Student-role logins exist, but there are no student-facing endpoints yet.
 
-Report cards count only submitted mark sheets; a subject below the exam pass mark fails the exam; ranks share on ties; results stay hidden from parents until published. Student-role logins are not possible yet (Student has no user link).
+Certificates are text only: there is no PDF, signature or school letterhead yet. Transport fees are stored on the route for information only and are not invoiced automatically; there is no live bus tracking. Deactivating or re-roling a driver takes them off their route. Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing.
+
+Report cards count only submitted mark sheets; a subject below the exam pass mark fails the exam; ranks share on ties; results stay hidden from parents until published.
 
 Boards and grade scales are editable defaults in the database, not an authoritative copy of each board's rules.

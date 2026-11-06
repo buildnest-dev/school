@@ -22,6 +22,7 @@ let accountant: APIRequestContext;
 let parent: APIRequestContext;
 let other: APIRequestContext;
 let sectionId = "";
+let priyaId = "";
 let studentIds: string[] = [];
 
 test.beforeAll(async () => {
@@ -35,6 +36,38 @@ test.beforeAll(async () => {
   const classes = await (await teacher.get("/api/classes")).json();
   const c8 = classes.find((c: { name: string }) => c.name === "Class 8");
   sectionId = c8.sections.find((s: { name: string }) => s.name === "A").id;
+  // Teachers only work with their own classes: make Priya the class teacher of Class 8 A.
+  const staff = (await (await principal.get("/api/staff")).json()).items;
+  priyaId = staff.find((x: { name: string }) => x.name === "Priya Nair").id;
+  expect(
+    (
+      await principal.put(`/api/sections/${sectionId}/class-teacher`, {
+        data: { staffId: priyaId },
+      })
+    ).status(),
+  ).toBe(200);
+});
+
+test.afterAll(async () => {
+  await principal.put(`/api/sections/${sectionId}/class-teacher`, { data: { staffId: null } });
+});
+
+test("a teacher can only work with their own classes", async () => {
+  const classes = await (await teacher.get("/api/classes")).json();
+  const c9 = classes.find((c: { name: string }) => c.name === "Class 9");
+  const other9 = c9.sections[0].id;
+  expect((await teacher.get(`/api/attendance/classes/${other9}/2026-10-27`)).status()).toBe(403);
+  expect(
+    (
+      await teacher.put(`/api/attendance/classes/${other9}/2026-10-27`, {
+        data: { marks: {}, submit: false },
+      })
+    ).status(),
+  ).toBe(403);
+  expect((await teacher.get(`/api/marks/classes/${other9}`)).status()).toBe(403);
+  expect((await teacher.get(`/api/attendance/classes/${sectionId}/2026-10-27`)).status()).toBe(200);
+  // The principal is never limited.
+  expect((await principal.get(`/api/attendance/classes/${other9}/2026-10-27`)).status()).toBe(200);
 });
 
 test("signed-out requests are rejected", async () => {
@@ -146,7 +179,10 @@ test("notices: drafts are hidden from parents; only principal can create", async
 test("tenant isolation: another school sees none of this school's data", async () => {
   // Its own data is visible...
   const own = await (await other.get("/api/students")).json();
-  expect(own.items.map((s: { name: string }) => s.name)).toEqual(["Kabir Joshi"]);
+  const mine = await (await principal.get("/api/students?pageSize=100")).json();
+  const demoIds = new Set(mine.items.map((s: { id: string }) => s.id));
+  expect(own.items.map((s: { name: string }) => s.name)).toContain("Kabir Joshi");
+  expect(own.items.some((s: { id: string }) => demoIds.has(s.id))).toBe(false);
   // ...but the demo school's section, students and invoices are invisible or not found.
   expect((await other.get(`/api/attendance/classes/${sectionId}/2026-10-26`)).status()).toBe(404);
   expect((await other.get(`/api/marks/classes/${sectionId}`)).status()).toBe(404);

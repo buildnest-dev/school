@@ -457,6 +457,28 @@ async function otherSchool() {
   await prisma.student.create({
     data: { tenantId: tenant.id, admissionNo: "OA-0001", name: "Kabir Joshi", sectionId: s.id },
   });
+  // A second class, a final class with one student, and a current academic year (used by rollover).
+  await prisma.classLevel.create({
+    data: { tenantId: tenant.id, name: "Class 9", stage: "secondary", position: 11 },
+  });
+  const c12 = await prisma.classLevel.create({
+    data: { tenantId: tenant.id, name: "Class 12", stage: "senior-secondary", position: 14 },
+  });
+  const s12 = await prisma.section.create({
+    data: { tenantId: tenant.id, classId: c12.id, name: "A" },
+  });
+  await prisma.student.create({
+    data: { tenantId: tenant.id, admissionNo: "OA-0002", name: "Riya Menon", sectionId: s12.id },
+  });
+  await prisma.academicYear.create({
+    data: {
+      tenantId: tenant.id,
+      label: "2026-27",
+      startsOn: new Date("2026-04-01"),
+      endsOn: new Date("2027-03-31"),
+      current: true,
+    },
+  });
 }
 
 async function main() {

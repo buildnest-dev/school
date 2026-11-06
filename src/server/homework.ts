@@ -1,7 +1,4 @@
 import { z } from "zod";
-import type { SessionUser } from "@/types";
-import { HttpError } from "./auth";
-import { prisma } from "./db";
 
 /** Today's date in India (IST, UTC+5:30) as YYYY-MM-DD; school deadlines are IST days. */
 export function todayIST(now = Date.now()) {
@@ -11,33 +8,7 @@ export function todayIST(now = Date.now()) {
 export const toDay = (s: string) => new Date(`${s}T00:00:00.000Z`);
 export const dayStr = (d: Date) => d.toISOString().slice(0, 10);
 
-/**
- * Who may set homework for a class and subject. The owner and principal: anyone. A teacher: only
- * if the timetable has them teaching that subject in that class, or they are its class teacher.
- */
-export async function assertCanAssign(
-  tenantId: string,
-  user: SessionUser,
-  sectionId: string,
-  subjectId: string,
-) {
-  if (user.role === "school_owner" || user.role === "principal") return;
-  const me = await prisma.staff.findFirst({
-    where: { tenantId, userId: user.id, role: "teacher", status: "active" },
-  });
-  if (me) {
-    const [teaches, classTeacher] = await Promise.all([
-      prisma.period.findFirst({ where: { tenantId, staffId: me.id, sectionId, subjectId } }),
-      prisma.section.findFirst({ where: { id: sectionId, tenantId, classTeacherId: me.id } }),
-    ]);
-    if (teaches || classTeacher) return;
-  }
-  throw new HttpError(
-    403,
-    "not_your_class",
-    "You can set homework only for classes and subjects you teach.",
-  );
-}
+export { assertCanAssign } from "./teaching";
 
 export const homeworkInclude = {
   subject: { select: { id: true, name: true } },

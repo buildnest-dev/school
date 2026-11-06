@@ -4,6 +4,7 @@ import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { roster, sectionLabel, sectionOr404 } from "@/server/lib";
+import { assertCanAssign } from "@/server/teaching";
 
 type Ctx = { params: Promise<{ classId: string }> };
 const WRITE = ["principal", "teacher"] as const;
@@ -28,9 +29,10 @@ async function target(tenantId: string, classId: string, url: string) {
 }
 
 export const GET = handle(async (req: Request, ctx: Ctx) => {
-  const { tenantId } = await requireTenant([...WRITE, "school_owner"]);
+  const { tenantId, user } = await requireTenant([...WRITE, "school_owner"]);
   const { classId } = await ctx.params;
   const { section, exam, subject } = await target(tenantId, classId, req.url);
+  await assertCanAssign(tenantId, user, classId, subject.id);
   const [students, rows, sheet] = await Promise.all([
     roster(tenantId, classId),
     prisma.mark.findMany({ where: { tenantId, examId: exam.id, subjectId: subject.id } }),
@@ -63,6 +65,7 @@ export const PUT = handle(async (req: Request, ctx: Ctx) => {
   const { tenantId, user } = await requireTenant([...WRITE]);
   const { classId } = await ctx.params;
   const { exam, subject } = await target(tenantId, classId, req.url);
+  await assertCanAssign(tenantId, user, classId, subject.id);
   const body = Body.parse(await req.json());
 
   const valid = new Set((await roster(tenantId, classId)).map((s) => s.id));
