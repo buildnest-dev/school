@@ -67,6 +67,8 @@ model Tenant {
   staff      Staff[]
   bellSlots  BellSlot[]
   homework   Homework[]
+  books      Book[]
+  loans      Loan[]
   periods    Period[]
   subjects   Subject[]
   feeHeads   FeeHead[]
@@ -231,6 +233,7 @@ model Student {
   marks        Mark[]
   invoices     Invoice[]
   homeworkRows HomeworkStatus[]
+  loans        Loan[]
 
   @@unique([tenantId, admissionNo])
   @@index([tenantId, sectionId])
@@ -267,6 +270,7 @@ model Staff {
   userId        String? // login of this staff member, when they have one
   tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   periods       Period[]
+  loans         Loan[]
 
   @@unique([tenantId, employeeNo])
   @@index([tenantId])
@@ -517,4 +521,50 @@ model HomeworkStatus {
 
   @@unique([homeworkId, studentId])
   @@index([tenantId])
+}
+
+// ---------- Library ----------
+
+model Book {
+  id              String   @id @default(cuid())
+  tenantId        String
+  accessionNo     String // LIB-0001, generated
+  title           String
+  author          String
+  isbn            String?
+  category        String
+  shelf           String?
+  totalCopies     Int
+  availableCopies Int // decremented atomically on issue, so the last copy can never be issued twice
+  status          String   @default("active") // active | retired
+  createdAt       DateTime @default(now())
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  loans           Loan[]
+
+  @@unique([tenantId, accessionNo])
+  @@unique([tenantId, isbn])
+  @@index([tenantId])
+}
+
+// One borrowing. Exactly one of studentId / staffId is set. Fines are stored in paise.
+model Loan {
+  id         String    @id @default(cuid())
+  tenantId   String
+  bookId     String
+  studentId  String?
+  staffId    String?
+  issuedOn   DateTime
+  dueOn      DateTime
+  returnedOn DateTime?
+  finePaise  Int       @default(0)
+  fineStatus String    @default("none") // none | due | paid | waived
+  issuedById String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  book       Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  student    Student?  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  staff      Staff?    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, studentId])
+  @@index([tenantId, staffId])
+  @@index([bookId])
 }

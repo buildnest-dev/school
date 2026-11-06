@@ -90,6 +90,7 @@ async function demoSchool() {
     ["principal@demo.test", "Anita Sharma", "principal"],
     ["teacher@demo.test", "Priya Nair", "teacher"],
     ["accountant@demo.test", "Vikram Singh", "accountant"],
+    ["librarian@demo.test", "Meena Kulkarni", "librarian"],
     ["parent@demo.test", "Suresh Patel", "parent"],
   ];
   for (const [email, name, role] of people) {
@@ -240,6 +241,60 @@ async function demoSchool() {
       where: { tenantId_slot: { tenantId: tenant.id, slot } },
       update: {},
       create: { tenantId: tenant.id, slot, label, startsAt, endsAt, isBreak },
+    });
+  }
+  const books: [string, string, string, string, number][] = [
+    ["LIB-0001", "Wings of Fire", "A. P. J. Abdul Kalam", "Biography", 3],
+    ["LIB-0002", "Malgudi Days", "R. K. Narayan", "Fiction", 2],
+    ["LIB-0003", "The Discovery of India", "Jawaharlal Nehru", "History", 1],
+    ["LIB-0004", "Panchatantra Tales", "Vishnu Sharma", "Children", 4],
+    ["LIB-0005", "Concise Mathematics Class 8", "Selina Publishers", "Textbook", 5],
+  ];
+  for (const [accessionNo, title, author, category, copies] of books) {
+    await prisma.book.upsert({
+      where: { tenantId_accessionNo: { tenantId: tenant.id, accessionNo } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        accessionNo,
+        title,
+        author,
+        category,
+        totalCopies: copies,
+        availableCopies: copies,
+      },
+    });
+  }
+  // Two overdue loans (issued weeks ago) so late-return fines can be exercised.
+  if ((await prisma.loan.count({ where: { tenantId: tenant.id } })) === 0) {
+    const istDay = (offset: number) =>
+      new Date(
+        Date.parse(new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10)) +
+          offset * 86400_000,
+      );
+    const borrowers = await prisma.student.findMany({
+      where: { tenantId: tenant.id },
+      orderBy: { admissionNo: "asc" },
+      take: 2,
+    });
+    const lent = await prisma.book.findFirstOrThrow({
+      where: { tenantId: tenant.id, accessionNo: "LIB-0004" },
+    });
+    for (const [i, st] of borrowers.entries()) {
+      await prisma.loan.create({
+        data: {
+          tenantId: tenant.id,
+          bookId: lent.id,
+          studentId: st.id,
+          issuedOn: istDay(-20 - i),
+          dueOn: istDay(-6 - i),
+          issuedById: acctUser.id,
+        },
+      });
+    }
+    await prisma.book.update({
+      where: { id: lent.id },
+      data: { availableCopies: { decrement: borrowers.length } },
     });
   }
   await prisma.exam.create({

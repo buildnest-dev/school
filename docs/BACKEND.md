@@ -63,11 +63,16 @@ Shared database, shared schema. Every school-owned table has `tenantId`. The ten
 | GET/POST  | `/api/homework`                            | staff (drafts only to author/principal); parents see published homework of their children with each child's status; create: owner, principal, or a teacher who teaches that subject in that class (per timetable) or is its class teacher |
 | GET/PATCH | `/api/homework/:id`                        | detail with roster and totals; edit/publish/withdraw: author or principal (due date never into the past; withdrawn is final) |
 | PUT       | `/api/homework/:id/completion`             | done / missing / excused / pending per student (published homework only, same teacher rule) |
+| GET/POST  | `/api/library/books`                       | read: anyone signed in (?q, ?category, ?available=1; retired hidden); add: owner, principal, librarian (ISBN-10/13 check digit, unique per school) |
+| GET/PATCH | `/api/library/books/:id`                   | edit: library staff (copies cannot drop below copies out; no retiring while lent) |
+| GET/POST  | `/api/library/loans`                       | library staff: all loans (?status=open/overdue/returned); parent: own children only; issue: 14 days default, max 3 books (students) / 5 (staff), blocked by overdue books or unpaid fines; last copy claimed atomically |
+| POST      | `/api/library/loans/:id/return`            | library staff; late return records a fine of Rs 1/day; waiving it is owner/principal only |
+| PATCH     | `/api/library/loans/:id/fine`              | library staff mark paid (records cash collected, no payment gateway); waive: owner/principal |
 | GET/POST  | `/api/notices`                             | read: signed in; create: owner, principal                             |
 
 ## Not built yet
 
-Library, transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
+Transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
 
 Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
 
