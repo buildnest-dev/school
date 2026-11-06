@@ -4,7 +4,7 @@ import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { sectionOr404 } from "@/server/lib";
-import { nextAdmissionNo } from "@/server/students";
+import { assertRoomForStudents, nextAdmissionNo } from "@/server/students";
 
 const Body = z.object({ sectionId: z.string().min(1) });
 
@@ -24,6 +24,7 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
   const { sectionId } = Body.parse(await req.json());
   await sectionOr404(tenantId, sectionId);
 
+  await assertRoomForStudents(tenantId);
   const student = await prisma.$transaction(async (tx) => {
     // Claim the enquiry first (conditional update) so two concurrent admits cannot both succeed.
     const claimed = await tx.admission.updateMany({

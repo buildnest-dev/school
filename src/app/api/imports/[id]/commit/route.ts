@@ -3,7 +3,7 @@ import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import type { ImportRow } from "@/server/importer";
-import { nextAdmissionNo } from "@/server/students";
+import { assertRoomForStudents, nextAdmissionNo } from "@/server/students";
 
 /**
  * POST: step 2. Creates the students from a checked batch, all or nothing. A batch can be
@@ -22,6 +22,7 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
   if (!batch) throw new HttpError(404, "not_found", "Import not found.");
 
   const rows = JSON.parse(batch.rowsJson) as ImportRow[];
+  await assertRoomForStudents(tenantId, rows.length);
   const created = await prisma.$transaction(
     async (tx) => {
       const claim = await tx.importBatch.updateMany({

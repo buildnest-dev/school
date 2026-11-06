@@ -4,7 +4,13 @@ import { HttpError, requireTenant } from "@/server/auth";
 import { prisma, tenantDb } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { sectionOr404 } from "@/server/lib";
-import { checkLocation, nextAdmissionNo, studentDetail, studentInclude } from "@/server/students";
+import {
+  assertRoomForStudents,
+  checkLocation,
+  nextAdmissionNo,
+  studentDetail,
+  studentInclude,
+} from "@/server/students";
 import { guardianInput, studentFields } from "@/server/validators";
 import type { Student } from "@/types";
 
@@ -29,6 +35,7 @@ export const POST = handle(async (req: Request) => {
   const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
   const b = CreateBody.parse(await req.json());
   await sectionOr404(tenantId, b.sectionId);
+  await assertRoomForStudents(tenantId);
   await checkLocation(b.stateId, b.districtId);
 
   const dup = await prisma.student.findFirst({

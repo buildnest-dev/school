@@ -74,3 +74,19 @@ export const studentInclude = {
   section: { include: { class: true } },
   guardian: true,
 } as const;
+
+/** Refuses a new admission when it would take the school past its plan's student limit. */
+export async function assertRoomForStudents(tenantId: string, adding = 1) {
+  const t = await prisma.tenant.findUniqueOrThrow({
+    where: { id: tenantId },
+    select: { maxStudents: true },
+  });
+  if (t.maxStudents == null) return;
+  const have = await prisma.student.count({ where: { tenantId, status: "active" } });
+  if (have + adding > t.maxStudents)
+    throw new HttpError(
+      409,
+      "LIMIT_EXCEEDED",
+      `This plan allows ${t.maxStudents} active students (${have} now). Ask ZAQSA to raise the limit.`,
+    );
+}

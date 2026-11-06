@@ -15,7 +15,8 @@ const Body = z.object({ token: z.string().min(20).max(100), password: strongPass
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   // Only failed attempts count towards the limit, so ordinary successful use is never blocked.
-  const failed = () => throttle(`reset|${req.headers.get("x-forwarded-for") ?? "local"}`, 10, 10 * 60_000);
+  const failed = () =>
+    throttle(`reset|${req.headers.get("x-forwarded-for") ?? "local"}`, 10, 10 * 60_000);
   const { token, password } = Body.parse(await req.json());
   const bad = new HttpError(400, "bad_token", "This link is invalid or has expired.");
   const row = await prisma.passwordToken.findUnique({

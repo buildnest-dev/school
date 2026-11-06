@@ -99,6 +99,7 @@ export async function schoolRow(t: {
   subscription: string;
   periodEnd: Date | null;
   graceDays: number;
+  maxStudents: number | null;
   wentLiveAt: Date | null;
   email: string | null;
   phone: string | null;
@@ -114,6 +115,7 @@ export async function schoolRow(t: {
     subscription: effectiveSubscription(t),
     periodEnd: t.periodEnd?.toISOString().slice(0, 10) ?? null,
     graceDays: t.graceDays,
+    maxStudents: t.maxStudents,
     wentLiveAt: t.wentLiveAt?.toISOString() ?? null,
     email: t.email,
     phone: t.phone,

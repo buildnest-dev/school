@@ -50,6 +50,7 @@ const Patch = z
     subscription: z.enum(["trial", "active", "cancelled"]),
     periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     graceDays: z.number().int().min(0).max(60),
+    maxStudents: z.number().int().min(1).max(100000).nullable(),
     suspended: z.boolean(),
   })
   .partial();

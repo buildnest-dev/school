@@ -4,6 +4,7 @@ import { createLogin, originOf } from "@/server/accounts";
 import { HttpError, requireAuth } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
+import { idempotent } from "@/server/idempotency";
 import { PLANS, schoolRow, slugField } from "@/server/platform";
 import { personName, phone } from "@/server/validators";
 
@@ -57,68 +58,68 @@ export const GET = handle(async (req: Request) => {
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   const { user } = await requireAuth(["platform_admin"]);
-  const b = Body.parse(await req.json());
+  const raw: unknown = await req.json();
+  const b = Body.parse(raw);
 
-  if (await prisma.tenant.findUnique({ where: { slug: b.slug } }))
-    throw new HttpError(409, "slug_taken", "That school address name is already used.");
-  const boards = await prisma.board.findMany({ where: { code: { in: b.boardCodes } } });
-  if (boards.length !== new Set(b.boardCodes).size)
-    throw new HttpError(422, "bad_board", "One of the boards is not recognised.");
-  if (b.stateId && !(await prisma.state.findUnique({ where: { id: b.stateId } })))
-    throw new HttpError(422, "bad_state", "Unknown state.");
-  const startYear = Number(b.yearLabel.slice(0, 4));
-  if (Number(b.yearLabel.slice(5)) !== (startYear + 1) % 100)
-    throw new HttpError(422, "bad_year", "The year label must be consecutive, like 2026-27.");
+  return idempotent(req, "platform", "school.create", raw, async () => {
+    if (await prisma.tenant.findUnique({ where: { slug: b.slug } }))
+      throw new HttpError(409, "slug_taken", "That school address name is already used.");
+    const boards = await prisma.board.findMany({ where: { code: { in: b.boardCodes } } });
+    if (boards.length !== new Set(b.boardCodes).size)
+      throw new HttpError(422, "bad_board", "One of the boards is not recognised.");
+    if (b.stateId && !(await prisma.state.findUnique({ where: { id: b.stateId } })))
+      throw new HttpError(422, "bad_state", "Unknown state.");
+    const startYear = Number(b.yearLabel.slice(0, 4));
+    if (Number(b.yearLabel.slice(5)) !== (startYear + 1) % 100)
+      throw new HttpError(422, "bad_year", "The year label must be consecutive, like 2026-27.");
 
-  const tenant = await prisma.$transaction(async (tx) => {
-    const t = await tx.tenant.create({
-      data: {
-        slug: b.slug,
-        name: b.name,
-        status: "provisioned",
-        plan: b.plan,
-        planPeriod: b.planPeriod,
-        subscription: "trial",
-        periodEnd: new Date(Date.now() + b.trialDays * 86_400_000),
-        phone: b.phone,
-        email: b.email,
-        address: b.address,
-        stateId: b.stateId,
-      },
-    });
-    for (const bd of boards)
-      await tx.tenantBoard.create({
-        data: { tenantId: t.id, boardId: bd.id, isDefault: bd.code === b.boardCodes[0] },
+    const tenant = await prisma.$transaction(async (tx) => {
+      const t = await tx.tenant.create({
+        data: {
+          slug: b.slug,
+          name: b.name,
+          status: "provisioned",
+          plan: b.plan,
+          planPeriod: b.planPeriod,
+          subscription: "trial",
+          periodEnd: new Date(Date.now() + b.trialDays * 86_400_000),
+          phone: b.phone,
+          email: b.email,
+          address: b.address,
+          stateId: b.stateId,
+        },
       });
-    await tx.campus.create({ data: { tenantId: t.id, name: "Main campus", address: b.address } });
-    await tx.academicYear.create({
-      data: {
-        tenantId: t.id,
-        label: b.yearLabel,
-        startsOn: new Date(Date.UTC(startYear, 3, 1)),
-        endsOn: new Date(Date.UTC(startYear + 1, 2, 31)),
-        current: true,
-      },
+      for (const bd of boards)
+        await tx.tenantBoard.create({
+          data: { tenantId: t.id, boardId: bd.id, isDefault: bd.code === b.boardCodes[0] },
+        });
+      await tx.campus.create({ data: { tenantId: t.id, name: "Main campus", address: b.address } });
+      await tx.academicYear.create({
+        data: {
+          tenantId: t.id,
+          label: b.yearLabel,
+          startsOn: new Date(Date.UTC(startYear, 3, 1)),
+          endsOn: new Date(Date.UTC(startYear + 1, 2, 31)),
+          current: true,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          tenantId: t.id,
+          userId: user.id,
+          action: "school.create",
+          entity: "tenant",
+          entityId: t.id,
+        },
+      });
+      return t;
     });
-    await tx.auditLog.create({
-      data: {
-        tenantId: t.id,
-        userId: user.id,
-        action: "school.create",
-        entity: "tenant",
-        entityId: t.id,
-      },
+    await createLogin(tenant.id, tenant.name, {
+      email: b.ownerEmail,
+      name: b.ownerName,
+      role: "school_owner",
+      origin: originOf(req),
     });
-    return t;
+    return { status: 201, body: { ok: true, mode: "api", school: await schoolRow(tenant) } };
   });
-  await createLogin(tenant.id, tenant.name, {
-    email: b.ownerEmail,
-    name: b.ownerName,
-    role: "school_owner",
-    origin: originOf(req),
-  });
-  return NextResponse.json(
-    { ok: true, mode: "api", school: await schoolRow(tenant) },
-    { status: 201 },
-  );
 });

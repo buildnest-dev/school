@@ -54,6 +54,7 @@ model Tenant {
   periodEnd    DateTime? // end of the paid (or trial) period
   graceDays    Int       @default(7)
   wentLiveAt   DateTime?
+  maxStudents  Int? // plan limit on active students; null = no limit
   udiseCode    String? // optional UDISE+ school code
   phone        String?
   email        String?
@@ -775,4 +776,19 @@ model LedgerEntry {
   createdAt      DateTime @default(now())
 
   @@index([tenantId, createdAt])
+}
+
+/// Remembers the result of a write sent with an Idempotency-Key, so a retry returns the same answer
+/// instead of doing the work twice. A row with status 0 is still being processed.
+model IdempotencyKey {
+  id           String   @id @default(cuid())
+  scope        String // tenant id, or "platform"
+  operation    String
+  key          String
+  requestHash  String
+  status       Int      @default(0)
+  responseJson String   @default("")
+  createdAt    DateTime @default(now())
+
+  @@unique([scope, operation, key])
 }

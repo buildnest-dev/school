@@ -420,3 +420,77 @@ test("school data stays separate", async () => {
   const demo = await (await principal.get("/api/students?q=Deshmukh")).json();
   expect(demo.total).toBe(0);
 });
+
+test("a retried write with the same Idempotency-Key is done once", async () => {
+  const body = { studentId, title: "Bus fee", amount: 750, dueOn: "2027-02-28" };
+  const headers = { "idempotency-key": `inv-${run}-0001` };
+  const first = await owner.post("/api/fees/invoices", { data: body, headers });
+  const second = await owner.post("/api/fees/invoices", { data: body, headers });
+  expect(first.status()).toBe(201);
+  expect(second.status()).toBe(201);
+  expect(second.headers()["idempotent-replayed"]).toBe("true");
+  expect((await second.json()).id).toBe((await first.json()).id);
+  const count = (await (await owner.get("/api/fees/invoices?pageSize=100")).json()).items.filter(
+    (i: { term: string }) => i.term === "Bus fee",
+  ).length;
+  expect(count).toBe(1);
+
+  const changed = await owner.post("/api/fees/invoices", {
+    data: { ...body, amount: 999 },
+    headers,
+  });
+  expect(changed.status()).toBe(409);
+  expect((await changed.json()).code).toBe("IDEMPOTENCY_CONFLICT");
+  expect(
+    (
+      await owner.post("/api/fees/invoices", {
+        data: body,
+        headers: { "idempotency-key": "short" },
+      })
+    ).status(),
+  ).toBe(422);
+
+  // Provisioning a school twice with one key gives one school, not a duplicate-name error.
+  const sch = school({ slug: `ik${run}`, ownerEmail: `ik.${run}@school-test.example` });
+  const k = { "idempotency-key": `school-${run}-0001` };
+  const a = await platform.post("/api/platform/schools", { data: sch, headers: k });
+  const b = await platform.post("/api/platform/schools", { data: sch, headers: k });
+  expect(a.status()).toBe(201);
+  expect(b.status()).toBe(201);
+  expect((await b.json()).school.id).toBe((await a.json()).school.id);
+});
+
+test("a plan's student limit stops further admissions", async () => {
+  const detail = await (await platform.get(`/api/platform/schools/${schoolId}`)).json();
+  const active = detail.counts.activeStudents;
+  expect((await patch({ maxStudents: active })).status()).toBe(200);
+  const classes = await (await owner.get("/api/classes")).json();
+  const sectionId = classes.find((c: { name: string }) => c.name === "Class 5").sections[0].id;
+  const add = await owner.post("/api/students", {
+    data: {
+      name: "Extra Student",
+      dob: "2015-01-02",
+      gender: "male",
+      sectionId,
+      guardian: { name: "Extra Parent", relation: "father", phone: "9811199999" },
+    },
+  });
+  expect(add.status()).toBe(409);
+  expect((await add.json()).code).toBe("LIMIT_EXCEEDED");
+  expect((await patch({ maxStudents: null })).status()).toBe(200);
+  expect((await patch({ maxStudents: 0 })).status()).toBe(422);
+});
+
+test("the school can read its own audit trail, nobody else's", async () => {
+  const all = await (await owner.get("/api/audit-events?pageSize=100")).json();
+  const actions = new Set(all.items.map((i: { action: string }) => i.action));
+  for (const a of ["invoice.create", "import.commit", "import.undo", "feehead.create"])
+    expect(actions.has(a), a).toBe(true);
+  expect(all.items[0].by).toBeTruthy();
+  const only = await (await owner.get("/api/audit-events?action=import")).json();
+  expect(only.items.length).toBeGreaterThan(0);
+  expect(only.items.every((i: { action: string }) => i.action.startsWith("import"))).toBe(true);
+  expect((await teacher.get("/api/audit-events")).status()).toBe(403);
+  const demo = await (await principal.get("/api/audit-events?action=import")).json();
+  expect(demo.items).toEqual([]); // the demo school never imported anything
+});
