@@ -259,7 +259,7 @@ test("school screens: ledger adds up, other schools and parents are kept out, da
   const rows = (await res.json()) as { debit: number; credit: number; balance: number }[];
   expect(rows.length).toBeGreaterThan(0);
   const net = rows.reduce((s, r) => s + r.debit - r.credit, 0);
-  expect(rows[rows.length - 1].balance).toBeCloseTo(net, 2);
+  expect(rows[rows.length - 1]!.balance).toBeCloseTo(net, 2);
 
   expect((await parent.get(`/api/students/${id}/ledger`)).status()).toBe(403);
   expect((await other.get(`/api/students/${id}/ledger`)).status()).toBe(404);
@@ -274,4 +274,36 @@ test("school screens: ledger adds up, other schools and parents are kept out, da
 
   const drafts = await (await principal.get("/api/notices?filter[status]=draft")).json();
   expect(drafts.items.every((n: { status: string }) => n.status === "draft")).toBe(true);
+});
+
+test("teacher, parent and student areas: each sees only their own, and the portal calls answer", async () => {
+  const student = await as("student@demo.test");
+  const classTeacher = await as("teacher2@demo.test");
+
+  const classes = (await (await classTeacher.get("/api/teacher/classes")).json()) as {
+    id: string;
+    subjectId: string | null;
+  }[];
+  expect(classes.length).toBeGreaterThan(0);
+  expect(classes[0]!.subjectId).toBeTruthy();
+  expect((await classTeacher.get("/api/teacher/home")).status()).toBe(200);
+  expect((await classTeacher.get("/api/teacher/timetable")).status()).toBe(200);
+  expect((await parent.get("/api/teacher/classes")).status()).toBe(403);
+  expect((await student.get("/api/teacher/classes")).status()).toBe(403);
+
+  const mine = (await (await student.get("/api/me/children")).json()) as { id: string }[];
+  expect(mine).toHaveLength(1);
+  const id = mine[0]!.id;
+  for (const part of ["briefing", "attendance", "homework", "results", "timetable", "exams"])
+    expect((await student.get(`/api/me/children/${id}/${part}`)).status(), part).toBe(200);
+  // Fees are the parent's, not the student's.
+  expect((await student.get(`/api/me/children/${id}/ledger`)).status()).toBe(403);
+
+  // A student cannot open a classmate, and a parent can open only their own child.
+  const kids = (await (await parent.get("/api/me/children")).json()) as { id: string }[];
+  const classmate = kids.find((k) => k.id !== id)!;
+  expect((await student.get(`/api/me/children/${classmate.id}/attendance`)).status()).toBe(404);
+  expect((await parent.get(`/api/me/children/${id}/ledger`)).status()).toBe(200);
+  expect((await other.get(`/api/me/children/${id}/attendance`)).status()).toBe(403);
+  expect((await teacher.get("/api/me/children")).status()).toBe(403);
 });

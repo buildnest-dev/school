@@ -932,6 +932,13 @@ export const NO_BACKEND_YET: ReadonlySet<string> = new Set([
   "school-rollover",
   "school-results",
   "school-reports",
+  "teacher-leave",
+  "teacher-syllabus",
+  "parent-ptm",
+  "parent-calendar",
+  "student-calendar",
+  "student-exams",
+  "parent-exams",
 ]);
 
 export const AREA_ROOT: Record<Area, string> = {

@@ -74,7 +74,25 @@ export const GET = handle(async (req: Request) => {
     include: homeworkInclude,
     orderBy: [{ dueOn: "desc" }, { createdAt: "desc" }],
   });
-  const items = rows.map(homeworkView);
+  const [doneRows, classSizes] = await Promise.all([
+    prisma.homeworkStatus.groupBy({
+      by: ["homeworkId"],
+      where: { tenantId, status: "done", homeworkId: { in: rows.map((r) => r.id) } },
+      _count: true,
+    }),
+    prisma.student.groupBy({
+      by: ["sectionId"],
+      where: { tenantId, status: "active", sectionId: { in: rows.map((r) => r.sectionId) } },
+      _count: true,
+    }),
+  ]);
+  const done = new Map(doneRows.map((d) => [d.homeworkId, d._count]));
+  const size = new Map(classSizes.map((c) => [c.sectionId, c._count]));
+  const items = rows.map((h) => ({
+    ...homeworkView(h),
+    done: done.get(h.id) ?? 0,
+    total: size.get(h.sectionId) ?? 0,
+  }));
   return NextResponse.json({ items, total: items.length, page: 1, pageSize: items.length });
 });
 

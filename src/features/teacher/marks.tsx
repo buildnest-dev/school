@@ -27,7 +27,7 @@ export function MarksPick() {
   }, [s]);
   return (
     <>
-      <PageHeader title="Enter Marks" description="Choose a class to enter Unit Test 2 marks." />
+      <PageHeader title="Enter Marks" description="Choose a class to enter marks." />
       {data.error ? (
         <ErrorState message={data.error.message} onRetry={data.reload} />
       ) : !data.data ? (
@@ -42,7 +42,7 @@ export function MarksPick() {
                     {c.label} · {c.subject}
                   </p>
                   <p className="text-muted text-sm">
-                    Unit Test 2 · out of {c.sheet?.maxMarks ?? 50}
+                    {c.sheet?.assessment ?? "Marks"} · out of {c.sheet?.maxMarks ?? 50}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

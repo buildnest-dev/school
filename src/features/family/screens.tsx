@@ -13,6 +13,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/field";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
+import { env } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { useSession } from "@/hooks/use-session";
@@ -69,12 +70,12 @@ export function FamilyHome() {
                   ["/parent/homework", "Homework"],
                   ["/parent/results", "Results"],
                   ["/parent/fees", "Fees"],
-                  ["/parent/ptm", "Meet a teacher"],
+                  ...(env.dataSource === "api" ? [] : [["/parent/ptm", "Meet a teacher"]]),
                 ]
               : [
                   ["/student/timetable", "Today’s timetable"],
                   ["/student/homework", "Homework"],
-                  ["/student/exams", "Exams"],
+                  ...(env.dataSource === "api" ? [] : [["/student/exams", "Exams"]]),
                   ["/student/results", "Results"],
                 ]
             ).map(([href, label]) => (
@@ -114,7 +115,10 @@ function AttendanceBody({ id, s }: { id: string; s: ReturnType<typeof useService
           { label: "Present", value: String(d.data.presentDays) },
           { label: "Absent", value: String(d.data.absentDays) },
           { label: "Late", value: String(d.data.lateDays) },
-          { label: "Attendance", value: `${Math.round((d.data.presentDays / total) * 100)}%` },
+          {
+            label: "Attendance",
+            value: total ? `${Math.round((d.data.presentDays / total) * 100)}%` : "Not marked yet",
+          },
         ]}
       />
       <Card className="mt-5 max-w-xl">
@@ -365,7 +369,11 @@ export function ParentPtm() {
   );
 }
 
-const CERTS: CertificateType[] = ["Bonafide", "Character", "Study", "Transfer"];
+/** The real backend issues bonafide, character and transfer certificates only. */
+const CERTS: CertificateType[] =
+  env.dataSource === "api"
+    ? ["Bonafide", "Character", "Transfer"]
+    : ["Bonafide", "Character", "Study", "Transfer"];
 const reqSchema = z.object({
   type: z.enum(["Bonafide", "Character", "Study", "Transfer"]),
   purpose: z.string().trim().min(3, "Say what the certificate is for."),

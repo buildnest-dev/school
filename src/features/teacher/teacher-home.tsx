@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/blocks";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
-import { todayIso } from "@/config/env";
+import { env, todayIso } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { todayLabel } from "../shared/format";
@@ -66,9 +66,18 @@ export function TeacherHome() {
             href: "/teacher/marks",
             icon: ClipboardList,
             title: "Enter Marks",
-            hint: "Unit Test 2",
+            hint: "For your classes",
           },
-          { href: "/teacher/leave", icon: Plane, title: "Request Leave", hint: "Ask for time off" },
+          ...(env.dataSource === "api"
+            ? []
+            : [
+                {
+                  href: "/teacher/leave",
+                  icon: Plane,
+                  title: "Request Leave",
+                  hint: "Ask for time off",
+                },
+              ]),
         ].map(({ href, icon: I, title, hint }) => (
           <Link
             key={href}

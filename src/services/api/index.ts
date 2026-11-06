@@ -179,6 +179,12 @@ const post = (path: string, body: unknown) =>
 const put = (path: string, body: unknown) =>
   apiRequest<{ id?: string; message?: string }>(path, { method: "PUT", body }).then(toMutation);
 
+/** The subject a teacher teaches in a class, so marks and homework go to the right subject. */
+async function subjectFor(classId: string): Promise<string | undefined> {
+  const mine = await apiRequest<{ id: string; subjectId: string | null }[]>("/teacher/classes");
+  return mine.find((c) => c.id === classId)?.subjectId ?? undefined;
+}
+
 export function createApiServices(): Services {
   const e = ENDPOINTS;
   return {
@@ -196,17 +202,44 @@ export function createApiServices(): Services {
       classes: () => apiRequest(e.teacherClasses),
       timetable: () => apiRequest(e.teacherTimetable),
       syllabus: () => apiRequest(e.teacherSyllabus),
-      leaves: () => apiRequest(e.teacherLeaves),
+      leaves: async () => [],
     },
     attendance: {
       getSheet: (classId, date) => apiRequest(e.attendanceSheet(classId, date)),
       save: (classId, date, marks, submit) =>
         put(e.attendanceSheet(classId, date), { marks, submit }),
     },
-    homework: { list: () => apiRequest(e.homework), create: (input) => post(e.homework, input) },
+    homework: {
+      list: async () => {
+        const page = await apiRequest<Page<Raw>>(e.homework);
+        return page.items.map((h) => ({
+          id: str(h.id),
+          classId: str(h.sectionId),
+          classLabel: str(h.classSection),
+          subject: str(h.subject),
+          title: str(h.title),
+          instructions: str(h.description),
+          due: str(h.dueOn),
+          status: h.status === "published" ? ("published" as const) : ("draft" as const),
+          submitted: num(h.done),
+          total: num(h.total),
+        }));
+      },
+      create: async (input) =>
+        post(e.homework, {
+          sectionId: input.classId,
+          subjectId: await subjectFor(input.classId),
+          title: input.title,
+          description: input.instructions,
+          dueOn: input.due,
+          publish: input.publish,
+        }),
+    },
     marks: {
-      getSheet: (classId) => apiRequest(e.marksSheet(classId)),
-      save: (classId, marks, submit) => put(e.marksSheet(classId), { marks, submit }),
+      getSheet: async (classId) =>
+        apiRequest(e.marksSheet(classId), { query: { subjectId: await subjectFor(classId) } }),
+      save: async (classId, marks, submit) =>
+        put(`${e.marksSheet(classId)}?subjectId=${await subjectFor(classId)}`, { marks, submit }),
     },
     notices: { create: (input) => post(e.notices, input) },
     leave: { request: (input) => post(e.leaveRequests, input) },
@@ -227,7 +260,14 @@ export function createApiServices(): Services {
       submit: (input) => apiRequest(e.rolloverSubmit, { method: "POST", body: input }),
     },
     family: {
-      children: () => apiRequest(e.familyChildren),
+      // The screens print "Class <classSection>", so the backend's "Class 8 A" drops its prefix.
+      children: async () =>
+        (await apiRequest<Raw[]>(e.familyChildren)).map((c) => ({
+          id: str(c.id),
+          name: str(c.name),
+          classSection: str(c.classSection).replace(/^Class\s+/, ""),
+          rollNo: num(c.rollNo),
+        })),
       briefing: (id) => apiRequest(e.child(id, "briefing")),
       attendance: (id) => apiRequest(e.child(id, "attendance")),
       homework: (id) => apiRequest(e.child(id, "homework")),
@@ -238,8 +278,15 @@ export function createApiServices(): Services {
       ptmSlots: () => apiRequest(e.ptmSlots),
       bookPtm: (slotId) => post(e.ptmBook(slotId), {}),
       requestCertificate: (childId, type, purpose) =>
-        post(e.child(childId, "certificate-requests"), { type, purpose }),
-      certificateRequests: (childId) => apiRequest(e.child(childId, "certificate-requests")),
+        post("/certificates", { studentId: childId, type: type.toLowerCase(), purpose }),
+      certificateRequests: async (childId) => {
+        const page = await apiRequest<Page<Raw>>("/certificates", {
+          query: { studentId: childId },
+        });
+        return page.items.map(
+          (r) => ADAPT.certificateRequests!.row(r) as import("@/types").CertificateRequest,
+        );
+      },
     },
   };
 }

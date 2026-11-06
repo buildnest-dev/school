@@ -474,6 +474,81 @@ async function demoSchool() {
   await prisma.exam.create({
     data: { tenantId: tenant.id, yearId: year.id, name: "Term 1", maxMarks: 100 },
   });
+
+  // A weekly timetable for the demo teacher (late slots, so it stays clear of everyday use), and
+  // a login for one student so the student and parent areas have something to show.
+  // This is a separate teacher (teacher2@demo.test) so the tests that need a teacher with no
+  // classes yet keep working with teacher@demo.test.
+  const classTeacherUser = await prisma.user.upsert({
+    where: { email: "teacher2@demo.test" },
+    update: {},
+    create: { email: "teacher2@demo.test", name: "Neha Kapoor", passwordHash: hash },
+  });
+  await prisma.membership.upsert({
+    where: { userId_tenantId: { userId: classTeacherUser.id, tenantId: tenant.id } },
+    update: { role: "teacher" },
+    create: { userId: classTeacherUser.id, tenantId: tenant.id, role: "teacher" },
+  });
+  const demoTeacher = await prisma.staff.upsert({
+    where: { tenantId_employeeNo: { tenantId: tenant.id, employeeNo: "EMP-2026-0090" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      employeeNo: "EMP-2026-0090",
+      name: "Neha Kapoor",
+      role: "teacher",
+      designation: "Teacher, Mathematics",
+      userId: classTeacherUser.id,
+      joinedOn: new Date("2025-06-02"),
+    },
+  });
+  {
+    const sec = await prisma.section.findFirstOrThrow({
+      where: { tenantId: tenant.id, name: "B", class: { name: "Class 8" } },
+    });
+    const maths = await prisma.subject.findFirstOrThrow({
+      where: { tenantId: tenant.id, classId: sec.classId, name: "Mathematics" },
+    });
+    for (const slot of [7, 8])
+      for (const day of [1, 2, 3, 4, 5])
+        await prisma.period.upsert({
+          where: { sectionId_day_slot: { sectionId: sec.id, day, slot } },
+          update: {},
+          create: {
+            tenantId: tenant.id,
+            sectionId: sec.id,
+            day,
+            slot,
+            subjectId: maths.id,
+            staffId: demoTeacher.id,
+            room: "Room 8B",
+          },
+        });
+  }
+  const childOfParent = await prisma.student.findFirst({
+    where: {
+      tenantId: tenant.id,
+      guardian: { userId: parentUser.id },
+      section: { name: "B", class: { name: "Class 8" } },
+    },
+    orderBy: { name: "asc" },
+  });
+  if (childOfParent && !childOfParent.userId) {
+    const studentUser = await prisma.user.upsert({
+      where: { email: "student@demo.test" },
+      update: {},
+      create: { email: "student@demo.test", name: childOfParent.name, passwordHash: hash },
+    });
+    await prisma.membership.upsert({
+      where: { userId_tenantId: { userId: studentUser.id, tenantId: tenant.id } },
+      update: { role: "student" },
+      create: { userId: studentUser.id, tenantId: tenant.id, role: "student" },
+    });
+    await prisma.student.update({
+      where: { id: childOfParent.id },
+      data: { userId: studentUser.id },
+    });
+  }
   await prisma.notice.createMany({
     data: [
       {

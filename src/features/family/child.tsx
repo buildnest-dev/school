@@ -34,9 +34,12 @@ export function useActiveChild() {
     () => null,
   );
   const list = useAsync(() => s.family.children(), [s]);
-  const allowed: Child[] = (list.data ?? []).filter((c) =>
-    user?.role === "student" ? c.id === "c-aarav" : (user?.childIds ?? []).includes(c.id),
-  );
+  const allowed: Child[] =
+    s.mode === "api"
+      ? (list.data ?? [])
+      : (list.data ?? []).filter((c) =>
+          user?.role === "student" ? c.id === "c-aarav" : (user?.childIds ?? []).includes(c.id),
+        );
   const child = allowed.find((c) => c.id === pick) ?? allowed[0];
   return {
     child,
