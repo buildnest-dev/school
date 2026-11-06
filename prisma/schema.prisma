@@ -68,6 +68,8 @@ model Tenant {
   bellSlots  BellSlot[]
   homework   Homework[]
   books      Book[]
+  vehicles   Vehicle[]
+  routes     TransportRoute[]
   loans      Loan[]
   periods    Period[]
   subjects   Subject[]
@@ -207,7 +209,7 @@ model Subject {
 // ---------- People ----------
 
 model Student {
-  id           String           @id @default(cuid())
+  id           String            @id @default(cuid())
   tenantId     String
   admissionNo  String
   name         String
@@ -225,15 +227,16 @@ model Student {
   stateId      String?
   districtId   String?
   address      String?
-  status       String           @default("active") // active | alumni | transferred
-  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  section      Section?         @relation(fields: [sectionId], references: [id])
-  guardian     Guardian?        @relation(fields: [guardianId], references: [id])
+  status       String            @default("active") // active | alumni | transferred
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  section      Section?          @relation(fields: [sectionId], references: [id])
+  guardian     Guardian?         @relation(fields: [guardianId], references: [id])
   attendance   Attendance[]
   marks        Mark[]
   invoices     Invoice[]
   homeworkRows HomeworkStatus[]
   loans        Loan[]
+  transport    StudentTransport?
 
   @@unique([tenantId, admissionNo])
   @@index([tenantId, sectionId])
@@ -255,7 +258,7 @@ model Guardian {
 }
 
 model Staff {
-  id            String    @id @default(cuid())
+  id            String           @id @default(cuid())
   tenantId      String
   employeeNo    String // EMP-<year>-0001, generated
   name          String
@@ -266,11 +269,12 @@ model Staff {
   phone         String?
   email         String?
   joinedOn      DateTime?
-  status        String    @default("active") // active | inactive
+  status        String           @default("active") // active | inactive
   userId        String? // login of this staff member, when they have one
-  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   periods       Period[]
   loans         Loan[]
+  routes        TransportRoute[]
 
   @@unique([tenantId, employeeNo])
   @@index([tenantId])
@@ -567,4 +571,71 @@ model Loan {
   @@index([tenantId, studentId])
   @@index([tenantId, staffId])
   @@index([bookId])
+}
+
+// ---------- Transport ----------
+
+model Vehicle {
+  id              String           @id @default(cuid())
+  tenantId        String
+  regNo           String // normalised, e.g. KA01AB1234
+  type            String // bus | van
+  capacity        Int
+  insuranceExpiry DateTime?
+  fitnessExpiry   DateTime?
+  status          String           @default("active") // active | inactive
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  routes          TransportRoute[]
+
+  @@unique([tenantId, regNo])
+}
+
+// A vehicle and a driver can each serve only one route (database-enforced).
+model TransportRoute {
+  id              String             @id @default(cuid())
+  tenantId        String
+  name            String
+  vehicleId       String?
+  driverId        String?
+  attendantName   String?
+  monthlyFeePaise Int                @default(0) // informational; not invoiced automatically
+  status          String             @default("active") // active | inactive
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicle         Vehicle?           @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  driver          Staff?             @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  stops           RouteStop[]
+  riders          StudentTransport[]
+
+  @@unique([tenantId, name])
+  @@unique([tenantId, vehicleId])
+  @@unique([tenantId, driverId])
+}
+
+model RouteStop {
+  id         String             @id @default(cuid())
+  tenantId   String
+  routeId    String
+  name       String
+  sequence   Int
+  pickupTime String // HH:MM
+  dropTime   String?
+  route      TransportRoute     @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  riders     StudentTransport[]
+
+  @@unique([routeId, name])
+  @@index([tenantId])
+}
+
+// A student uses at most one route and stop.
+model StudentTransport {
+  id        String         @id @default(cuid())
+  tenantId  String
+  studentId String         @unique
+  routeId   String
+  stopId    String
+  student   Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  route     TransportRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  stop      RouteStop      @relation(fields: [stopId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, routeId])
 }

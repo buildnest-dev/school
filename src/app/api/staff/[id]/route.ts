@@ -61,6 +61,8 @@ export const PATCH = handle(async (req: Request, ctx: { params: Promise<{ id: st
       );
   }
 
+  // A driver who is deactivated or re-roled no longer drives their route.
+  const leavesDriving = cur.role === "driver" && (deactivating || (b.role && b.role !== "driver"));
   const { joinedOn, ...rest } = b;
   const [updated, freed] = await prisma.$transaction([
     prisma.staff.update({
@@ -74,6 +76,10 @@ export const PATCH = handle(async (req: Request, ctx: { params: Promise<{ id: st
     prisma.section.updateMany({
       where: { tenantId, classTeacherId: cur.id, ...(deactivating ? {} : { id: "__none__" }) },
       data: { classTeacherId: null },
+    }),
+    prisma.transportRoute.updateMany({
+      where: { tenantId, driverId: cur.id, ...(leavesDriving ? {} : { id: "__none__" }) },
+      data: { driverId: null },
     }),
     prisma.auditLog.create({
       data: {

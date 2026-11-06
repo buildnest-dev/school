@@ -68,13 +68,19 @@ Shared database, shared schema. Every school-owned table has `tenantId`. The ten
 | GET/POST  | `/api/library/loans`                       | library staff: all loans (?status=open/overdue/returned); parent: own children only; issue: 14 days default, max 3 books (students) / 5 (staff), blocked by overdue books or unpaid fines; last copy claimed atomically |
 | POST      | `/api/library/loans/:id/return`            | library staff; late return records a fine of Rs 1/day; waiving it is owner/principal only |
 | PATCH     | `/api/library/loans/:id/fine`              | library staff mark paid (records cash collected, no payment gateway); waive: owner/principal |
+| GET/POST  | `/api/transport/vehicles`                  | owner, principal, transport (registration normalised e.g. KA01AB1234; insurance/fitness flagged ok / expiring within 30 days / expired / unknown) |
+| PATCH     | `/api/transport/vehicles/:id`              | same (capacity cannot drop below riders; no switching off while on a route) |
+| GET/POST  | `/api/transport/routes`                    | same (vehicle needs valid papers; one vehicle and one driver per route, database-enforced) |
+| GET/PATCH | `/api/transport/routes/:id`                | route detail with riders; edit (a route with riders cannot be switched off or lose its vehicle) |
+| PUT       | `/api/transport/routes/:id/stops`          | replaces stops in travel order (pickup times must increase; a stop with riders cannot be removed) |
+| GET/PUT   | `/api/transport/students/:studentId`       | read: transport staff, or a parent for their own child (route, stop, times, vehicle, driver); assign/move/remove: transport staff (seat limit, route must be running) |
 | GET/POST  | `/api/notices`                             | read: signed in; create: owner, principal                             |
 
 ## Not built yet
 
-Transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
+Certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
 
-Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
+Transport fees are stored on the route for information only and are not invoiced automatically; there is no live bus tracking. Deactivating or re-roling a driver takes them off their route. Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
 
 Report cards count only submitted mark sheets; a subject below the exam pass mark fails the exam; ranks share on ties; results stay hidden from parents until published. Student-role logins are not possible yet (Student has no user link).
 

@@ -91,6 +91,7 @@ async function demoSchool() {
     ["teacher@demo.test", "Priya Nair", "teacher"],
     ["accountant@demo.test", "Vikram Singh", "accountant"],
     ["librarian@demo.test", "Meena Kulkarni", "librarian"],
+    ["transport@demo.test", "Dinesh Patil", "transport"],
     ["parent@demo.test", "Suresh Patel", "parent"],
   ];
   for (const [email, name, role] of people) {
@@ -296,6 +297,80 @@ async function demoSchool() {
       where: { id: lent.id },
       data: { availableCopies: { decrement: borrowers.length } },
     });
+  }
+  // Transport: two vehicles (one with an expired fitness certificate), a driver, one route.
+  {
+    const day = (offset: number) =>
+      new Date(
+        Date.parse(new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10)) +
+          offset * 86400_000,
+      );
+    const driver = await prisma.staff.upsert({
+      where: { tenantId_employeeNo: { tenantId: tenant.id, employeeNo: "EMP-2026-0005" } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        employeeNo: "EMP-2026-0005",
+        name: "Ramesh Yadav",
+        role: "driver",
+        designation: "Bus Driver",
+        phone: "+91 9811100011",
+      },
+    });
+    const bus = await prisma.vehicle.upsert({
+      where: { tenantId_regNo: { tenantId: tenant.id, regNo: "KA01AB1234" } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        regNo: "KA01AB1234",
+        type: "bus",
+        capacity: 40,
+        insuranceExpiry: day(200),
+        fitnessExpiry: day(200),
+      },
+    });
+    await prisma.vehicle.upsert({
+      where: { tenantId_regNo: { tenantId: tenant.id, regNo: "KA01CD5678" } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        regNo: "KA01CD5678",
+        type: "van",
+        capacity: 12,
+        insuranceExpiry: day(200),
+        fitnessExpiry: day(-10),
+      },
+    });
+    const route = await prisma.transportRoute.upsert({
+      where: { tenantId_name: { tenantId: tenant.id, name: "Route 1 - North" } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        name: "Route 1 - North",
+        vehicleId: bus.id,
+        driverId: driver.id,
+        monthlyFeePaise: 120000,
+      },
+    });
+    const stops: [string, string, string][] = [
+      ["Hebbal Circle", "07:00", "15:30"],
+      ["Yelahanka Gate", "07:15", "15:15"],
+      ["School Gate", "07:45", "15:00"],
+    ];
+    for (const [i, [name, pickupTime, dropTime]] of stops.entries()) {
+      await prisma.routeStop.upsert({
+        where: { routeId_name: { routeId: route.id, name } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          routeId: route.id,
+          name,
+          sequence: i + 1,
+          pickupTime,
+          dropTime,
+        },
+      });
+    }
   }
   await prisma.exam.create({
     data: { tenantId: tenant.id, yearId: year.id, name: "Term 1", maxMarks: 100 },
