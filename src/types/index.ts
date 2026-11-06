@@ -142,6 +142,8 @@ export interface Campus {
 /* ---------- Finance ---------- */
 export interface Invoice {
   id: string;
+  /** Printed invoice number, when the backend provides one. */
+  number?: string;
   studentName: string;
   classSection: string;
   term: string;

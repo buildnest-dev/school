@@ -119,7 +119,15 @@ export function renderDocument(type: CertType, serialNo: string, issuedOn: strin
   return { title: TITLE[type], statement, lines };
 }
 
-export const certInclude = { student: { select: { id: true, name: true } } } as const;
+export const certInclude = {
+  student: {
+    select: {
+      id: true,
+      name: true,
+      section: { select: { name: true, class: { select: { name: true } } } },
+    },
+  },
+} as const;
 
 type Row = {
   id: string;
@@ -133,7 +141,11 @@ type Row = {
   decisionNote: string | null;
   createdAt: Date;
   data: string | null;
-  student: { id: string; name: string };
+  student: {
+    id: string;
+    name: string;
+    section?: { name: string; class: { name: string } } | null;
+  };
 };
 
 export function certView(c: Row, withDocument = false) {
@@ -144,6 +156,9 @@ export function certView(c: Row, withDocument = false) {
     status: c.status,
     studentId: c.student.id,
     student: c.student.name,
+    classSection: c.student.section
+      ? `${c.student.section.class.name} ${c.student.section.name}`
+      : "",
     purpose: c.purpose,
     requestedBy: c.requestedByName,
     requestedOn: dayStr(c.createdAt),

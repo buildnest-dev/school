@@ -12,7 +12,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { ErrorState, LoadingBlock } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
-import { todayIso } from "@/config/env";
+import { env, todayIso } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { STAFF_SCHOOL_AUDIENCES, SCHOOL_NAME } from "@/mocks/data";
@@ -123,13 +123,16 @@ export function NoticeNew() {
   );
 }
 
-const CERT_TYPES: CertificateType[] = [
+const ALL_CERT_TYPES: CertificateType[] = [
   "Bonafide",
   "Transfer",
   "Character",
   "Study",
   "School leaving",
 ];
+/** The real backend issues bonafide, transfer and character certificates only. */
+const CERT_TYPES: CertificateType[] =
+  env.dataSource === "api" ? ["Bonafide", "Transfer", "Character"] : ALL_CERT_TYPES;
 const certSchema = z.object({
   type: z.enum(["Bonafide", "Transfer", "Character", "Study", "School leaving"]),
   studentId: z.string().min(1, "Choose a student."),

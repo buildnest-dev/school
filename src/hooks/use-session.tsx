@@ -20,6 +20,8 @@ interface SessionApi {
   user: SessionUser | null;
   /** Development sign-in only (mock mode). The real session comes from the backend. */
   devSignIn: (personaId: string) => void;
+  /** API mode: signs in with the backend (sets its cookie) and loads the session. Throws ApiError. */
+  signIn: (email: string, password: string, code?: string) => Promise<SessionUser>;
   signOut: () => void;
 }
 
@@ -70,7 +72,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     setState({ status: "ready", user });
   }, []);
+  const signIn = useCallback(async (email: string, password: string, code?: string) => {
+    await apiRequest("/auth/login", {
+      method: "POST",
+      body: { email, password, ...(code ? { code } : {}) },
+    });
+    const user = await apiRequest<SessionUser>("/me");
+    setState({ status: "ready", user });
+    return user;
+  }, []);
   const signOut = useCallback(() => {
+    // The server ends the session and clears its cookie; the screen does not wait for it.
+    if (env.dataSource === "api")
+      void apiRequest("/auth/logout", { method: "POST" }).catch(() => {});
     try {
       sessionStorage.removeItem(KEY);
     } catch {
@@ -79,7 +93,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setState({ status: "signedOut", user: null });
   }, []);
 
-  const value = useMemo(() => ({ ...state, devSignIn, signOut }), [state, devSignIn, signOut]);
+  const value = useMemo(
+    () => ({ ...state, devSignIn, signIn, signOut }),
+    [state, devSignIn, signIn, signOut],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

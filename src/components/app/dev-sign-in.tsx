@@ -1,13 +1,17 @@
 "use client";
 
 import { FlaskConical } from "lucide-react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { Avatar } from "@/components/shared/blocks";
+import { Button } from "@/components/ui/button";
+import { Field, Input } from "@/components/ui/field";
 import { AREA_ROOT, ROLE_AREA, ROLE_LABEL } from "@/config/screens";
 import { env } from "@/config/env";
 import { useSession } from "@/hooks/use-session";
+import { ApiError } from "@/lib/api/client";
 import { PERSONAS } from "@/mocks/data";
 
 /**
@@ -15,7 +19,33 @@ import { PERSONAS } from "@/mocks/data";
  * authentication. In API mode the backend owns sign-in; this screen only explains that.
  */
 export function DevSignIn() {
-  const { devSignIn, user } = useSession();
+  const { devSignIn, signIn, user } = useSession();
+  const [form, setForm] = useState({ email: "", password: "", code: "" });
+  const [needsCode, setNeedsCode] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const me = await signIn(
+        form.email.trim(),
+        form.password,
+        needsCode ? form.code.trim() : undefined,
+      );
+      router.push(AREA_ROOT[ROLE_AREA[me.role]]);
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "mfa_required") {
+        setNeedsCode(true);
+        setError(null);
+      } else {
+        setError(err instanceof ApiError ? err.message : "Could not sign in. Try again.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
   const router = useRouter();
   const go = (id: string) => {
     const p = PERSONAS.find((x) => x.id === id);
@@ -32,7 +62,7 @@ export function DevSignIn() {
           <p className="text-muted mt-1">
             {env.dataSource === "mock"
               ? "Real sign-in is built with the backend. For now, pick a role to explore the product with sample data."
-              : "Sign-in is handled by the school platform’s backend. This build does not collect credentials."}
+              : "Use the e-mail and password your school gave you."}
           </p>
         </div>
 
@@ -67,7 +97,59 @@ export function DevSignIn() {
               ))}
             </ul>
           </>
-        ) : null}
+        ) : (
+          <form onSubmit={submit} className="grid gap-4" noValidate>
+            <Field id="email" label="E-mail" required>
+              {(a) => (
+                <Input
+                  {...a}
+                  type="email"
+                  autoComplete="username"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              )}
+            </Field>
+            <Field id="password" label="Password" required>
+              {(a) => (
+                <Input
+                  {...a}
+                  type="password"
+                  autoComplete="current-password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                />
+              )}
+            </Field>
+            {needsCode ? (
+              <Field
+                id="code"
+                label="Authenticator code"
+                hint="The 6-digit code from your authenticator app."
+                required
+              >
+                {(a) => (
+                  <Input
+                    {...a}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={form.code}
+                    onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  />
+                )}
+              </Field>
+            ) : null}
+            {error ? (
+              <p role="alert" className="text-bad text-sm font-medium">
+                {error}
+              </p>
+            ) : null}
+            <Button type="submit" disabled={busy || !form.email || !form.password}>
+              {busy ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+        )}
         <p className="text-sm">
           <Link href="/" className="underline underline-offset-4">
             Back to the website

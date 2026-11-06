@@ -915,6 +915,22 @@ export const SCREENS: readonly ScreenDef[] = [
   }),
 ];
 
+/**
+ * School screens whose backend does not exist yet. They are hidden from the menu when the app runs
+ * against the real API (they still work on sample data). Remove an id here when its backend ships.
+ */
+export const NO_BACKEND_YET: ReadonlySet<string> = new Set([
+  "school-approvals",
+  "school-calendar",
+  "school-queries",
+  "school-events",
+  "school-leave",
+  "school-fee-structure",
+  "school-vendors",
+  "school-exams",
+  "school-rollover",
+]);
+
 export const AREA_ROOT: Record<Area, string> = {
   platform: "/platform",
   school: "/school",

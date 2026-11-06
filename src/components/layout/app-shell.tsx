@@ -9,6 +9,7 @@ import { Avatar } from "@/components/shared/blocks";
 import {
   AREA_ROOT,
   ROLE_LABEL,
+  NO_BACKEND_YET,
   SCREENS,
   canAccess,
   screenHref,
@@ -16,6 +17,7 @@ import {
   type ScreenDef,
 } from "@/config/screens";
 import { useServices } from "@/hooks/use-services";
+import { env } from "@/config/env";
 import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 import type { Area, Role } from "@/types";
@@ -32,7 +34,13 @@ const AREA_LABEL: Record<Area, string> = {
 
 function useNav(area: Area, role: Role | undefined) {
   return useMemo(() => {
-    const items = screensFor(area).filter((s) => s.nav && role !== undefined && canAccess(role, s));
+    const items = screensFor(area).filter(
+      (s) =>
+        s.nav &&
+        role !== undefined &&
+        canAccess(role, s) &&
+        !(env.dataSource === "api" && NO_BACKEND_YET.has(s.id)),
+    );
     const groups = new Map<string, ScreenDef[]>();
     for (const s of items.sort((a, b) => (a.nav?.order ?? 0) - (b.nav?.order ?? 0))) {
       const g = s.nav?.group ?? "";
@@ -150,12 +158,14 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
         </div>
       </div>
       <div className="mt-3 grid gap-1">
-        <Link
-          href="/sign-in"
-          className="text-on-dark flex min-h-10 items-center gap-2 rounded-md px-3 text-sm hover:bg-white/10 hover:text-white"
-        >
-          <FlaskConical className="size-4" aria-hidden="true" /> Switch dev role
-        </Link>
+        {env.dataSource === "mock" ? (
+          <Link
+            href="/sign-in"
+            className="text-on-dark flex min-h-10 items-center gap-2 rounded-md px-3 text-sm hover:bg-white/10 hover:text-white"
+          >
+            <FlaskConical className="size-4" aria-hidden="true" /> Switch dev role
+          </Link>
+        ) : null}
         <button
           type="button"
           onClick={() => {

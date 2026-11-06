@@ -281,7 +281,7 @@ export function FeesOverview() {
             },
           ]}
           columns={[
-            { key: "id", header: "Invoice", sortable: true },
+            { key: "number", header: "Invoice", sortable: true, render: (r) => r.number ?? r.id },
             { key: "studentName", header: "Student", sortable: true },
             { key: "classSection", header: "Class", hideOnMobile: true },
             { key: "amount", header: "Amount", sortable: true, render: (r) => rupees(r.amount) },
