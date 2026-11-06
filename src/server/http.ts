@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { HttpError } from "./auth";
+import { prisma } from "./db";
 import { requestContext } from "./context";
 
 /** Wraps a route handler: maps HttpError / validation errors to the ApiErrorBody shape the frontend expects. */
@@ -38,16 +39,27 @@ export function assertSameOrigin(req: Request) {
     throw new HttpError(403, "bad_origin", "Cross-site request blocked.");
 }
 
-const attempts = new Map<string, { n: number; reset: number }>();
-/** In-memory login throttle (5 tries / 10 min per key). A multi-instance deployment needs a shared store. */
-export function throttle(key: string, max = 5, windowMs = 10 * 60_000) {
-  const now = Date.now();
-  const a = attempts.get(key);
-  if (!a || a.reset < now) {
-    attempts.set(key, { n: 1, reset: now + windowMs });
-    return;
-  }
-  if (++a.n > max)
+/**
+ * Attempt limiter kept in the database so every server instance shares one count (an in-memory
+ * counter would reset on each serverless start). By default 5 tries per 10 minutes for a key.
+ */
+export async function throttle(key: string, max = 5, windowMs = 10 * 60_000) {
+  const now = new Date();
+  const count = await prisma.$transaction(async (tx) => {
+    const a = await tx.rateLimit.findUnique({ where: { key } });
+    if (!a || a.resetAt < now) {
+      await tx.rateLimit.upsert({
+        where: { key },
+        create: { key, count: 1, resetAt: new Date(now.getTime() + windowMs) },
+        update: { count: 1, resetAt: new Date(now.getTime() + windowMs) },
+      });
+      return 1;
+    }
+    return (await tx.rateLimit.update({ where: { key }, data: { count: { increment: 1 } } })).count;
+  });
+  if (count > max)
     throw new HttpError(429, "too_many_attempts", "Too many attempts. Try again later.");
 }
-export const clearThrottle = (key: string) => attempts.delete(key);
+export const clearThrottle = async (key: string) => {
+  await prisma.rateLimit.deleteMany({ where: { key } });
+};

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { HttpError, requireTenant } from "@/server/auth";
-import { prisma } from "@/server/db";
+import { like, prisma } from "@/server/db";
 import { nextInvoiceNo, rupees } from "@/server/fees";
 import { assertSameOrigin, handle } from "@/server/http";
 import { idempotent } from "@/server/idempotency";
@@ -64,7 +64,7 @@ export const GET = handle(async (req: Request) => {
   const q = sp.get("q")?.trim();
   const where = {
     tenantId,
-    ...(q ? { OR: [{ number: { contains: q } }, { student: { name: { contains: q } } }] } : {}),
+    ...(q ? { OR: [{ number: like(q) }, { student: { name: like(q) } }] } : {}),
   };
   const [rows, total] = await Promise.all([
     prisma.invoice.findMany({

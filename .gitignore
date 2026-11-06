@@ -11,3 +11,6 @@ playwright-report
 *.db
 *.db-journal
 src/generated
+
+# generated for production
+/prisma/schema.postgres.prisma

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { HttpError, requireTenant } from "@/server/auth";
-import { prisma } from "@/server/db";
+import { like, prisma } from "@/server/db";
 import { adminRow, EnquiryBody, STAGES } from "@/server/admissions";
 import { assertSameOrigin, handle } from "@/server/http";
 
@@ -16,7 +16,7 @@ export const GET = handle(async (req: Request) => {
   const where = {
     tenantId,
     ...(stage && (STAGES as readonly string[]).includes(stage) ? { stage } : {}),
-    ...(q ? { OR: [{ studentName: { contains: q } }, { guardianName: { contains: q } }] } : {}),
+    ...(q ? { OR: [{ studentName: like(q) }, { guardianName: like(q) }] } : {}),
   };
   const [rows, total, classes] = await Promise.all([
     prisma.admission.findMany({

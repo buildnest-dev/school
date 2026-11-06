@@ -19,7 +19,13 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
   if (t.status === "closed") throw new HttpError(409, "closed", "This ticket is closed.");
   const msg = await prisma.$transaction(async (tx) => {
     const m = await tx.ticketMessage.create({
-      data: { ticketId: id, authorId: user.id, fromStaff: true, internal: b.internal, body: b.body },
+      data: {
+        ticketId: id,
+        authorId: user.id,
+        fromStaff: true,
+        internal: b.internal,
+        body: b.body,
+      },
     });
     // A visible reply means the school's turn: the ticket is waiting on them.
     await tx.supportTicket.update({

@@ -13,8 +13,8 @@ const Body = z.object({ email: z.string().trim().toLowerCase().email() });
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   const { email } = Body.parse(await req.json());
-  throttle(`forgot-ip|${req.headers.get("x-forwarded-for") ?? "local"}`, 10, 10 * 60_000);
-  throttle(`forgot|${email}`, 3, 60 * 60_000);
+  await throttle(`forgot-ip|${req.headers.get("x-forwarded-for") ?? "local"}`, 10, 10 * 60_000);
+  await throttle(`forgot|${email}`, 3, 60 * 60_000);
   const user = await prisma.user.findUnique({ where: { email } });
   if (user?.active) {
     const token = await createToken(user.id, "reset", 1);

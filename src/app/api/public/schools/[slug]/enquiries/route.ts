@@ -18,7 +18,7 @@ const Body = EnquiryBody.omit({ source: true, notes: true }).extend({
 export const POST = handle(async (req: Request, ctx: { params: Promise<{ slug: string }> }) => {
   assertSameOrigin(req);
   const { slug } = await ctx.params;
-  throttle(`enq|${req.headers.get("x-forwarded-for") ?? "local"}`, 5, 10 * 60_000);
+  await throttle(`enq|${req.headers.get("x-forwarded-for") ?? "local"}`, 5, 10 * 60_000);
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) throw parsed.error;
   const { website: _hp, ...b } = parsed.data;

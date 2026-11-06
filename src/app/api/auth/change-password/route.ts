@@ -12,7 +12,7 @@ const Body = z.object({ currentPassword: z.string().min(1).max(200), newPassword
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   const { user, sessionId } = await requireAuth();
-  throttle(`chpw|${user.id}`, 5, 10 * 60_000);
+  await throttle(`chpw|${user.id}`, 5, 10 * 60_000);
   const b = Body.parse(await req.json());
   const row = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
   if (!(await bcrypt.compare(b.currentPassword, row.passwordHash)))

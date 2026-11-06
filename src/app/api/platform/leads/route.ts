@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/server/db";
+import { like, prisma } from "@/server/db";
 import { handle } from "@/server/http";
 import { requirePlatform } from "@/server/platform";
 
@@ -14,11 +14,7 @@ export const GET = handle(async (req: Request) => {
       ...(stage ? { stage } : {}),
       ...(q
         ? {
-            OR: [
-              { name: { contains: q } },
-              { email: { contains: q } },
-              { organisation: { contains: q } },
-            ],
+            OR: [{ name: like(q) }, { email: like(q) }, { organisation: like(q) }],
           }
         : {}),
     },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { HttpError, requireTenant } from "@/server/auth";
-import { prisma, tenantDb } from "@/server/db";
+import { like, prisma, tenantDb } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { sectionOr404 } from "@/server/lib";
 import {
@@ -89,7 +89,7 @@ export const GET = handle(async (req: Request) => {
   const status = sp.get("filter[status]");
 
   const where = {
-    ...(q ? { OR: [{ name: { contains: q } }, { admissionNo: { contains: q } }] } : {}),
+    ...(q ? { OR: [{ name: like(q) }, { admissionNo: like(q) }] } : {}),
     ...(status ? { status } : {}),
   };
   const db = tenantDb(tenantId);

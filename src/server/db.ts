@@ -1,5 +1,5 @@
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../generated/prisma/client";
+import { isPostgres, makeAdapter } from "./adapter";
 
 const url = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
 
@@ -7,9 +7,18 @@ const globalForDb = globalThis as unknown as { prisma?: PrismaClient };
 
 /** Shared Prisma client (one per process; reused across hot reloads in development). */
 export const prisma: PrismaClient =
-  globalForDb.prisma ?? new PrismaClient({ adapter: new PrismaBetterSqlite3({ url }) });
+  globalForDb.prisma ?? new PrismaClient({ adapter: makeAdapter(url) });
 
 if (process.env.NODE_ENV !== "production") globalForDb.prisma = prisma;
+
+/**
+ * Text search that ignores case. PostgreSQL compares exactly unless told otherwise, while SQLite
+ * already ignores case for plain letters, so the extra option is added only for PostgreSQL.
+ */
+export const like = (text: string): { contains: string } =>
+  (isPostgres(url) ? { contains: text, mode: "insensitive" } : { contains: text }) as {
+    contains: string;
+  };
 
 /**
  * Tenant isolation: every query for school data goes through this helper, which fixes `tenantId`

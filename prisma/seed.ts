@@ -2,14 +2,14 @@
  * Development seed: reference data (boards, states, districts) plus ONE fictional demo school.
  * The demo logins below are for local development only. Never run this against production.
  */
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { makeAdapter } from "../src/server/adapter";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { ALL_BOARDS } from "../src/data/boards";
 import { STATES_AND_DISTRICTS, UT_NAMES } from "../src/data/india-geo";
 
 const prisma = new PrismaClient({
-  adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./prisma/dev.db" }),
+  adapter: makeAdapter(process.env.DATABASE_URL ?? "file:./prisma/dev.db"),
 });
 
 const DEV_PASSWORD = "ChangeMe#2026";
@@ -133,15 +133,69 @@ async function demoSchool() {
       create: { email, name, passwordHash: hash, isPlatformAdmin: true, platformRole },
     });
   const catalog = [
-    ["school", "School OS", "software", "Admissions, attendance, fees, exams and parent portal for schools.", "available"],
-    ["hospital", "Hospital OS", "software", "Patient registration, OPD/IPD, laboratory, pharmacy and billing.", "coming_soon"],
-    ["business", "Business OS", "software", "Customers, inventory, billing, purchases and expenses for small businesses.", "coming_soon"],
-    ["campaign", "Campaign OS", "software", "Teams, volunteers, events, budgets and approved communications.", "coming_soon"],
-    ["social", "Social Media OS", "software", "Content calendar, approvals and publishing across brands.", "coming_soon"],
-    ["web", "Web Development", "service", "Websites built, launched and maintained by ZAQSA.", "available"],
-    ["app", "App Development", "service", "Android and iOS apps from brief to store release.", "available"],
-    ["ai", "AI Automation", "service", "Workflows and assistants that remove repetitive work.", "available"],
-    ["marketing", "Digital Marketing", "service", "Campaigns, branding and social presence.", "available"],
+    [
+      "school",
+      "School OS",
+      "software",
+      "Admissions, attendance, fees, exams and parent portal for schools.",
+      "available",
+    ],
+    [
+      "hospital",
+      "Hospital OS",
+      "software",
+      "Patient registration, OPD/IPD, laboratory, pharmacy and billing.",
+      "coming_soon",
+    ],
+    [
+      "business",
+      "Business OS",
+      "software",
+      "Customers, inventory, billing, purchases and expenses for small businesses.",
+      "coming_soon",
+    ],
+    [
+      "campaign",
+      "Campaign OS",
+      "software",
+      "Teams, volunteers, events, budgets and approved communications.",
+      "coming_soon",
+    ],
+    [
+      "social",
+      "Social Media OS",
+      "software",
+      "Content calendar, approvals and publishing across brands.",
+      "coming_soon",
+    ],
+    [
+      "web",
+      "Web Development",
+      "service",
+      "Websites built, launched and maintained by ZAQSA.",
+      "available",
+    ],
+    [
+      "app",
+      "App Development",
+      "service",
+      "Android and iOS apps from brief to store release.",
+      "available",
+    ],
+    [
+      "ai",
+      "AI Automation",
+      "service",
+      "Workflows and assistants that remove repetitive work.",
+      "available",
+    ],
+    [
+      "marketing",
+      "Digital Marketing",
+      "service",
+      "Campaigns, branding and social presence.",
+      "available",
+    ],
   ] as const;
   for (const [i, [key, name, kind, summary, status]] of catalog.entries())
     await prisma.product.upsert({

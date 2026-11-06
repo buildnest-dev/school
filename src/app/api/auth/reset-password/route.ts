@@ -15,8 +15,8 @@ const Body = z.object({ token: z.string().min(20).max(100), password: strongPass
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   // Only failed attempts count towards the limit, so ordinary successful use is never blocked.
-  const failed = () =>
-    throttle(`reset|${req.headers.get("x-forwarded-for") ?? "local"}`, 10, 10 * 60_000);
+  const failed = async () =>
+    await throttle(`reset|${req.headers.get("x-forwarded-for") ?? "local"}`, 10, 10 * 60_000);
   const { token, password } = Body.parse(await req.json());
   const bad = new HttpError(400, "bad_token", "This link is invalid or has expired.");
   const row = await prisma.passwordToken.findUnique({
@@ -24,7 +24,7 @@ export const POST = handle(async (req: Request) => {
     include: { user: true },
   });
   if (!row || row.usedAt || row.expiresAt < new Date() || !row.user.active) {
-    failed();
+    await failed();
     throw bad;
   }
   // The password must not contain a recognisable piece of the e-mail name (e.g. "anita" in anita.j@...).
@@ -34,7 +34,7 @@ export const POST = handle(async (req: Request) => {
     .split(/[^a-z0-9]+/)
     .filter((x) => x.length >= 4);
   if (pieces.some((x) => password.toLowerCase().includes(x))) {
-    failed();
+    await failed();
     throw new HttpError(422, "weak_password", "The password must not contain your e-mail name.");
   }
 

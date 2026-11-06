@@ -26,7 +26,7 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ action:
   assertSameOrigin(req);
   const { action } = await ctx.params;
   const { user } = await requireAuth();
-  throttle(`mfa|${user.id}`, 10, 10 * 60_000);
+  await throttle(`mfa|${user.id}`, 10, 10 * 60_000);
   const row = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
 
   if (action === "setup") {

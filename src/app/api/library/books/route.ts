@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { HttpError, requireTenant } from "@/server/auth";
-import { prisma } from "@/server/db";
+import { like, prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { bookFields, bookView, LIB_MANAGE, nextAccessionNo } from "@/server/library";
 
@@ -23,9 +23,9 @@ export const GET = handle(async (req: Request) => {
       ...(text
         ? {
             OR: [
-              { title: { contains: text } },
-              { author: { contains: text } },
-              { isbn: { contains: text.replace(/[\s-]/g, "") } },
+              { title: like(text) },
+              { author: like(text) },
+              { isbn: like(text.replace(/[\s-]/g, "")) },
             ],
           }
         : {}),

@@ -57,7 +57,7 @@ export async function sendMail(m: {
     await prisma.outbox.update({
       where: { id: row.id },
       data: res.ok
-        ? { status: "sent", sentAt: new Date() }
+        ? { status: "sent", sentAt: new Date(), body: "(sent; text not kept)" }
         : { status: "failed", error: `Brevo answered ${res.status}` },
     });
   } catch (e) {

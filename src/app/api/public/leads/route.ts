@@ -21,7 +21,7 @@ const Body = z.object({
  */
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
-  throttle(`lead|${req.headers.get("x-forwarded-for") ?? "local"}`, 5, 10 * 60_000);
+  await throttle(`lead|${req.headers.get("x-forwarded-for") ?? "local"}`, 5, 10 * 60_000);
   const { website: hp, ...b } = Body.parse(await req.json());
   void hp;
   if (b.productKey && !(await prisma.product.findUnique({ where: { key: b.productKey } })))

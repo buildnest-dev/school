@@ -30,7 +30,7 @@ export const GET = handle(async () => {
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   const { user, tenantId } = await school();
-  throttle(`ticket|${user.id}`, 10, 60 * 60_000);
+  await throttle(`ticket|${user.id}`, 10, 60 * 60_000);
   const b = NewTicket.parse(await req.json());
   let ticket;
   for (let attempt = 0; ; attempt++) {

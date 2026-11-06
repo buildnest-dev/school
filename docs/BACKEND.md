@@ -120,6 +120,19 @@ ZAQSA staff have a `platformRole` (null means super admin): `super_admin`, `sale
 
 Not built from the ZAQSA overview: one customer account that belongs to several organisations across products, single sign-on between product sites, per-product subscriptions and entitlements, projects and milestones for the service business, time-limited audited support access into a school, and staff invitations (team users are created by seed for now).
 
+## Deploying on Vercel with Neon (PostgreSQL)
+
+Development and the tests stay on SQLite (`prisma/schema.prisma`). Production uses the same models on PostgreSQL: `scripts/make-pg-schema.mjs` writes `prisma/schema.postgres.prisma` (git-ignored) with only the database type switched. `DATABASE_URL` picks the driver at run time (`src/server/adapter.ts`): a `postgresql://` address uses PostgreSQL, anything else the SQLite file. Text search is case-insensitive on both (`like()` in `src/server/db.ts`). The login and form attempt limits now live in the `RateLimit` table, because an in-memory counter would restart with every serverless call.
+
+Steps:
+
+1. On neon.com create a project. Copy the **pooled** connection string and the **direct** (unpooled) one.
+2. On this machine, create the tables once: set `DATABASE_URL` (pooled) and `DIRECT_URL` (direct) in `.env.local`, then run `npm run db:push:pg` and `npm run db:seed:pg` (the seed adds reference data, the demo school and the demo logins with the shared dev password, so skip the seed for a real launch and create the first platform admin yourself).
+3. In Vercel, import the repository. `vercel.json` already sets the build to `npm run build:vercel` (generates the PostgreSQL client, then builds). Add the environment variables: `DATABASE_URL` (pooled), `BANK_ENC_KEY` (a long random secret, 32+ characters; keep it, bank details cannot be read without it), `RAZORPAY_WEBHOOK_SECRET` when payments are connected, `BREVO_API_KEY`, `MAIL_FROM`, `MAIL_FROM_NAME`, `ZAQSA_BASE_DOMAIN`.
+4. Run the test suite only against a throw-away Neon database or branch: the tests create data and `npm run db:reset` is for SQLite only.
+
+Tables are created with `prisma db push`; there is no migration history yet, so schema changes on a live database need care. Not yet tested against a live PostgreSQL: only the SQLite suite and schema validation have been run.
+
 ## Not built yet
 
 - **Platform billing:** subscription invoices, payout runs and settlement reports for schools. The ledger table exists and collects online payments only.

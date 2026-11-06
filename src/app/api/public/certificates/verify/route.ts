@@ -17,7 +17,7 @@ const mask = (name: string) => {
  * for anything it cannot confirm, so it cannot be used to discover which serials exist.
  */
 export const GET = handle(async (req: Request) => {
-  throttle(`cert|${req.headers.get("x-forwarded-for") ?? "local"}`, 30, 10 * 60_000);
+  await throttle(`cert|${req.headers.get("x-forwarded-for") ?? "local"}`, 30, 10 * 60_000);
   const q = new URL(req.url).searchParams;
   const school = q.get("school")?.trim() ?? "";
   const serial = q.get("serial")?.trim() ?? "";

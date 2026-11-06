@@ -8,7 +8,11 @@ import { handle } from "@/server/http";
  * is configured, so reset links can never be read through it on a live site.
  */
 export const GET = handle(async (req: Request) => {
-  if (process.env.NODE_ENV === "production" || process.env.MAIL_PROVIDER)
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.MAIL_PROVIDER ||
+    process.env.BREVO_API_KEY
+  )
     return NextResponse.json({ code: "not_found", message: "Not found." }, { status: 404 });
   const to = new URL(req.url).searchParams.get("to")?.trim().toLowerCase();
   if (!to) return NextResponse.json({ items: [] });

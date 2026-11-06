@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createLogin, originOf } from "@/server/accounts";
 import { HttpError } from "@/server/auth";
-import { prisma } from "@/server/db";
+import { like, prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { idempotent } from "@/server/idempotency";
 import { PLANS, schoolRow, slugField, requirePlatform } from "@/server/platform";
@@ -33,7 +33,7 @@ export const GET = handle(async (req: Request) => {
   const status = sp.get("status");
   const rows = await prisma.tenant.findMany({
     where: {
-      ...(q ? { OR: [{ name: { contains: q } }, { slug: { contains: q } }] } : {}),
+      ...(q ? { OR: [{ name: like(q) }, { slug: like(q) }] } : {}),
       ...(status ? { status } : {}),
     },
     orderBy: { createdAt: "desc" },

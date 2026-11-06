@@ -914,3 +914,9 @@ model TicketMessage {
 
   @@index([ticketId])
 }
+
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+}
