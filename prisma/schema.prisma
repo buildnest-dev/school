@@ -66,6 +66,7 @@ model Tenant {
   guardians  Guardian[]
   staff      Staff[]
   bellSlots  BellSlot[]
+  homework   Homework[]
   periods    Period[]
   subjects   Subject[]
   feeHeads   FeeHead[]
@@ -179,6 +180,7 @@ model Section {
   students       Student[]
   attendance     Attendance[]
   periods        Period[]
+  homework       Homework[]
 
   @@unique([classId, name])
   @@index([tenantId])
@@ -194,6 +196,7 @@ model Subject {
   class    ClassLevel @relation(fields: [classId], references: [id], onDelete: Cascade)
   marks    Mark[]
   periods  Period[]
+  homework Homework[]
 
   @@unique([classId, name])
   @@index([tenantId])
@@ -202,7 +205,7 @@ model Subject {
 // ---------- People ----------
 
 model Student {
-  id           String       @id @default(cuid())
+  id           String           @id @default(cuid())
   tenantId     String
   admissionNo  String
   name         String
@@ -220,13 +223,14 @@ model Student {
   stateId      String?
   districtId   String?
   address      String?
-  status       String       @default("active") // active | alumni | transferred
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  section      Section?     @relation(fields: [sectionId], references: [id])
-  guardian     Guardian?    @relation(fields: [guardianId], references: [id])
+  status       String           @default("active") // active | alumni | transferred
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  section      Section?         @relation(fields: [sectionId], references: [id])
+  guardian     Guardian?        @relation(fields: [guardianId], references: [id])
   attendance   Attendance[]
   marks        Mark[]
   invoices     Invoice[]
+  homeworkRows HomeworkStatus[]
 
   @@unique([tenantId, admissionNo])
   @@index([tenantId, sectionId])
@@ -475,4 +479,42 @@ model Admission {
   tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, stage])
+}
+
+// ---------- Homework ----------
+
+model Homework {
+  id          String           @id @default(cuid())
+  tenantId    String
+  sectionId   String
+  subjectId   String
+  title       String
+  description String
+  assignedOn  DateTime
+  dueOn       DateTime
+  status      String // draft | published | withdrawn
+  createdById String // User.id of the author
+  authorName  String
+  createdAt   DateTime         @default(now())
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  section     Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  subject     Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  rows        HomeworkStatus[]
+
+  @@index([tenantId, sectionId, dueOn])
+}
+
+// Per-student completion, recorded by the teacher. A student with no row is "pending".
+model HomeworkStatus {
+  id         String   @id @default(cuid())
+  tenantId   String
+  homeworkId String
+  studentId  String
+  status     String // done | missing | excused
+  note       String?
+  homework   Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([homeworkId, studentId])
+  @@index([tenantId])
 }

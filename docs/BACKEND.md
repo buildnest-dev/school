@@ -60,13 +60,16 @@ Shared database, shared schema. Every school-owned table has `tenantId`. The ten
 | GET/PUT   | `/api/timetable/sections/:sectionId`       | read: staff, parent of a child in that class; write: owner, principal (replaces the week atomically) |
 | GET       | `/api/timetable/staff/:staffId`            | owner, principal; a teacher only their own week                       |
 | PUT       | `/api/sections/:sectionId/class-teacher`   | owner, principal (active teacher of the same school, or null)         |
+| GET/POST  | `/api/homework`                            | staff (drafts only to author/principal); parents see published homework of their children with each child's status; create: owner, principal, or a teacher who teaches that subject in that class (per timetable) or is its class teacher |
+| GET/PATCH | `/api/homework/:id`                        | detail with roster and totals; edit/publish/withdraw: author or principal (due date never into the past; withdrawn is final) |
+| PUT       | `/api/homework/:id/completion`             | done / missing / excused / pending per student (published homework only, same teacher rule) |
 | GET/POST  | `/api/notices`                             | read: signed in; create: owner, principal                             |
 
 ## Not built yet
 
-Homework, library, transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes (currently any teacher in the school can mark any class).
+Library, transport, certificates, academic-year rollover, platform-admin tenant management, password reset, email/SMS, file uploads, payment gateway, and restricting a teacher to only their own classes for attendance and marks (currently any teacher can mark any class; homework already follows the timetable rule).
 
-Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
+Homework has no file attachments or student submissions yet (no upload storage); due dates are IST days. Timetable: a teacher cannot be in two classes at once (database unique index plus a pre-check that names the clashing class); a refused save changes nothing. Staff logins are not created by the staff API yet (the seeded teacher and accountant are linked by hand).
 
 Report cards count only submitted mark sheets; a subject below the exam pass mark fails the exam; ranks share on ties; results stay hidden from parents until published. Student-role logins are not possible yet (Student has no user link).
 
