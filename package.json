@@ -14,7 +14,7 @@
     "docs:inventory": "node scripts/gen-screen-inventory.mjs",
     "db:reset": "node scripts/db-reset.mjs",
     "test:api": "npm run db:reset && playwright test e2e/api.spec.ts e2e/api-students.spec.ts --project=chromium --workers=1",
-    "build:vercel": "node scripts/make-pg-schema.mjs && prisma generate --schema prisma/schema.postgres.prisma && next build",
+    "build:vercel": "node scripts/vercel-build.mjs",
     "db:setup:prod": "tsx prisma/production-setup.ts",
     "db:push:pg": "node scripts/make-pg-schema.mjs && prisma db push --schema prisma/schema.postgres.prisma",
     "db:seed:pg": "tsx prisma/seed.ts"
