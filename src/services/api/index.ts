@@ -32,9 +32,19 @@ const CERT_TYPE: Record<string, string> = {
  * enquiries and campuses already match).
  */
 const ADAPT: Partial<
-  Record<ResourceKey, { path?: string; keep?: (r: Raw) => boolean; row: (r: Raw) => unknown }>
+  Record<
+    ResourceKey,
+    {
+      path?: string;
+      keep?: (r: Raw) => boolean;
+      /** Turns the table's filters into the query this endpoint understands (default: filter[name]). */
+      query?: (f: Record<string, string>) => Record<string, string>;
+      row: (r: Raw) => unknown;
+    }
+  >
 > = {
   staff: {
+    query: (f): Record<string, string> => (f.status ? { status: f.status } : {}),
     row: (r) => ({
       id: r.id,
       name: r.name,
@@ -56,6 +66,9 @@ const ADAPT: Partial<
     }),
   },
   loans: {
+    query: (f): Record<string, string> => ({
+      ...(f.status ? { status: f.status === "issued" ? "open" : f.status } : {}),
+    }),
     row: (r) => ({
       id: r.id,
       book: r.title,
@@ -96,6 +109,10 @@ const ADAPT: Partial<
   },
   certificateRequests: {
     path: "/certificates",
+    query: (f) => ({
+      ...(f.status ? { status: f.status === "pending" ? "requested" : f.status } : {}),
+      ...(f.type ? { type: f.type.toLowerCase() } : {}),
+    }),
     row: (r) => ({
       id: r.id,
       type: CERT_TYPE[str(r.type)] ?? str(r.type),
@@ -110,6 +127,7 @@ const ADAPT: Partial<
   issueRegister: {
     path: "/certificates",
     keep: (r) => r.status === "issued" || r.status === "cancelled",
+    query: (f): Record<string, string> => (f.status ? { status: f.status } : {}),
     row: (r) => ({
       id: r.id,
       certNo: str(r.serialNo),
@@ -135,9 +153,11 @@ function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]>
           pageSize: p.pageSize,
           sort: p.sort,
           order: p.order,
-          ...Object.fromEntries(
-            Object.entries(p.filters ?? {}).map(([k, v]) => [`filter[${k}]`, v]),
-          ),
+          ...(a?.query
+            ? a.query(p.filters ?? {})
+            : Object.fromEntries(
+                Object.entries(p.filters ?? {}).map(([k, v]) => [`filter[${k}]`, v]),
+              )),
         },
       });
       const rows = a?.keep ? page.items.filter(a.keep) : page.items;

@@ -6,13 +6,15 @@ import { assertSameOrigin, handle } from "@/server/http";
 
 const STAFF = ["school_owner", "principal", "teacher", "accountant"];
 
-export const GET = handle(async () => {
+export const GET = handle(async (req: Request) => {
   const { tenantId, user } = await requireTenant();
+  const wanted = new URL(req.url).searchParams.get("filter[status]");
   const all = await tenantDb(tenantId).notices.list();
   // Staff see drafts; everyone else only sees published notices.
   const staff = STAFF.includes(user.role);
   const items = all
     .filter((n) => staff || n.status === "published")
+    .filter((n) => !wanted || n.status === wanted)
     .map((n) => ({
       id: n.id,
       title: n.title,

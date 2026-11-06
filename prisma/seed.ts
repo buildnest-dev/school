@@ -210,12 +210,18 @@ async function demoSchool() {
       create: { key, name, kind, summary, status, position: i },
     });
 
+  const campus =
+    (await prisma.campus.findFirst({ where: { tenantId: tenant.id } })) ??
+    (await prisma.campus.create({
+      data: { tenantId: tenant.id, name: "Main campus", address: "Demo address, Kolkata" },
+    }));
+
   const sections: string[] = [];
   for (const [i, [name, stage]] of CLASSES.entries()) {
     const c = await prisma.classLevel.upsert({
       where: { tenantId_name: { tenantId: tenant.id, name } },
       update: {},
-      create: { tenantId: tenant.id, name, stage, position: i },
+      create: { tenantId: tenant.id, name, stage, position: i, campusId: campus.id },
     });
     for (const sec of ["A", "B"]) {
       const s = await prisma.section.upsert({

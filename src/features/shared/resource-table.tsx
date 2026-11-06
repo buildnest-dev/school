@@ -8,10 +8,12 @@ import { PageHeader } from "@/components/shared/blocks";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { env } from "@/config/env";
 import { useServices } from "@/hooks/use-services";
 import { useSession } from "@/hooks/use-session";
 import type { ResourceKey } from "@/services/types";
 import type { Role } from "@/types";
+import { CertificateActions } from "../school/certificate-actions";
 import { fmtDate, prettyKey, rupees } from "./format";
 import type { ScreenProps } from "./planned-screen";
 
@@ -26,6 +28,8 @@ export interface TableConfig {
   rowHref?: (row: any) => string;
   actions?: (role: Role) => ReactNode;
   emptyHint?: string;
+  /** Buttons under the details dialog; call done() after a change to reload the table. */
+  detailActions?: (row: Record<string, unknown>, done: () => void) => ReactNode;
   initialSort?: { key: string; order: "asc" | "desc" };
 }
 
@@ -140,21 +144,24 @@ export const TABLES: Record<string, TableConfig> = {
       { key: "target", header: "On" },
       { key: "area", header: "Area", hideOnMobile: true },
     ],
-    filters: [
-      {
-        key: "area",
-        label: "Area",
-        options: opts(
-          "notices",
-          "fees",
-          "attendance",
-          "platform",
-          "certificates",
-          "settings",
-          "rollover",
-        ),
-      },
-    ],
+    filters:
+      env.dataSource === "api"
+        ? undefined
+        : [
+            {
+              key: "area",
+              label: "Area",
+              options: opts(
+                "notices",
+                "fees",
+                "attendance",
+                "platform",
+                "certificates",
+                "settings",
+                "rollover",
+              ),
+            },
+          ],
   },
   "school-audit": {
     resource: "audit",
@@ -195,7 +202,9 @@ export const TABLES: Record<string, TableConfig> = {
     ],
     filters: [
       { key: "status", label: "Status", options: opts("active", "pending", "transferred") },
-      { key: "feeStatus", label: "Fees", options: opts("paid", "partial", "overdue") },
+      ...(env.dataSource === "api"
+        ? []
+        : [{ key: "feeStatus", label: "Fees", options: opts("paid", "partial", "overdue") }]),
     ],
   },
   "school-admissions": {
@@ -334,6 +343,7 @@ export const TABLES: Record<string, TableConfig> = {
   "school-certificates": {
     resource: "certificateRequests",
     searchPlaceholder: "Search requests",
+    detailActions: (row, done) => <CertificateActions row={row} onDone={done} />,
     actions: (role) =>
       SCHOOL_ADMIN.includes(role) ? (
         <Button asChild>
@@ -364,6 +374,7 @@ export const TABLES: Record<string, TableConfig> = {
   "school-certificate-register": {
     resource: "issueRegister",
     searchPlaceholder: "Search the register",
+    detailActions: (row, done) => <CertificateActions row={row} onDone={done} />,
     columns: [
       { key: "certNo", header: "Certificate no.", sortable: true },
       { key: "type", header: "Type" },
@@ -448,6 +459,7 @@ export function ResourceTableScreen({ screen }: ScreenProps) {
   const { user } = useSession();
   const router = useRouter();
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   if (!cfg || !user) return null;
   const svc = services.resource(cfg.resource);
   return (
@@ -464,6 +476,7 @@ export function ResourceTableScreen({ screen }: ScreenProps) {
         searchPlaceholder={cfg.searchPlaceholder}
         emptyHint={cfg.emptyHint}
         initialSort={cfg.initialSort}
+        reloadKey={reloadKey}
         load={(p) => svc.list({ ...p, filters: { ...p.filters, ...cfg.fixedFilters } })}
         onRowClick={(row) =>
           cfg.rowHref
@@ -489,6 +502,12 @@ export function ResourceTableScreen({ screen }: ScreenProps) {
                 ))
             : null}
         </dl>
+        {detail
+          ? cfg.detailActions?.(detail, () => {
+              setDetail(null);
+              setReloadKey((k) => k + 1);
+            })
+          : null}
       </Dialog>
     </>
   );

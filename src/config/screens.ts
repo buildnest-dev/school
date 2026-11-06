@@ -381,10 +381,11 @@ export const SCREENS: readonly ScreenDef[] = [
     id: "school-refunds",
     area: "school",
     path: "fees/refunds",
-    title: "Refunds & reconciliation",
-    description: "Refund workflow and payment reconciliation.",
+    title: "Refunds",
+    description: "Refund requests and their approval.",
     roles: [...SCHOOL_ADMIN, "accountant"],
-    status: "planned",
+    nav: { group: "Finance", icon: "book", order: 5 },
+    status: "implemented",
     features: ["10"],
   }),
 
@@ -929,6 +930,8 @@ export const NO_BACKEND_YET: ReadonlySet<string> = new Set([
   "school-vendors",
   "school-exams",
   "school-rollover",
+  "school-results",
+  "school-reports",
 ]);
 
 export const AREA_ROOT: Record<Area, string> = {

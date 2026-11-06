@@ -24,6 +24,7 @@ import {
   ResultsOverview,
   StudentDetail,
 } from "./school/operations";
+import { Refunds } from "./school/refunds";
 import { Rollover } from "./school/rollover";
 import { Settings } from "./school/settings";
 import { ResourceTableScreen, TABLES } from "./shared/resource-table";
@@ -58,6 +59,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-results": plain(ResultsOverview),
   "school-fees": plain(FeesOverview),
   "school-fee-ledger": plain(FeeLedger),
+  "school-refunds": plain(Refunds),
   "school-notice-new": plain(NoticeNew),
   "school-certificate-new": plain(CertificateNew),
   "school-certificate-verify": plain(CertificateVerify),

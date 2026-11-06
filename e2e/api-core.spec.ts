@@ -90,20 +90,24 @@ test("only the right ZAQSA roles see and work leads", async () => {
   expect(
     (await sales.patch(`/api/platform/leads/${leadId}`, { data: { stage: "bogus" } })).status(),
   ).toBe(422);
-  expect((await support.patch(`/api/platform/leads/${leadId}`, { data: { stage: "won" } })).status()).toBe(
-    403,
-  );
+  expect(
+    (await support.patch(`/api/platform/leads/${leadId}`, { data: { stage: "won" } })).status(),
+  ).toBe(403);
 });
 
 test("a product manager edits the catalog; others cannot", async () => {
   expect(
-    (await sales.patch("/api/platform/products/hospital", { data: { name: "X Hospital" } })).status(),
+    (
+      await sales.patch("/api/platform/products/hospital", { data: { name: "X Hospital" } })
+    ).status(),
   ).toBe(403);
   const ok = await product.patch("/api/platform/products/business", {
     data: { summary: "Billing, stock and expenses for shops and agencies." },
   });
   expect(ok.status()).toBe(200);
-  expect((await product.patch("/api/platform/products/nope", { data: { name: "Nope" } })).status()).toBe(404);
+  expect(
+    (await product.patch("/api/platform/products/nope", { data: { name: "Nope" } })).status(),
+  ).toBe(404);
 });
 
 test("activation needs verification and approval, and cannot skip steps", async () => {
@@ -120,7 +124,11 @@ test("activation needs verification and approval, and cannot skip steps", async 
   expect(
     (
       await sales.post("/api/platform/provisioning-requests", {
-        data: { productKey: "hospital", organisation: "City Hospital", contactEmail: "a@b.example" },
+        data: {
+          productKey: "hospital",
+          organisation: "City Hospital",
+          contactEmail: "a@b.example",
+        },
       })
     ).status(),
   ).toBe(422); // coming soon, not sellable yet
@@ -228,13 +236,42 @@ test("school staff open tickets and the support desk answers", async () => {
       })
     ).status(),
   ).toBe(201);
-  expect((await (await support.get(`/api/platform/tickets/${ticketId}`)).json()).status).toBe("open");
+  expect((await (await support.get(`/api/platform/tickets/${ticketId}`)).json()).status).toBe(
+    "open",
+  );
   expect(
-    (await support.patch(`/api/platform/tickets/${ticketId}`, { data: { status: "closed" } })).status(),
+    (
+      await support.patch(`/api/platform/tickets/${ticketId}`, { data: { status: "closed" } })
+    ).status(),
   ).toBe(200);
   expect(
     (
       await teacher.post(`/api/support/tickets/${ticketId}/messages`, { data: { body: "More." } })
     ).status(),
   ).toBe(409);
+});
+
+test("school screens: ledger adds up, other schools and parents are kept out, dashboard is role-shaped", async () => {
+  const stu = await (await principal.get("/api/students?pageSize=1")).json();
+  const id = stu.items[0].id as string;
+  const res = await principal.get(`/api/students/${id}/ledger`);
+  expect(res.status()).toBe(200);
+  const rows = (await res.json()) as { debit: number; credit: number; balance: number }[];
+  expect(rows.length).toBeGreaterThan(0);
+  const net = rows.reduce((s, r) => s + r.debit - r.credit, 0);
+  expect(rows[rows.length - 1].balance).toBeCloseTo(net, 2);
+
+  expect((await parent.get(`/api/students/${id}/ledger`)).status()).toBe(403);
+  expect((await other.get(`/api/students/${id}/ledger`)).status()).toBe(404);
+
+  const home = await (await principal.get("/api/dashboards/school")).json();
+  expect(home.stats.map((s: { label: string }) => s.label)).toContain("Students");
+  expect((await teacher.get("/api/dashboards/school")).status()).toBe(403);
+
+  const camps = await (await principal.get("/api/campuses")).json();
+  expect(camps.items.length).toBeGreaterThan(0);
+  expect((await parent.get("/api/campuses")).status()).toBe(403);
+
+  const drafts = await (await principal.get("/api/notices?filter[status]=draft")).json();
+  expect(drafts.items.every((n: { status: string }) => n.status === "draft")).toBe(true);
 });
