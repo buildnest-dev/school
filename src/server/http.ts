@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { HttpError } from "./auth";
+import { requestContext } from "./context";
 
 /** Wraps a route handler: maps HttpError / validation errors to the ApiErrorBody shape the frontend expects. */
 export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response>) {
   return async (...args: A): Promise<Response> => {
     try {
-      return await fn(...args);
+      const first = args[0];
+      const method = first instanceof Request ? first.method : "GET";
+      return await requestContext.run({ method }, () => fn(...args));
     } catch (e) {
       if (e instanceof HttpError)
         return NextResponse.json({ code: e.code, message: e.message }, { status: e.status });

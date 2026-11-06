@@ -50,6 +50,11 @@ export const loginRoles = [
   "accountant",
   "librarian",
   "transport",
+  "vice_principal",
+  "admission_officer",
+  "hr",
+  "reception",
+  "school_owner",
   "parent",
   "student",
 ] as const;

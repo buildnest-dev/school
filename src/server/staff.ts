@@ -8,6 +8,10 @@ export const STAFF_ROLES = [
   "accountant",
   "admin",
   "librarian",
+  "vice_principal",
+  "admission_officer",
+  "hr",
+  "reception",
   "driver",
   "other",
 ] as const;

@@ -1,7 +1,58 @@
 import { NextResponse } from "next/server";
-import { requireTenant } from "@/server/auth";
+import { z } from "zod";
+import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
-import { handle } from "@/server/http";
+import { nextInvoiceNo, rupees } from "@/server/fees";
+import { assertSameOrigin, handle } from "@/server/http";
+
+const CreateBody = z.object({
+  studentId: z.string().min(1),
+  title: z.string().trim().min(2).max(80),
+  amount: rupees,
+  dueOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use the format YYYY-MM-DD"),
+});
+
+/** POST: raises one invoice for a student in the current academic year. */
+export const POST = handle(async (req: Request) => {
+  assertSameOrigin(req);
+  const { tenantId, user } = await requireTenant(["school_owner", "principal", "accountant"]);
+  const b = CreateBody.parse(await req.json());
+  if (Number.isNaN(Date.parse(b.dueOn)))
+    throw new HttpError(422, "bad_date", "That date does not exist.");
+  const student = await prisma.student.findFirst({
+    where: { id: b.studentId, tenantId, status: "active" },
+  });
+  if (!student) throw new HttpError(404, "not_found", "Active student not found.");
+  const year = await prisma.academicYear.findFirst({ where: { tenantId, current: true } });
+  if (!year) throw new HttpError(409, "no_year", "Set the current academic year first.");
+  const inv = await prisma.$transaction(async (tx) => {
+    const i = await tx.invoice.create({
+      data: {
+        tenantId,
+        yearId: year.id,
+        studentId: student.id,
+        number: await nextInvoiceNo(tx, tenantId),
+        title: b.title,
+        amountPaise: b.amount,
+        dueOn: new Date(`${b.dueOn}T00:00:00Z`),
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        action: "invoice.create",
+        entity: "invoice",
+        entityId: i.id,
+      },
+    });
+    return i;
+  });
+  return NextResponse.json(
+    { ok: true, mode: "api", id: inv.id, number: inv.number },
+    { status: 201 },
+  );
+});
 
 /** Amounts are stored in paise; the API returns rupees (the shape the frontend already uses). */
 export const GET = handle(async (req: Request) => {

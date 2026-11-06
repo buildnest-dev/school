@@ -43,19 +43,25 @@ model District {
 // ---------- Tenancy ----------
 
 model Tenant {
-  id         String   @id @default(cuid())
-  slug       String   @unique
-  name       String
-  status     String   @default("active") // trial | active | suspended
-  plan       String   @default("trial")
-  udiseCode  String? // optional UDISE+ school code
-  phone      String?
-  email      String?
-  address    String?
-  stateId    String?
-  districtId String?
-  timezone   String   @default("Asia/Kolkata")
-  createdAt  DateTime @default(now())
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  status       String    @default("provisioned") // provisioned | live | suspended
+  plan         String    @default("trial")
+  planPeriod   String    @default("monthly") // monthly | yearly
+  /// trial | active | past_due | restricted | cancelled. Derived from periodEnd + graceDays when active.
+  subscription String    @default("trial")
+  periodEnd    DateTime? // end of the paid (or trial) period
+  graceDays    Int       @default(7)
+  wentLiveAt   DateTime?
+  udiseCode    String? // optional UDISE+ school code
+  phone        String?
+  email        String?
+  address      String?
+  stateId      String?
+  districtId   String?
+  timezone     String    @default("Asia/Kolkata")
+  createdAt    DateTime  @default(now())
 
   boards       TenantBoard[]
   campuses     Campus[]
@@ -75,6 +81,7 @@ model Tenant {
   periods      Period[]
   subjects     Subject[]
   feeHeads     FeeHead[]
+  bank         TenantBank?
   invoices     Invoice[]
   notices      Notice[]
   exams        Exam[]
@@ -211,36 +218,37 @@ model Subject {
 // ---------- People ----------
 
 model Student {
-  id           String            @id @default(cuid())
-  tenantId     String
-  admissionNo  String
-  name         String
-  dob          DateTime?
-  gender       String?
-  sectionId    String?
-  guardianId   String?
-  bloodGroup   String?
-  category     String? // General | OBC | SC | ST | EWS (as declared)
-  motherTongue String?
-  religion     String?
-  aadhaarLast4 String? // never store the full Aadhaar number
-  penNumber    String? // Permanent Education Number
-  apaarId      String?
-  stateId      String?
-  districtId   String?
-  address      String?
-  status       String            @default("active") // active | alumni | transferred
-  userId       String? // login of the student, when they have one
-  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  section      Section?          @relation(fields: [sectionId], references: [id])
-  guardian     Guardian?         @relation(fields: [guardianId], references: [id])
-  attendance   Attendance[]
-  marks        Mark[]
-  invoices     Invoice[]
-  homeworkRows HomeworkStatus[]
-  loans        Loan[]
-  transport    StudentTransport?
-  certificates Certificate[]
+  id            String            @id @default(cuid())
+  tenantId      String
+  admissionNo   String
+  name          String
+  dob           DateTime?
+  gender        String?
+  sectionId     String?
+  guardianId    String?
+  bloodGroup    String?
+  category      String? // General | OBC | SC | ST | EWS (as declared)
+  motherTongue  String?
+  religion      String?
+  aadhaarLast4  String? // never store the full Aadhaar number
+  penNumber     String? // Permanent Education Number
+  apaarId       String?
+  stateId       String?
+  districtId    String?
+  address       String?
+  status        String            @default("active") // active | alumni | transferred
+  userId        String? // login of the student, when they have one
+  importBatchId String? // set when the student came from a bulk import (allows undo)
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  section       Section?          @relation(fields: [sectionId], references: [id])
+  guardian      Guardian?         @relation(fields: [guardianId], references: [id])
+  attendance    Attendance[]
+  marks         Mark[]
+  invoices      Invoice[]
+  homeworkRows  HomeworkStatus[]
+  loans         Loan[]
+  transport     StudentTransport?
+  certificates  Certificate[]
 
   @@unique([tenantId, admissionNo])
   @@index([tenantId, sectionId])
@@ -366,18 +374,20 @@ model MarkSheet {
 }
 
 model Exam {
-  id          String       @id @default(cuid())
-  tenantId    String
-  yearId      String
-  name        String // Term 1, Unit Test 2, Half-yearly ...
-  maxMarks    Int          @default(100)
-  passPercent Int          @default(33)
-  published   Boolean      @default(false) // results are visible to parents/students only once published
-  publishedAt DateTime?
-  boardId     String? // grading scale to apply; null = tenant default board
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  year        AcademicYear @relation(fields: [yearId], references: [id])
-  marks       Mark[]
+  id           String       @id @default(cuid())
+  tenantId     String
+  yearId       String
+  name         String // Term 1, Unit Test 2, Half-yearly ...
+  maxMarks     Int          @default(100)
+  passPercent  Int          @default(33)
+  approvedAt   DateTime? // a principal must approve the marks before they can be published
+  approvedById String?
+  published    Boolean      @default(false) // results are visible to parents/students only once published
+  publishedAt  DateTime?
+  boardId      String? // grading scale to apply; null = tenant default board
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  year         AcademicYear @relation(fields: [yearId], references: [id])
+  marks        Mark[]
 
   @@index([tenantId])
 }
@@ -429,14 +439,15 @@ model Invoice {
 }
 
 model Payment {
-  id          String   @id @default(cuid())
-  tenantId    String
-  invoiceId   String
-  amountPaise Int
-  mode        String // cash | upi | cheque | dd | netbanking | card
-  reference   String? // UPI txn id, cheque no. ...
-  paidOn      DateTime @default(now())
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  tenantId         String
+  invoiceId        String
+  amountPaise      Int
+  mode             String // cash | upi | cheque | dd | netbanking | card
+  reference        String? // UPI txn id, cheque no. ...
+  gatewayPaymentId String?  @unique // set when the payment came from a verified gateway callback
+  paidOn           DateTime @default(now())
+  invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, invoiceId])
 }
@@ -697,4 +708,71 @@ model Outbox {
   createdAt DateTime @default(now())
 
   @@index([toEmail])
+}
+
+// ---------- Platform: bank details, imports, online payments, ledger ----------
+
+/// Where ZAQSA pays the school out. The account number is stored encrypted (see src/server/secret.ts).
+model TenantBank {
+  tenantId      String   @id
+  holderName    String
+  bankName      String
+  ifsc          String
+  accountLast4  String
+  accountCipher String // AES-256-GCM: iv.tag.ciphertext (base64url)
+  updatedAt     DateTime @updatedAt
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+/// A bulk import. Rows are checked first (status preview), then committed, and can be undone.
+model ImportBatch {
+  id         String   @id @default(cuid())
+  tenantId   String
+  kind       String // students
+  status     String   @default("preview") // preview | committed | undone
+  rowsJson   String // valid rows, ready to commit
+  errorsJson String // rows that failed validation
+  createdBy  String
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+/// One attempt by a parent to pay an invoice online. Only a verified gateway callback marks it paid.
+model PaymentAttempt {
+  id             String   @id @default(cuid())
+  tenantId       String
+  invoiceId      String
+  amountPaise    Int
+  gateway        String // razorpay | stub
+  gatewayOrderId String   @unique
+  status         String   @default("created") // created | paid | failed
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId, invoiceId])
+}
+
+/// Each gateway callback is stored once (by its event id) so a retried callback cannot post twice.
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  gateway    String
+  eventId    String
+  type       String
+  receivedAt DateTime @default(now())
+
+  @@unique([gateway, eventId])
+}
+
+/// Money movements per school, separate from gateway records. Positive = collected for the school.
+model LedgerEntry {
+  id             String   @id @default(cuid())
+  tenantId       String
+  kind           String // fee_collected | gateway_fee | refund | payout
+  amountPaise    Int
+  refType        String
+  refId          String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId, createdAt])
 }

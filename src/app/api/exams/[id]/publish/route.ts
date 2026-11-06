@@ -13,13 +13,19 @@ const Body = z.object({ published: z.boolean() });
  */
 export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
   assertSameOrigin(req);
-  const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
+  const { tenantId, user } = await requireTenant(["school_owner", "principal", "vice_principal"]);
   const { id } = await ctx.params;
   const { published } = Body.parse(await req.json());
   const exam = await prisma.exam.findFirst({ where: { id, tenantId } });
   if (!exam) throw new HttpError(404, "not_found", "Exam not found.");
 
   if (published) {
+    if (!exam.approvedAt)
+      throw new HttpError(
+        409,
+        "not_approved",
+        "The marks must be approved before the results can be published.",
+      );
     const sections = await prisma.section.findMany({
       where: { tenantId, students: { some: { status: "active" } } },
       select: { id: true, name: true, class: { select: { id: true, name: true } } },

@@ -4,7 +4,13 @@ import { tenantDb } from "@/server/db";
 import { handle } from "@/server/http";
 
 export const GET = handle(async () => {
-  const { tenantId } = await requireTenant(["school_owner", "principal", "teacher", "accountant"]);
+  const { tenantId } = await requireTenant([
+    "school_owner",
+    "principal",
+    "vice_principal",
+    "teacher",
+    "accountant",
+  ]);
   const classes = await tenantDb(tenantId).classes.list();
   return NextResponse.json(
     classes.map((c) => ({

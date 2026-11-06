@@ -6,7 +6,12 @@ import { sectionResults } from "@/server/reportcards";
 
 /** Class result sheet for one exam: every student's total, percentage, grade, result and rank. Staff only. */
 export const GET = handle(async (req: Request, ctx: { params: Promise<{ sectionId: string }> }) => {
-  const { tenantId } = await requireTenant(["school_owner", "principal", "teacher"]);
+  const { tenantId } = await requireTenant([
+    "school_owner",
+    "principal",
+    "vice_principal",
+    "teacher",
+  ]);
   const { sectionId } = await ctx.params;
   const examId =
     new URL(req.url).searchParams.get("examId") ??

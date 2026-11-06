@@ -2,7 +2,9 @@ import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import type { Role, SessionUser } from "@/types";
+import { isWrite } from "./context";
 import { prisma } from "./db";
+import { effectiveSubscription, isReadOnly } from "./subscription";
 
 const COOKIE = "sid";
 const TTL_MS = 1000 * 60 * 60 * 12; // 12 hours
@@ -12,6 +14,7 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 export interface Auth {
   user: SessionUser;
   sessionId: string;
+  tenant?: { status: string; subscription: string };
 }
 
 /** Constant-ish time: compare against a dummy hash when the user is unknown so timing does not reveal accounts. */
@@ -30,7 +33,12 @@ export async function login(email: string, password: string, tenantSlug?: string
     const m =
       (tenantSlug ? user.memberships.find((x) => x.tenant.slug === tenantSlug) : undefined) ??
       user.memberships[0];
-    if (!m || m.tenant.status === "suspended") return null;
+    if (!m) return null;
+    const family = m.role === "parent" || m.role === "student";
+    // Suspended: staff are locked out, families can still read their records.
+    if (m.tenant.status === "suspended" && !family) return null;
+    // Provisioned: the school is still being set up, so families cannot sign in yet.
+    if (m.tenant.status === "provisioned" && family) return null;
     tenantId = m.tenantId;
   }
 
@@ -91,8 +99,14 @@ export async function getAuth(): Promise<Auth | null> {
   });
   if (!m) return null;
   const role = m.role as Role;
+  // A suspended school's staff are signed out at once; families can still read their records.
+  if (m.tenant.status === "suspended" && role !== "parent" && role !== "student") return null;
   return {
     sessionId: s.id,
+    tenant: {
+      status: m.tenant.status,
+      subscription: effectiveSubscription(m.tenant),
+    },
     user: {
       id: s.user.id,
       name: s.user.name,
@@ -128,5 +142,18 @@ export async function requireTenant(roles?: Role[]) {
   const a = await requireAuth(roles);
   if (!a.user.tenantId)
     throw new HttpError(403, "forbidden", "This action needs a school account.");
+  // Changes are blocked while a school is suspended or its subscription has lapsed; reading stays open.
+  if (isWrite() && a.tenant) {
+    if (a.tenant.status === "suspended")
+      throw new HttpError(403, "school_suspended", "This school's account is suspended.");
+    const family = a.user.role === "parent" || a.user.role === "student";
+    // Families keep working (for example paying fees) even when the school's own plan has lapsed.
+    if (!family && isReadOnly(a.tenant.subscription as Parameters<typeof isReadOnly>[0]))
+      throw new HttpError(
+        403,
+        "read_only",
+        "This school's subscription has lapsed. Records can be viewed and exported, but not changed.",
+      );
+  }
   return { ...a, tenantId: a.user.tenantId };
 }

@@ -42,7 +42,7 @@ const Body = z.object({
  */
 export const PUT = handle(async (req: Request) => {
   assertSameOrigin(req);
-  const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
+  const { tenantId, user } = await requireTenant(["school_owner", "principal", "vice_principal"]);
   const { slots } = Body.parse(await req.json());
   const sorted = [...slots].sort((a, b) => a.slot - b.slot);
   if (new Set(slots.map((s) => s.slot)).size !== slots.length)

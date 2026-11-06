@@ -6,7 +6,7 @@ import { assertSameOrigin, handle } from "@/server/http";
 
 export const GET = handle(async () => {
   const { tenantId, user } = await requireTenant();
-  const staff = ["school_owner", "principal", "teacher"].includes(user.role);
+  const staff = ["school_owner", "principal", "vice_principal", "teacher"].includes(user.role);
   const exams = await prisma.exam.findMany({
     where: { tenantId, ...(staff ? {} : { published: true }) },
     orderBy: { name: "asc" },
@@ -35,7 +35,7 @@ const Body = z.object({
 
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
-  const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
+  const { tenantId, user } = await requireTenant(["school_owner", "principal", "vice_principal"]);
   const b = Body.parse(await req.json());
   const year = await prisma.academicYear.findFirst({ where: { tenantId, current: true } });
   if (!year) throw new HttpError(409, "no_year", "Set the current academic year first.");

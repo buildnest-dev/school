@@ -82,6 +82,13 @@ export const PUT = handle(async (req: Request, ctx: Ctx) => {
       "Enter marks (or 0) for every student before submitting.",
     );
 
+  if (exam.published)
+    throw new HttpError(
+      409,
+      "published",
+      "Results are published. Hide them before changing marks.",
+    );
+
   const where = {
     examId_sectionId_subjectId: { examId: exam.id, sectionId: classId, subjectId: subject.id },
   };
@@ -114,6 +121,8 @@ export const PUT = handle(async (req: Request, ctx: Ctx) => {
         status: body.submit ? "submitted" : "draft",
       },
     }),
+    // Any change withdraws an earlier approval, so approved marks are always the ones published.
+    prisma.exam.update({ where: { id: exam.id }, data: { approvedAt: null, approvedById: null } }),
     prisma.auditLog.create({
       data: {
         tenantId,

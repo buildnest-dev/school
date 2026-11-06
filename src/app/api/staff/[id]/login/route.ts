@@ -8,11 +8,25 @@ import { assertSameOrigin, handle } from "@/server/http";
 const Body = z.object({ email: z.string().trim().email() });
 
 /** Which login role each kind of staff member gets. Principal and owner are never granted here. */
-const ROLE_FOR: Record<string, "teacher" | "accountant" | "librarian" | "transport"> = {
+const ROLE_FOR: Record<
+  string,
+  | "teacher"
+  | "accountant"
+  | "librarian"
+  | "transport"
+  | "vice_principal"
+  | "admission_officer"
+  | "hr"
+  | "reception"
+> = {
   teacher: "teacher",
   accountant: "accountant",
   librarian: "librarian",
   admin: "transport",
+  vice_principal: "vice_principal",
+  admission_officer: "admission_officer",
+  hr: "hr",
+  reception: "reception",
 };
 
 /**

@@ -62,7 +62,12 @@ async function demoSchool() {
     create: {
       slug: "demo-school",
       name: "Demo Public School (fictional)",
-      plan: "trial",
+      plan: "growth",
+      planPeriod: "yearly",
+      status: "live",
+      subscription: "active",
+      periodEnd: new Date(Date.now() + 365 * 86_400_000),
+      wentLiveAt: new Date(),
       stateId: karnataka?.id,
     },
   });
@@ -428,7 +433,15 @@ async function otherSchool() {
   const tenant = await prisma.tenant.upsert({
     where: { slug: "other-school" },
     update: {},
-    create: { slug: "other-school", name: "Other Academy (fictional)", plan: "trial" },
+    create: {
+      slug: "other-school",
+      name: "Other Academy (fictional)",
+      plan: "starter",
+      status: "live",
+      subscription: "active",
+      periodEnd: new Date(Date.now() + 365 * 86_400_000),
+      wentLiveAt: new Date(),
+    },
   });
   const icse = await prisma.board.findUniqueOrThrow({ where: { code: "ICSE" } });
   await prisma.tenantBoard.create({

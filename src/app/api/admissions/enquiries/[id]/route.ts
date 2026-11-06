@@ -15,7 +15,12 @@ const Body = z.object({
 /** Moves an enquiry along the pipeline. Skipping steps, reopening and "enrolled" are all refused here. */
 export const PATCH = handle(async (req: Request, ctx: Ctx) => {
   assertSameOrigin(req);
-  const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
+  const { tenantId, user } = await requireTenant([
+    "school_owner",
+    "principal",
+    "vice_principal",
+    "admission_officer",
+  ]);
   const { id } = await ctx.params;
   const b = Body.parse(await req.json());
   const a = await prisma.admission.findFirst({ where: { id, tenantId } });

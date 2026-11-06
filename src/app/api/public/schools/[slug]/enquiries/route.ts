@@ -25,7 +25,7 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ slug: s
   void _hp;
 
   const tenant = await prisma.tenant.findFirst({
-    where: { slug, status: { in: ["trial", "active"] } },
+    where: { slug, status: "live" },
     select: { id: true },
   });
   if (!tenant) throw new HttpError(404, "not_found", "School not found.");

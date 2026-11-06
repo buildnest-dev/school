@@ -8,7 +8,14 @@ import { checkLocation, nextAdmissionNo, studentDetail, studentInclude } from "@
 import { guardianInput, studentFields } from "@/server/validators";
 import type { Student } from "@/types";
 
-const STAFF_ROLES = ["school_owner", "principal", "teacher", "accountant"] as const;
+const STAFF_ROLES = [
+  "school_owner",
+  "principal",
+  "vice_principal",
+  "admission_officer",
+  "teacher",
+  "accountant",
+] as const;
 
 const CreateBody = studentFields.extend({
   guardian: guardianInput,

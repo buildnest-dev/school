@@ -6,7 +6,12 @@ import { bellSchedule, periodInclude, periodView } from "@/server/timetable";
 
 /** A teacher's own week. The principal and owner can read anyone's; a teacher only their own. */
 export const GET = handle(async (_req: Request, ctx: { params: Promise<{ staffId: string }> }) => {
-  const { tenantId, user } = await requireTenant(["school_owner", "principal", "teacher"]);
+  const { tenantId, user } = await requireTenant([
+    "school_owner",
+    "principal",
+    "vice_principal",
+    "teacher",
+  ]);
   const staff = await prisma.staff.findFirst({
     where: { id: (await ctx.params).staffId, tenantId },
   });

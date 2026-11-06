@@ -14,7 +14,12 @@ const Body = z.object({ sectionId: z.string().min(1) });
  */
 export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
   assertSameOrigin(req);
-  const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
+  const { tenantId, user } = await requireTenant([
+    "school_owner",
+    "principal",
+    "vice_principal",
+    "admission_officer",
+  ]);
   const { id } = await ctx.params;
   const { sectionId } = Body.parse(await req.json());
   await sectionOr404(tenantId, sectionId);

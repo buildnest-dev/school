@@ -160,10 +160,12 @@ test("exams: create with validation, no duplicates, board must be followed", asy
   expect((await teacher.post("/api/exams", { data: { name: "Other" } })).status()).toBe(403);
 });
 
-test("publish is refused while any mark sheet is missing", async () => {
-  const res = await principal.post(`/api/exams/${examId}/publish`, { data: { published: true } });
+test("approval and publishing are refused while any mark sheet is missing", async () => {
+  const res = await principal.post(`/api/exams/${examId}/approve`, { data: { approved: true } });
   expect(res.status()).toBe(409);
   expect((await res.json()).code).toBe("incomplete");
+  const pub = await principal.post(`/api/exams/${examId}/publish`, { data: { published: true } });
+  expect(pub.status()).toBe(409);
 });
 
 test("marks use the exam's max marks; fill every sheet of every class", async () => {
@@ -260,6 +262,15 @@ test("parents cannot see report cards until results are published", async () => 
 
 test("publish releases results to the linked parent only", async () => {
   // Class 8 and 9 are done; the other classes have no students, so nothing else blocks publishing.
+  // Publishing needs the marks to be approved first.
+  const early = await principal.post(`/api/exams/${examId}/publish`, { data: { published: true } });
+  expect(early.status()).toBe(409);
+  expect((await early.json()).code).toBe("not_approved");
+  expect(
+    (await teacher.post(`/api/exams/${examId}/approve`, { data: { approved: true } })).status(),
+  ).toBe(403);
+  const appr = await principal.post(`/api/exams/${examId}/approve`, { data: { approved: true } });
+  expect(appr.status(), JSON.stringify(await appr.json())).toBe(200);
   const pub = await principal.post(`/api/exams/${examId}/publish`, { data: { published: true } });
   expect(pub.status(), JSON.stringify(await pub.json())).toBe(200);
 

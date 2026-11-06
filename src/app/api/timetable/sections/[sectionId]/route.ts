@@ -66,7 +66,7 @@ const Body = z.object({
  */
 export const PUT = handle(async (req: Request, ctx: Ctx) => {
   assertSameOrigin(req);
-  const { tenantId, user } = await requireTenant(["school_owner", "principal"]);
+  const { tenantId, user } = await requireTenant(["school_owner", "principal", "vice_principal"]);
   const section = await sectionOr404(tenantId, (await ctx.params).sectionId);
   const { periods } = Body.parse(await req.json());
 

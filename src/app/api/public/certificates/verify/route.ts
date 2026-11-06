@@ -24,7 +24,7 @@ export const GET = handle(async (req: Request) => {
   const none = NextResponse.json({ valid: false });
   if (!school || !serial || serial.length > 40) return none;
   const tenant = await prisma.tenant.findFirst({
-    where: { slug: school, status: { in: ["trial", "active"] } },
+    where: { slug: school, status: { in: ["live", "suspended"] } },
     select: { id: true, name: true },
   });
   if (!tenant) return none;
