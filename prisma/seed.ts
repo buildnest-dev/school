@@ -6,8 +6,7 @@ import { config } from "dotenv";
 import { makeAdapter } from "../src/server/adapter";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { ALL_BOARDS } from "../src/data/boards";
-import { STATES_AND_DISTRICTS, UT_NAMES } from "../src/data/india-geo";
+import { productCatalog, reference } from "./reference";
 
 config({ path: ".env.local" });
 config();
@@ -19,36 +18,6 @@ const prisma = new PrismaClient({
 });
 
 const DEV_PASSWORD = "ChangeMe#2026";
-
-async function reference() {
-  for (const [name, districts] of Object.entries(STATES_AND_DISTRICTS)) {
-    const state = await prisma.state.upsert({
-      where: { name },
-      update: {},
-      create: { name, kind: UT_NAMES.has(name) ? "ut" : "state" },
-    });
-    for (const d of districts) {
-      await prisma.district.upsert({
-        where: { stateId_name: { stateId: state.id, name: d } },
-        update: {},
-        create: { name: d, stateId: state.id },
-      });
-    }
-  }
-  for (const b of ALL_BOARDS) {
-    await prisma.board.upsert({
-      where: { code: b.code },
-      update: { name: b.name, gradeScale: JSON.stringify(b.scale) },
-      create: {
-        code: b.code,
-        name: b.name,
-        kind: b.kind,
-        stateCode: b.stateName ?? null,
-        gradeScale: JSON.stringify(b.scale),
-      },
-    });
-  }
-}
 
 const CLASSES: [string, string][] = [
   ["Nursery", "pre-primary"],
@@ -138,77 +107,7 @@ async function demoSchool() {
       update: { platformRole },
       create: { email, name, passwordHash: hash, isPlatformAdmin: true, platformRole },
     });
-  const catalog = [
-    [
-      "school",
-      "School OS",
-      "software",
-      "Admissions, attendance, fees, exams and parent portal for schools.",
-      "available",
-    ],
-    [
-      "hospital",
-      "Hospital OS",
-      "software",
-      "Patient registration, OPD/IPD, laboratory, pharmacy and billing.",
-      "coming_soon",
-    ],
-    [
-      "business",
-      "Business OS",
-      "software",
-      "Customers, inventory, billing, purchases and expenses for small businesses.",
-      "coming_soon",
-    ],
-    [
-      "campaign",
-      "Campaign OS",
-      "software",
-      "Teams, volunteers, events, budgets and approved communications.",
-      "coming_soon",
-    ],
-    [
-      "social",
-      "Social Media OS",
-      "software",
-      "Content calendar, approvals and publishing across brands.",
-      "coming_soon",
-    ],
-    [
-      "web",
-      "Web Development",
-      "service",
-      "Websites built, launched and maintained by ZAQSA.",
-      "available",
-    ],
-    [
-      "app",
-      "App Development",
-      "service",
-      "Android and iOS apps from brief to store release.",
-      "available",
-    ],
-    [
-      "ai",
-      "AI Automation",
-      "service",
-      "Workflows and assistants that remove repetitive work.",
-      "available",
-    ],
-    [
-      "marketing",
-      "Digital Marketing",
-      "service",
-      "Campaigns, branding and social presence.",
-      "available",
-    ],
-  ] as const;
-  for (const [i, [key, name, kind, summary, status]] of catalog.entries())
-    await prisma.product.upsert({
-      where: { key },
-      update: {},
-      create: { key, name, kind, summary, status, position: i },
-    });
+  await productCatalog(prisma);
 
   const campus =
     (await prisma.campus.findFirst({ where: { tenantId: tenant.id } })) ??
@@ -664,7 +563,7 @@ async function otherSchool() {
 }
 
 async function main() {
-  await reference();
+  await reference(prisma);
   await demoSchool();
   await otherSchool();
   console.log("Seeded. Dev logins use password:", DEV_PASSWORD);

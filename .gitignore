@@ -15,3 +15,4 @@ src/generated
 # generated for production
 /prisma/schema.postgres.prisma
 .neon
+/.secrets
