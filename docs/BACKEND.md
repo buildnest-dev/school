@@ -109,6 +109,17 @@ Finance additions: `POST /api/fees/invoices/generate` bills a section or class a
 
 Authenticator sign-in: `POST /api/auth/mfa/setup|enable|disable`; once on, login needs `code` (6 digits, each code works once). It is optional per user and not yet forced for any role.
 
+## ZAQSA core: team roles, catalog, leads, activation, support desk
+
+ZAQSA staff have a `platformRole` (null means super admin): `super_admin`, `sales`, `finance`, `customer_success`, `support`, `product_manager`, `project_manager`, `developer`, `designer`, `marketing`. `requirePlatform([...])` in `src/server/platform.ts` guards each route; super admin passes everywhere. Demo logins: `sales@demo.test`, `support@demo.test`, `product@demo.test`. School routes now follow the roles: reading schools is open to sales, finance, customer success and support; creating or changing a school, go-live and bank details belong to customer success (bank also finance). `GET /api/platform/overview` gives counts only.
+
+- **Catalog:** `GET /api/public/products` (public). `PATCH /api/platform/products/:key` (product manager) edits a product; only `available` products can be activated.
+- **Leads (CRM):** `POST /api/public/leads` (website demo request; throttled, honeypot). `GET /api/platform/leads` and `PATCH /api/platform/leads/:id` (stage, owner, notes) for sales, marketing (read) and customer success. Stages: new, contacted, demo, proposal, won, lost.
+- **Activation:** `GET/POST /api/platform/provisioning-requests`, `PATCH .../:id`. Order: requested, verifying, approved, provisioned (or rejected from any step before provisioned). Sales can start verification; only customer success approves or rejects. A school is marked provisioned only with its workspace linked. Payment alone never activates anything. It records the decision; it does not create the workspace (use `POST /api/platform/schools`).
+- **Support desk:** schools: `GET/POST /api/support/tickets`, `GET .../:id`, `POST .../:id/messages` (staff only; owner and principal see all of the school's tickets, others their own; works even when the plan has lapsed; internal notes are never returned). ZAQSA: `GET /api/platform/tickets`, `GET/PATCH .../:id`, `POST .../:id/messages` (`internal:true` for a staff-only note) for support and customer success. A staff reply sets the ticket to pending; a school reply reopens it; a closed ticket takes no more messages.
+
+Not built from the ZAQSA overview: one customer account that belongs to several organisations across products, single sign-on between product sites, per-product subscriptions and entitlements, projects and milestones for the service business, time-limited audited support access into a school, and staff invitations (team users are created by seed for now).
+
 ## Not built yet
 
 - **Platform billing:** subscription invoices, payout runs and settlement reports for schools. The ledger table exists and collects online payments only.

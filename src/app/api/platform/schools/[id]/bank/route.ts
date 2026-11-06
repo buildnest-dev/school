@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { HttpError, requireAuth } from "@/server/auth";
+import { HttpError } from "@/server/auth";
+import { requirePlatform } from "@/server/platform";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { encryptSecret } from "@/server/secret";
@@ -23,7 +24,7 @@ const Body = z.object({
 /** PUT: stores the payout account. The number is kept encrypted and is never returned again. */
 export const PUT = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
   assertSameOrigin(req);
-  const { user } = await requireAuth(["platform_admin"]);
+  const { user } = await requirePlatform(["finance", "customer_success"]);
   const { id } = await ctx.params;
   if (!(await prisma.tenant.findUnique({ where: { id } })))
     throw new HttpError(404, "not_found", "School not found.");

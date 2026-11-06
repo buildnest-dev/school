@@ -88,6 +88,7 @@ model Tenant {
   exams        Exam[]
   auditLogs    AuditLog[]
   admissions   Admission[]
+  tickets      SupportTicket[]
 }
 
 model TenantBoard {
@@ -120,6 +121,8 @@ model User {
   name            String
   passwordHash    String
   isPlatformAdmin Boolean         @default(false)
+  /// ZAQSA staff role (super_admin, sales, support, ...). Null on a platform user means super_admin.
+  platformRole    String?
   active          Boolean         @default(true)
   totpCipher      String? // authenticator secret, encrypted (src/server/secret.ts)
   totpEnabled     Boolean         @default(false)
@@ -826,4 +829,84 @@ model FeeReminder {
   sentAt    DateTime @default(now())
 
   @@index([tenantId, invoiceId])
+}
+
+// ---------- ZAQSA core: catalog, CRM, provisioning, support ----------
+
+model Product {
+  key      String @id // school, hospital, business, campaign, social, web, app, ai, marketing
+  name     String
+  kind     String // software | service
+  summary  String
+  status   String @default("available") // available | coming_soon | retired
+  position Int    @default(0)
+}
+
+model Lead {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  organisation String?
+  productKey   String?
+  message      String?
+  source       String   @default("website")
+  stage        String   @default("new") // new | contacted | demo | proposal | won | lost
+  ownerId      String? // ZAQSA staff member handling the lead
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([stage])
+}
+
+model ProvisioningRequest {
+  id            String    @id @default(cuid())
+  productKey    String
+  organisation  String
+  contactEmail  String
+  leadId        String?
+  /// requested | verifying | approved | rejected | provisioned
+  status        String    @default("requested")
+  tenantId      String? // the workspace created for it (school product)
+  note          String?
+  requestedById String
+  decidedById   String?
+  decidedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([status])
+}
+
+model SupportTicket {
+  id          String          @id @default(cuid())
+  number      Int             @unique
+  tenantId    String
+  requesterId String
+  subject     String
+  category    String          @default("question") // question | problem | billing | request
+  priority    String          @default("normal") // low | normal | high | urgent
+  status      String          @default("open") // open | pending | resolved | closed
+  assigneeId  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messages    TicketMessage[]
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id        String        @id @default(cuid())
+  ticketId  String
+  authorId  String
+  fromStaff Boolean       @default(false)
+  /// Internal notes are visible to ZAQSA staff only.
+  internal  Boolean       @default(false)
+  body      String
+  createdAt DateTime      @default(now())
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
 }

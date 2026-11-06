@@ -121,6 +121,34 @@ async function demoSchool() {
       isPlatformAdmin: true,
     },
   });
+  // ZAQSA team members with narrower roles (a platform user with no role is a super admin).
+  for (const [email, name, platformRole] of [
+    ["sales@demo.test", "Sales Rep", "sales"],
+    ["support@demo.test", "Support Agent", "support"],
+    ["product@demo.test", "Product Manager", "product_manager"],
+  ] as const)
+    await prisma.user.upsert({
+      where: { email },
+      update: { platformRole },
+      create: { email, name, passwordHash: hash, isPlatformAdmin: true, platformRole },
+    });
+  const catalog = [
+    ["school", "School OS", "software", "Admissions, attendance, fees, exams and parent portal for schools.", "available"],
+    ["hospital", "Hospital OS", "software", "Patient registration, OPD/IPD, laboratory, pharmacy and billing.", "coming_soon"],
+    ["business", "Business OS", "software", "Customers, inventory, billing, purchases and expenses for small businesses.", "coming_soon"],
+    ["campaign", "Campaign OS", "software", "Teams, volunteers, events, budgets and approved communications.", "coming_soon"],
+    ["social", "Social Media OS", "software", "Content calendar, approvals and publishing across brands.", "coming_soon"],
+    ["web", "Web Development", "service", "Websites built, launched and maintained by ZAQSA.", "available"],
+    ["app", "App Development", "service", "Android and iOS apps from brief to store release.", "available"],
+    ["ai", "AI Automation", "service", "Workflows and assistants that remove repetitive work.", "available"],
+    ["marketing", "Digital Marketing", "service", "Campaigns, branding and social presence.", "available"],
+  ] as const;
+  for (const [i, [key, name, kind, summary, status]] of catalog.entries())
+    await prisma.product.upsert({
+      where: { key },
+      update: {},
+      create: { key, name, kind, summary, status, position: i },
+    });
 
   const sections: string[] = [];
   for (const [i, [name, stage]] of CLASSES.entries()) {

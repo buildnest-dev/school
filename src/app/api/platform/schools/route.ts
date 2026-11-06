@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createLogin, originOf } from "@/server/accounts";
-import { HttpError, requireAuth } from "@/server/auth";
+import { HttpError } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { idempotent } from "@/server/idempotency";
-import { PLANS, schoolRow, slugField } from "@/server/platform";
+import { PLANS, schoolRow, slugField, requirePlatform } from "@/server/platform";
 import { personName, phone } from "@/server/validators";
 
 const Body = z.object({
@@ -27,7 +27,7 @@ const Body = z.object({
 
 /** GET /api/platform/schools: every school with its status and subscription. */
 export const GET = handle(async (req: Request) => {
-  await requireAuth(["platform_admin"]);
+  await requirePlatform(["sales", "finance", "customer_success", "support"]);
   const sp = new URL(req.url).searchParams;
   const q = sp.get("q")?.trim();
   const status = sp.get("status");
@@ -57,7 +57,7 @@ export const GET = handle(async (req: Request) => {
  */
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
-  const { user } = await requireAuth(["platform_admin"]);
+  const { user } = await requirePlatform(["customer_success"]);
   const raw: unknown = await req.json();
   const b = Body.parse(raw);
 

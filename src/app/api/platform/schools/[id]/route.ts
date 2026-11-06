@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { HttpError, requireAuth } from "@/server/auth";
+import { HttpError } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
-import { PLANS, goLiveChecklist, schoolRow } from "@/server/platform";
+import { PLANS, goLiveChecklist, schoolRow, requirePlatform } from "@/server/platform";
 import { phone } from "@/server/validators";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -16,7 +16,7 @@ async function load(id: string) {
 
 /** Details for the platform team: status, subscription, checklist, masked bank and counts. No student records. */
 export const GET = handle(async (_req: Request, ctx: Ctx) => {
-  await requireAuth(["platform_admin"]);
+  await requirePlatform(["sales", "finance", "customer_success", "support"]);
   const t = await load((await ctx.params).id);
   const [checklist, students, staff, logins] = await Promise.all([
     goLiveChecklist(t.id),
@@ -58,7 +58,7 @@ const Patch = z
 /** PATCH: change plan or renewal date, suspend or reactivate, edit contact details. */
 export const PATCH = handle(async (req: Request, ctx: Ctx) => {
   assertSameOrigin(req);
-  const { user } = await requireAuth(["platform_admin"]);
+  const { user } = await requirePlatform(["customer_success", "finance"]);
   const t = await load((await ctx.params).id);
   const { suspended, periodEnd, ...rest } = Patch.parse(await req.json());
   if (periodEnd && Number.isNaN(Date.parse(periodEnd)))

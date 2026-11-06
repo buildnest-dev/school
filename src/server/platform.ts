@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HttpError, requireAuth } from "./auth";
 import { prisma } from "./db";
 import { effectiveSubscription } from "./subscription";
 
@@ -122,4 +123,43 @@ export async function schoolRow(t: {
     createdAt: t.createdAt.toISOString(),
     hosts: hostsFor(t.slug),
   };
+}
+
+export const PLATFORM_ROLES = [
+  "super_admin",
+  "sales",
+  "finance",
+  "customer_success",
+  "support",
+  "product_manager",
+  "project_manager",
+  "developer",
+  "designer",
+  "marketing",
+] as const;
+export type PlatformRole = (typeof PLATFORM_ROLES)[number];
+
+/**
+ * Guards a ZAQSA-team route. A platform user with no role set is a super admin; every other
+ * role only reaches the routes that list it. Platform staff never get school records this way.
+ */
+export async function requirePlatform(allowed: readonly PlatformRole[]) {
+  const a = await requireAuth(["platform_admin"]);
+  const u = await prisma.user.findUniqueOrThrow({
+    where: { id: a.user.id },
+    select: { platformRole: true },
+  });
+  const role = (u.platformRole ?? "super_admin") as PlatformRole;
+  if (role !== "super_admin" && !allowed.includes(role))
+    throw new HttpError(403, "forbidden", "Your ZAQSA role does not allow this.");
+  return { ...a, platformRole: role };
+}
+
+/** Next ticket number; the unique column makes two racing requests retry rather than clash. */
+export async function nextTicketNumber() {
+  const top = await prisma.supportTicket.findFirst({
+    orderBy: { number: "desc" },
+    select: { number: true },
+  });
+  return (top?.number ?? 1000) + 1;
 }
