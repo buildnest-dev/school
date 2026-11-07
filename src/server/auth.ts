@@ -6,6 +6,7 @@ import { isWrite } from "./context";
 import { prisma } from "./db";
 import { classifyHost, hostAllows, type HostInfo } from "./hosts";
 import { decryptSecret } from "./secret";
+import { platformPasswordAllowed } from "./sso";
 import { effectiveSubscription, isReadOnly } from "./subscription";
 import { verifyCode } from "./totp";
 
@@ -28,12 +29,6 @@ export async function currentHost(): Promise<HostInfo> {
   return classifyHost(h.get("x-forwarded-host") ?? h.get("host"));
 }
 
-/**
- * Platform users must use the authenticator app. It is required on the team address and on any
- * production deployment; local development and tests are exempt so they stay quick to run.
- */
-const mfaRequired = (h: HostInfo) => h.kind === "team" || process.env.NODE_ENV === "production";
-
 /** Constant-ish time: compare against a dummy hash when the user is unknown so timing does not reveal accounts. */
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 10);
 
@@ -52,6 +47,8 @@ export async function login(
   const host = await currentHost();
   // The wrong address looks exactly like a wrong password, so it reveals nothing about accounts.
   if (user.isPlatformAdmin && !hostAllows(host, { platform: true })) return null;
+  // ZAQSA team members sign in through the website editor, never with a password here.
+  if (user.isPlatformAdmin && !platformPasswordAllowed()) return null;
 
   // Second step for people who turned on an authenticator app. A code works only once.
   if (user.totpEnabled && user.totpCipher) {
@@ -78,11 +75,17 @@ export async function login(
     tenantId = m.tenantId;
   }
 
+  await startSession(user.id, tenantId);
+  return true;
+}
+
+/** Creates the server-side session and sets the host-only cookie. */
+export async function startSession(userId: string, tenantId: string | null) {
   const token = randomBytes(32).toString("base64url");
   await prisma.session.create({
     data: {
       tokenHash: sha256(token),
-      userId: user.id,
+      userId,
       tenantId,
       expiresAt: new Date(Date.now() + TTL_MS),
     },
@@ -95,7 +98,6 @@ export async function login(
     path: "/",
     maxAge: TTL_MS / 1000,
   });
-  return true;
 }
 
 export async function logout() {
@@ -119,7 +121,6 @@ export async function getAuth(): Promise<Auth | null> {
   if (s.user.isPlatformAdmin) {
     if (!hostAllows(host, { platform: true })) return null;
     return {
-      mfaSetupRequired: mfaRequired(host) && !s.user.totpEnabled ? true : undefined,
       sessionId: s.id,
       user: {
         id: s.user.id,

@@ -43,17 +43,15 @@ test("a person of another school cannot sign in, and a session does not cross sc
   }
 });
 
-test("platform users sign in only on the team address and must set up the authenticator", async () => {
+test("platform users sign in only on the team address and are not asked for an authenticator", async () => {
   expect((await login(PUBLIC, "platform@demo.test")).status).toBe(404);
   expect((await login(FAMILY, "platform@demo.test")).status).toBe(401);
   expect((await login(TEAM, "principal@demo.test")).status).toBe(401);
   const { c, status } = await login(TEAM, "platform@demo.test");
   expect(status).toBe(200);
   const me = await (await c.get("/api/me")).json();
-  expect(me.mfaSetupRequired).toBe(true);
-  const blocked = await c.get("/api/platform/schools");
-  expect(blocked.status()).toBe(403);
-  expect((await blocked.json()).code).toBe("mfa_setup_required");
+  expect(me.mfaSetupRequired).toBeUndefined();
+  expect((await c.get("/api/platform/schools")).status()).toBe(200);
   // The same session on a school address means nothing.
   expect((await c.get("/api/me", { headers: { "x-forwarded-host": STAFF } })).status()).toBe(401);
 });
