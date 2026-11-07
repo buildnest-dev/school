@@ -34,6 +34,12 @@ export function DevSignIn() {
         form.password,
         needsCode ? form.code.trim() : undefined,
       );
+      // The website editor sends people here and expects them back; only that one path is honoured.
+      const next = new URLSearchParams(window.location.search).get("next");
+      if (me.role === "platform_admin" && next?.startsWith("/api/platform/sso/start?")) {
+        window.location.assign(next);
+        return;
+      }
       router.push(AREA_ROOT[ROLE_AREA[me.role]]);
     } catch (err) {
       if (err instanceof ApiError && err.code === "mfa_required") {
