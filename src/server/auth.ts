@@ -6,7 +6,7 @@ import { isWrite } from "./context";
 import { prisma } from "./db";
 import { classifyHost, hostAllows, type HostInfo } from "./hosts";
 import { decryptSecret } from "./secret";
-import { platformPasswordAllowed } from "./sso";
+import { approvalsOn, platformStep, type StepResult } from "./approvals";
 import { effectiveSubscription, isReadOnly } from "./subscription";
 import { verifyCode } from "./totp";
 
@@ -37,7 +37,8 @@ export async function login(
   password: string,
   tenantSlug?: string,
   code?: string,
-): Promise<true | null | "mfa_required" | "mfa_invalid"> {
+  remember = false,
+): Promise<true | null | "mfa_required" | "mfa_invalid" | Exclude<StepResult, "ok">> {
   const user = await prisma.user.findUnique({
     where: { email: email.trim().toLowerCase() },
     include: { memberships: { include: { tenant: true } } },
@@ -47,11 +48,14 @@ export async function login(
   const host = await currentHost();
   // The wrong address looks exactly like a wrong password, so it reveals nothing about accounts.
   if (user.isPlatformAdmin && !hostAllows(host, { platform: true })) return null;
-  // ZAQSA team members sign in through the website editor, never with a password here.
-  if (user.isPlatformAdmin && !platformPasswordAllowed()) return null;
+  // ZAQSA team members also need an admin at admin.zaqsa.com to approve each sign-in.
+  if (user.isPlatformAdmin && approvalsOn()) {
+    const step = await platformStep(user, code, remember);
+    if (step !== "ok") return step;
+  }
 
   // Second step for people who turned on an authenticator app. A code works only once.
-  if (user.totpEnabled && user.totpCipher) {
+  if (!(user.isPlatformAdmin && approvalsOn()) && user.totpEnabled && user.totpCipher) {
     if (!code) return "mfa_required";
     const step = verifyCode(decryptSecret(user.totpCipher), code);
     if (step === null || step <= user.totpLastStep) return "mfa_invalid";

@@ -21,7 +21,12 @@ interface SessionApi {
   /** Development sign-in only (mock mode). The real session comes from the backend. */
   devSignIn: (personaId: string) => void;
   /** API mode: signs in with the backend (sets its cookie) and loads the session. Throws ApiError. */
-  signIn: (email: string, password: string, code?: string) => Promise<SessionUser>;
+  signIn: (
+    email: string,
+    password: string,
+    code?: string,
+    remember?: boolean,
+  ) => Promise<SessionUser>;
   signOut: () => void;
 }
 
@@ -72,10 +77,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     setState({ status: "ready", user });
   }, []);
-  const signIn = useCallback(async (email: string, password: string, code?: string) => {
+  const signIn = useCallback(async (email: string, password: string, code?: string, remember?: boolean) => {
     await apiRequest("/auth/login", {
       method: "POST",
-      body: { email, password, ...(code ? { code } : {}) },
+      body: { email, password, ...(code ? { code } : {}), ...(remember ? { remember } : {}) },
     });
     const user = await apiRequest<SessionUser>("/me");
     setState({ status: "ready", user });

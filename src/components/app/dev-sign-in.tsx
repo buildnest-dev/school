@@ -22,6 +22,10 @@ export function DevSignIn() {
   const { devSignIn, signIn, user } = useSession();
   const [form, setForm] = useState({ email: "", password: "", code: "" });
   const [needsCode, setNeedsCode] = useState(false);
+  /** Set for ZAQSA team sign-in: the request is waiting for an admin to approve it. */
+  const [waiting, setWaiting] = useState<string | null>(null);
+  const [remember, setRemember] = useState(false);
+  const onTeamHost = typeof window !== "undefined" && window.location.hostname.startsWith("team.");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
@@ -33,12 +37,22 @@ export function DevSignIn() {
         form.email.trim(),
         form.password,
         needsCode ? form.code.trim() : undefined,
+        onTeamHost ? remember : undefined,
       );
       router.push(AREA_ROOT[ROLE_AREA[me.role]]);
     } catch (err) {
       if (err instanceof ApiError && err.code === "mfa_required") {
         setNeedsCode(true);
         setError(null);
+      } else if (err instanceof ApiError && err.code === "approval_required") {
+        setNeedsCode(true);
+        setWaiting(err.message);
+        setError(null);
+      } else if (err instanceof ApiError && err.code === "approval_invalid") {
+        setNeedsCode(false);
+        setWaiting(null);
+        setForm((f) => ({ ...f, code: "" }));
+        setError(err.message);
       } else {
         setError(err instanceof ApiError ? err.message : "Could not sign in. Try again.");
       }
@@ -124,8 +138,8 @@ export function DevSignIn() {
             {needsCode ? (
               <Field
                 id="code"
-                label="Authenticator code"
-                hint="The 6-digit code from your authenticator app."
+                label={waiting ? "Code from the admin" : "Authenticator code"}
+                hint={waiting ?? "The 6-digit code from your authenticator app."}
                 required
               >
                 {(a) => (
@@ -139,6 +153,16 @@ export function DevSignIn() {
                   />
                 )}
               </Field>
+            ) : null}
+            {onTeamHost ? (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                Remember this device for 30 days
+              </label>
             ) : null}
             {error ? (
               <p role="alert" className="text-bad text-sm font-medium">

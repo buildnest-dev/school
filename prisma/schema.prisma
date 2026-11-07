@@ -134,6 +134,7 @@ model User {
   memberships     Membership[]
   sessions        Session[]
   tokens          PasswordToken[]
+  trustedDevices  TrustedDevice[]
 }
 
 // A user can belong to several schools with a role in each.
@@ -980,4 +981,18 @@ model AppNotification {
 
   @@index([userId, createdAt])
   @@index([tenantId])
+}
+
+/// A browser a ZAQSA team member chose to remember after a successful approval, so the approval
+/// code is not asked again on it until it expires. Only a hash of the cookie value is kept.
+model TrustedDevice {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  userAgent String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
