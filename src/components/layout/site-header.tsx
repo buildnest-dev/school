@@ -88,11 +88,6 @@ export function SiteHeader() {
           </ul>
           <div className="flex items-center gap-3">
             <span data-nav-item>
-              <Button asChild size="sm" variant="ghost">
-                <Link href={ROUTES.signIn}>Sign In</Link>
-              </Button>
-            </span>
-            <span data-nav-item>
               <Button asChild size="sm">
                 <Link href={ROUTES.demo}>Book a Demo</Link>
               </Button>
@@ -138,14 +133,6 @@ export function SiteHeader() {
                 ))}
               </ul>
               <div className="mt-5 grid gap-3">
-                <Dialog.Close asChild>
-                  <Link
-                    href={ROUTES.signIn}
-                    className="border-ink rounded-sm border py-3 text-center font-semibold"
-                  >
-                    Sign In
-                  </Link>
-                </Dialog.Close>
                 <Dialog.Close asChild>
                   <Button asChild>
                     <Link href={ROUTES.demo}>Book a Demo</Link>
