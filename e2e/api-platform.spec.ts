@@ -1,13 +1,10 @@
-import { createHmac } from "node:crypto";
 import { expect, request as pwRequest, test, type APIRequestContext } from "@playwright/test";
 
 /**
- * Schools portal, go-live, subscription, online payment callbacks and student import.
- * The server must run with RAZORPAY_WEBHOOK_SECRET=test_webhook_secret.
+ * Schools portal, go-live, subscription, and student import.
  */
 const PASSWORD = "ChangeMe#2026";
 const NEW_PASSWORD = "Sunrise2026Blue";
-const WEBHOOK_SECRET = "test_webhook_secret";
 const base = "http://localhost:3000";
 
 async function as(email: string, password = PASSWORD): Promise<APIRequestContext> {
@@ -233,24 +230,7 @@ test("families cannot sign in until the school is live", async () => {
   parent = await as(parentMail, NEW_PASSWORD);
 });
 
-const sign = (raw: string) => createHmac("sha256", WEBHOOK_SECRET).update(raw).digest("hex");
-const hook = (event: object, id: string, signature?: string) => {
-  const raw = JSON.stringify(event);
-  return anon.post("/api/webhooks/razorpay", {
-    data: raw,
-    headers: {
-      "content-type": "application/json",
-      "x-razorpay-event-id": id,
-      ...(signature !== null ? { "x-razorpay-signature": signature ?? sign(raw) } : {}),
-    },
-  });
-};
-const captured = (orderId: string, payId: string, amount: number) => ({
-  event: "payment.captured",
-  payload: { payment: { entity: { id: payId, order_id: orderId, amount } } },
-});
-
-test("online payment counts only after a verified callback, once", async () => {
+test("invoices: amounts are validated, and there is no online payment gateway", async () => {
   expect(
     (
       await owner.post("/api/fees/invoices", {
@@ -264,57 +244,9 @@ test("online payment counts only after a verified callback, once", async () => {
   expect(inv.status()).toBe(201);
   ({ id: invoiceId, number: invoiceNo } = await inv.json());
 
-  const demoParent = await as("parent@demo.test");
-  expect((await demoParent.post(`/api/fees/invoices/${invoiceId}/pay`)).status()).toBe(404);
-  expect((await owner.post(`/api/fees/invoices/${invoiceId}/pay`)).status()).toBe(403);
-  const pay = await parent.post(`/api/fees/invoices/${invoiceId}/pay`);
-  expect(pay.status()).toBe(201);
-  const order = await pay.json();
-  expect(order.mode).toBe("stub");
-  expect(order.amount).toBe(5000.5);
-
-  const status = async () =>
-    (await (await owner.get(`/api/fees/invoices?q=${invoiceNo}`)).json()).items[0] as {
-      status: string;
-      paid: number;
-    };
-  const evt = captured(order.orderId, `pay_${run}`, 500050);
-
-  // Not signed, wrongly signed: refused and nothing is paid.
-  expect((await hook(evt, `evt_a_${run}`, null as unknown as string)).status()).toBe(400);
-  expect((await hook(evt, `evt_b_${run}`, "0".repeat(64))).status()).toBe(400);
-  expect((await status()).paid).toBe(0);
-  // A correctly signed event for the wrong amount is not accepted.
-  const wrong = await hook(captured(order.orderId, `pay_x${run}`, 100), `evt_c_${run}`);
-  expect((await wrong.json()).outcome).toBe("amount_mismatch");
-  expect((await status()).paid).toBe(0);
-
-  expect((await (await hook(evt, `evt_d_${run}`)).json()).outcome).toBe("paid");
-  expect(await status()).toMatchObject({ status: "paid", paid: 5000.5 });
-  // Same event again, and the same payment under a new event id: still one payment.
-  expect((await (await hook(evt, `evt_d_${run}`)).json()).outcome).toBe("duplicate");
-  expect((await (await hook(evt, `evt_e_${run}`)).json()).outcome).toBe("duplicate");
-  expect(await status()).toMatchObject({ status: "paid", paid: 5000.5 });
-  expect((await parent.post(`/api/fees/invoices/${invoiceId}/pay`)).status()).toBe(409); // already paid
-
-  // A failed attempt leaves the invoice due.
-  const inv2 = await (
-    await owner.post("/api/fees/invoices", {
-      data: { studentId, title: "Term 2", amount: 100, dueOn: "2027-09-30" },
-    })
-  ).json();
-  const o2 = await (await parent.post(`/api/fees/invoices/${inv2.id}/pay`)).json();
-  const failed = await hook(
-    {
-      event: "payment.failed",
-      payload: { payment: { entity: { id: `pay_f${run}`, order_id: o2.orderId } } },
-    },
-    `evt_f_${run}`,
-  );
-  expect((await failed.json()).outcome).toBe("failed");
-  expect(
-    (await (await owner.get(`/api/fees/invoices?q=${inv2.number}`)).json()).items[0].paid,
-  ).toBe(0);
+  // Payments reach the school's own bank account. Only the accountant records them.
+  expect((await parent.post(`/api/fees/invoices/${invoiceId}/pay`)).status()).toBe(404);
+  expect((await anon.post("/api/webhooks/razorpay", { data: "{}" })).status()).toBe(404);
 });
 
 test("a lapsed subscription makes the school read-only but never locks families out", async () => {

@@ -24,6 +24,7 @@ import {
   ResultsOverview,
   StudentDetail,
 } from "./school/operations";
+import { PaymentDetails } from "./school/payment-details";
 import { Refunds } from "./school/refunds";
 import { Rollover } from "./school/rollover";
 import { Settings } from "./school/settings";
@@ -60,6 +61,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-fees": plain(FeesOverview),
   "school-fee-ledger": plain(FeeLedger),
   "school-refunds": plain(Refunds),
+  "school-payment-details": plain(PaymentDetails),
   "school-notice-new": plain(NoticeNew),
   "school-certificate-new": plain(CertificateNew),
   "school-certificate-verify": plain(CertificateVerify),

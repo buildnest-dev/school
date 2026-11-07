@@ -21,6 +21,7 @@ import type { CertificateType } from "@/types";
 import { LedgerTable } from "../school/operations";
 import { firstName, fmtDate, rupees } from "../shared/format";
 import { ChildPage, useActiveChild } from "./child";
+import { PayCard } from "./pay-card";
 
 const ICON = { homework: Pencil, fee: IndianRupee, notice: Bell, event: CalendarDays } as const;
 
@@ -232,12 +233,13 @@ function FeesBody({ id, s }: { id: string; s: ReturnType<typeof useServices> }) 
         <p className="font-display text-4xl tabular-nums">{rupees(bal)}</p>
         {bal > 0 ? (
           <p className="text-muted mt-1 text-sm">
-            Online payment is not available yet. Please pay at the school office.
+            Pay the school directly using the details below.
           </p>
         ) : (
           <StatusBadge status="paid" />
         )}
       </Card>
+      {bal > 0 ? <PayCard amountRupees={bal} note="School fees" /> : null}
       <LedgerTable rows={d.data} />
     </>
   );

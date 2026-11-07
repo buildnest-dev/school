@@ -736,6 +736,7 @@ model TenantBank {
   ifsc          String
   accountLast4  String
   accountCipher String // AES-256-GCM: iv.tag.ciphertext (base64url)
+  upiId         String? // the school's UPI address; parents pay to it by QR
   updatedAt     DateTime @updatedAt
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }

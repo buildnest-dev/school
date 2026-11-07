@@ -378,6 +378,17 @@ export const SCREENS: readonly ScreenDef[] = [
     features: ["10"],
   }),
   screen({
+    id: "school-payment-details",
+    area: "school",
+    path: "fees/payment-details",
+    title: "Payment details",
+    description: "Bank account and UPI ID that parents pay into.",
+    roles: [...SCHOOL_ADMIN, "accountant"],
+    nav: { group: "Finance", icon: "credit", order: 6 },
+    status: "implemented",
+    features: ["10"],
+  }),
+  screen({
     id: "school-refunds",
     area: "school",
     path: "fees/refunds",
