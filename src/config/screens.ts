@@ -389,6 +389,17 @@ export const SCREENS: readonly ScreenDef[] = [
     features: ["10"],
   }),
   screen({
+    id: "school-opening-balances",
+    area: "school",
+    path: "fees/opening-balances",
+    title: "Opening balances",
+    description: "Enter dues and payments from before the school joined.",
+    roles: [...SCHOOL_ADMIN, "accountant"],
+    nav: { group: "Finance", icon: "list", order: 7 },
+    status: "implemented",
+    features: ["10"],
+  }),
+  screen({
     id: "school-payment-details",
     area: "school",
     path: "fees/payment-details",

@@ -159,6 +159,10 @@ Base domain: `ZAQSA_BASE_DOMAIN` (default `zaqsa.com`). The shared rules are in 
 
 No money passes through ZAQSA. The school saves its account and UPI ID (`GET/PUT /api/school/bank`, owner, principal, accountant). Parents see them, with a UPI QR for the balance (`GET /api/me/payment-info`), pay in their own UPI app, then send a screenshot: `POST /api/payment-proofs` (the phone shrinks it to about 100 KB; the server keeps only real JPEGs up to 500 KB). The accountant lists pending proofs (`GET /api/payment-proofs`), opens the image (`GET /api/payment-proofs/:id/image`, school staff or the sending parent only), and decides (`POST /api/payment-proofs/:id/decision`): approve picks the invoice and records a normal UPI payment once, refusing a transaction id already recorded and any amount above the balance; reject needs a reason. Screenshots are stored in the database for now (`PaymentProof.image`); moving them to object storage such as Cloudflare R2 only changes `src/server/proofs.ts` and the two image routes.
 
+## Opening balances
+
+`POST /api/fees/opening-balances` (owner, principal, accountant) is the accountant's first job: for each student item, what the family owed this year and what was already paid before the school joined (`admissionNo, title, amount, paid, dueOn`, optionally `paidOn, mode, reference`). `commit:false` only checks and lists problems by line; `commit:true` saves every row or none, as an invoice plus a back-dated payment. An item with the same title is never entered twice for a student. Up to 500 rows per call.
+
 ## Not built yet
 
 - **Platform billing:** subscription invoices, payout runs and settlement reports for schools. The ledger table exists and collects online payments only.

@@ -24,6 +24,7 @@ import {
   ResultsOverview,
   StudentDetail,
 } from "./school/operations";
+import { OpeningBalances } from "./school/opening-balances";
 import { PaymentDetails } from "./school/payment-details";
 import { PaymentProofs } from "./school/payment-proofs";
 import { Refunds } from "./school/refunds";
@@ -63,6 +64,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-fee-ledger": plain(FeeLedger),
   "school-refunds": plain(Refunds),
   "school-payment-details": plain(PaymentDetails),
+  "school-opening-balances": plain(OpeningBalances),
   "school-payment-proofs": plain(PaymentProofs),
   "school-notice-new": plain(NoticeNew),
   "school-certificate-new": plain(CertificateNew),

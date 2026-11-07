@@ -4,7 +4,7 @@ _Generated from `src/config/screens.ts` by `npm run docs:inventory`. Do not edit
 
 **Status legend.** Implemented = working UI against the development mock with the documented service contract. Partial = works but covers only part of the feature, or uses sample data. Planned = route exists and shows an honest "not built yet" page.
 
-**Totals:** 82 screens: 64 implemented, 8 partial, 10 planned.
+**Totals:** 83 screens: 65 implemented, 8 partial, 10 planned.
 
 The public marketing site (`/`, `/placeholder/*`, `/sign-in`, `/get-started`) lives outside this table; `/get-started` (registration/onboarding) is a placeholder.
 
@@ -53,6 +53,7 @@ Root: `/school`
 | `/school/fees/ledger` | Student ledger | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/vendors` | Vendors | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/fees/screenshots` | Payment screenshots | School owner, Principal, Accountant | Implemented (mock data) | 10 |
+| `/school/fees/opening-balances` | Opening balances | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/fees/payment-details` | Payment details | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/fees/refunds` | Refunds | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/certificates` | Certificate requests | School owner, Principal, Accountant | Implemented (mock data) | 5 |
