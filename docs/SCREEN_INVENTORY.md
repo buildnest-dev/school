@@ -4,7 +4,7 @@ _Generated from `src/config/screens.ts` by `npm run docs:inventory`. Do not edit
 
 **Status legend.** Implemented = working UI against the development mock with the documented service contract. Partial = works but covers only part of the feature, or uses sample data. Planned = route exists and shows an honest "not built yet" page.
 
-**Totals:** 83 screens: 65 implemented, 8 partial, 10 planned.
+**Totals:** 82 screens: 64 implemented, 8 partial, 10 planned.
 
 The public marketing site (`/`, `/placeholder/*`, `/sign-in`, `/get-started`) lives outside this table; `/get-started` (registration/onboarding) is a placeholder.
 
@@ -20,7 +20,6 @@ Root: `/platform`
 | `/platform/subscriptions` | Plans & usage | Platform administrator | Partial | 1 |
 | `/platform/support` | Support requests | Platform administrator | Implemented (mock data) | 1 |
 | `/platform/status` | System status | Platform administrator | Partial | 19, 20 |
-| `/platform/audit` | Audit & activity | Platform administrator | Implemented (mock data) | 19 |
 | `/platform/config` | Platform configuration | Platform administrator | Planned | 1, 19 |
 
 ## School administration (owner, principal, accountant, librarian, transport)

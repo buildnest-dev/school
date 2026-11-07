@@ -35,7 +35,7 @@ export interface TableConfig {
 
 const badge = (key: string) =>
   function BadgeCell(r: any) {
-    return <StatusBadge status={String(r[key])} />;
+    return <StatusBadge status={String(r[key] ?? "")} />;
   };
 const date = (key: string) => (r: any) => fmtDate(r[key]);
 const opts = (...v: string[]): FilterDef["options"] =>
@@ -69,7 +69,7 @@ export const TABLES: Record<string, TableConfig> = {
     ],
     filters: [
       { key: "status", label: "Status", options: opts("active", "trial", "suspended") },
-      { key: "plan", label: "Plan", options: opts("Starter", "Standard", "Group") },
+      { key: "plan", label: "Plan", options: opts("trial", "starter", "growth", "premium") },
     ],
   },
   "platform-onboarding": {
@@ -100,16 +100,19 @@ export const TABLES: Record<string, TableConfig> = {
         header: "Students used",
         sortable: true,
         render: (r) =>
-          `${r.students.toLocaleString("en-IN")} of ${r.studentLimit.toLocaleString("en-IN")}`,
+          r.studentLimit
+            ? `${r.students.toLocaleString("en-IN")} of ${r.studentLimit.toLocaleString("en-IN")}`
+            : `${r.students.toLocaleString("en-IN")} (no limit)`,
       },
       {
         key: "usage",
         header: "Usage",
-        render: (r) => `${Math.round((r.students / r.studentLimit) * 100)}%`,
+        render: (r) =>
+          r.studentLimit ? `${Math.round((r.students / r.studentLimit) * 100)}%` : "-",
       },
-      { key: "status", header: "Status", render: badge("status") },
+      { key: "subscription", header: "Subscription", render: badge("subscription") },
     ],
-    filters: [{ key: "plan", label: "Plan", options: opts("Starter", "Standard", "Group") }],
+    filters: [{ key: "plan", label: "Plan", options: opts("trial", "starter", "growth", "premium") }],
     emptyHint: "Pricing, billing periods and renewals are provided by the backend.",
   },
   "platform-support": {
@@ -132,36 +135,6 @@ export const TABLES: Record<string, TableConfig> = {
       { key: "status", label: "Status", options: opts("open", "in_progress", "closed") },
       { key: "priority", label: "Priority", options: opts("low", "normal", "high") },
     ],
-  },
-  "platform-audit": {
-    resource: "audit",
-    searchPlaceholder: "Search activity",
-    initialSort: { key: "at", order: "desc" },
-    columns: [
-      { key: "at", header: "When", sortable: true },
-      { key: "actor", header: "Who", sortable: true },
-      { key: "action", header: "What" },
-      { key: "target", header: "On" },
-      { key: "area", header: "Area", hideOnMobile: true },
-    ],
-    filters:
-      env.dataSource === "api"
-        ? undefined
-        : [
-            {
-              key: "area",
-              label: "Area",
-              options: opts(
-                "notices",
-                "fees",
-                "attendance",
-                "platform",
-                "certificates",
-                "settings",
-                "rollover",
-              ),
-            },
-          ],
   },
   "school-audit": {
     resource: "audit",

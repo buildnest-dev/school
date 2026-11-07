@@ -103,17 +103,6 @@ export const SCREENS: readonly ScreenDef[] = [
     features: ["19", "20"],
   }),
   screen({
-    id: "platform-audit",
-    area: "platform",
-    path: "audit",
-    title: "Audit & activity",
-    description: "Sensitive actions across the platform.",
-    roles: ["platform_admin"],
-    nav: { group: "Platform", icon: "shield", order: 7 },
-    status: "implemented",
-    features: ["19"],
-  }),
-  screen({
     id: "platform-config",
     area: "platform",
     path: "config",

@@ -97,6 +97,69 @@ const ADAPT: Partial<
       vehicle: str(obj(r.vehicle).regNo),
     }),
   },
+  tenants: {
+    path: "/platform/schools",
+    query: (f): Record<string, string> => ({
+      ...(f.status
+        ? {
+            status:
+              f.status === "active" ? "live" : f.status === "trial" ? "provisioned" : f.status,
+          }
+        : {}),
+      ...(f.plan ? { plan: f.plan.toLowerCase() } : {}),
+    }),
+    row: (r) => ({
+      id: r.id,
+      name: r.name,
+      plan: str(r.plan).replace(/^./, (c) => c.toUpperCase()),
+      status: r.status === "live" ? "active" : r.status === "provisioned" ? "trial" : r.status,
+      subscription: r.subscription,
+      campuses: num(r.campuses),
+      students: num(r.activeStudents),
+      studentLimit: num(r.maxStudents),
+      createdAt: r.createdAt,
+    }),
+  },
+  onboarding: {
+    path: "/platform/provisioning-requests",
+    query: (f): Record<string, string> => ({
+      ...(f.status
+        ? {
+            status:
+              f.status === "done"
+                ? "provisioned"
+                : f.status === "blocked"
+                  ? "rejected"
+                  : "requested,verifying,approved",
+          }
+        : {}),
+    }),
+    row: (r) => ({
+      id: r.id,
+      tenant: str(r.organisation),
+      stage: str(r.status).replace(/^./, (c) => c.toUpperCase()),
+      progressPct:
+        { requested: 10, verifying: 40, approved: 70, provisioned: 100 }[str(r.status)] ?? 0,
+      owner: str(r.contactEmail),
+      status:
+        r.status === "provisioned" ? "done" : r.status === "rejected" ? "blocked" : "on_track",
+    }),
+  },
+  support: {
+    path: "/platform/tickets",
+    query: (f): Record<string, string> => ({
+      ...(f.status ? { status: f.status === "in_progress" ? "pending" : f.status } : {}),
+      ...(f.priority ? { priority: f.priority } : {}),
+    }),
+    row: (r) => ({
+      id: r.id,
+      tenant: str(obj(r.school).name),
+      subject: str(r.subject),
+      priority: str(r.priority),
+      status: r.status === "pending" ? "in_progress" : r.status,
+      openedOn: r.createdAt,
+    }),
+  },
   audit: {
     row: (r) => ({
       id: r.id,

@@ -18,7 +18,7 @@ export const GET = handle(async (req: Request) => {
   await requirePlatform(["sales", "customer_success", "finance"]);
   const status = new URL(req.url).searchParams.get("status");
   const items = await prisma.provisioningRequest.findMany({
-    where: status ? { status } : {},
+    where: status ? { status: { in: status.split(",") } } : {},
     orderBy: { createdAt: "desc" },
     take: 200,
   });

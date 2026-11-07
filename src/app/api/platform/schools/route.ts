@@ -31,8 +31,10 @@ export const GET = handle(async (req: Request) => {
   const sp = new URL(req.url).searchParams;
   const q = sp.get("q")?.trim();
   const status = sp.get("status");
+  const plan = sp.get("plan");
   const rows = await prisma.tenant.findMany({
     where: {
+      ...(plan ? { plan } : {}),
       ...(q ? { OR: [{ name: like(q) }, { slug: like(q) }] } : {}),
       ...(status ? { status } : {}),
     },
@@ -45,8 +47,18 @@ export const GET = handle(async (req: Request) => {
     _count: true,
   });
   const byTenant = new Map(counts.map((c) => [c.tenantId, c._count]));
+  const campusCounts = await prisma.campus.groupBy({
+    by: ["tenantId"],
+    where: { tenantId: { in: rows.map((r) => r.id) } },
+    _count: true,
+  });
+  const campuses = new Map(campusCounts.map((c) => [c.tenantId, c._count]));
   const items = await Promise.all(
-    rows.map(async (r) => ({ ...(await schoolRow(r)), activeStudents: byTenant.get(r.id) ?? 0 })),
+    rows.map(async (r) => ({
+      ...(await schoolRow(r)),
+      activeStudents: byTenant.get(r.id) ?? 0,
+      campuses: campuses.get(r.id) ?? 0,
+    })),
   );
   return NextResponse.json({ items, total: items.length });
 });
