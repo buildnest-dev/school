@@ -64,32 +64,34 @@ model Tenant {
   timezone     String    @default("Asia/Kolkata")
   createdAt    DateTime  @default(now())
 
-  boards        TenantBoard[]
-  paymentProofs PaymentProof[]
-  campuses      Campus[]
-  users         Membership[]
-  years         AcademicYear[]
-  classes       ClassLevel[]
-  students      Student[]
-  guardians     Guardian[]
-  staff         Staff[]
-  bellSlots     BellSlot[]
-  homework      Homework[]
-  books         Book[]
-  vehicles      Vehicle[]
-  certificates  Certificate[]
-  routes        TransportRoute[]
-  loans         Loan[]
-  periods       Period[]
-  subjects      Subject[]
-  feeHeads      FeeHead[]
-  bank          TenantBank?
-  invoices      Invoice[]
-  notices       Notice[]
-  exams         Exam[]
-  auditLogs     AuditLog[]
-  admissions    Admission[]
-  tickets       SupportTicket[]
+  boards            TenantBoard[]
+  paymentProofs     PaymentProof[]
+  pushSubscriptions PushSubscription[]
+  notifications     AppNotification[]
+  campuses          Campus[]
+  users             Membership[]
+  years             AcademicYear[]
+  classes           ClassLevel[]
+  students          Student[]
+  guardians         Guardian[]
+  staff             Staff[]
+  bellSlots         BellSlot[]
+  homework          Homework[]
+  books             Book[]
+  vehicles          Vehicle[]
+  certificates      Certificate[]
+  routes            TransportRoute[]
+  loans             Loan[]
+  periods           Period[]
+  subjects          Subject[]
+  feeHeads          FeeHead[]
+  bank              TenantBank?
+  invoices          Invoice[]
+  notices           Notice[]
+  exams             Exam[]
+  auditLogs         AuditLog[]
+  admissions        Admission[]
+  tickets           SupportTicket[]
 }
 
 model TenantBoard {
@@ -945,4 +947,37 @@ model PaymentProof {
 
   @@index([tenantId, status])
   @@index([studentId])
+}
+
+/// A phone or computer that agreed to receive notifications for this user.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tenantId])
+}
+
+/// Every notification the system sends to a person, kept so it can also be read inside the app.
+model AppNotification {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  title     String
+  body      String
+  url       String?
+  /// sent | no_device | not_configured | failed
+  delivery  String
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([tenantId])
 }

@@ -4,6 +4,7 @@ import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { parseDay, roster, sectionLabel, sectionOr404 } from "@/server/lib";
+import { notifyUsers } from "@/server/push";
 import { assertTeachesSection } from "@/server/teaching";
 
 type Ctx = { params: Promise<{ classId: string; date: string }> };
@@ -105,6 +106,26 @@ export const PUT = handle(async (req: Request, ctx: Ctx) => {
       },
     }),
   ]);
+  // Parents hear about an absence once, when the sheet is first submitted (not on drafts or edits).
+  if (body.submit && existing?.status !== "submitted") {
+    const absent = ids.filter((id) => body.marks[id] === "absent");
+    if (absent.length) {
+      const kids = await prisma.student.findMany({
+        where: { id: { in: absent }, tenantId, guardian: { userId: { not: null } } },
+        select: { name: true, guardian: { select: { userId: true } } },
+      });
+      const label = sectionLabel(await sectionOr404(tenantId, classId));
+      await Promise.all(
+        kids.map((k) =>
+          notifyUsers(tenantId, [k.guardian!.userId!], {
+            title: `${k.name} was absent today`,
+            body: `${k.name} (${label}) was marked absent on ${date}. Please contact the school if this is a mistake.`,
+            url: "/parent/attendance",
+          }),
+        ),
+      );
+    }
+  }
   return NextResponse.json({
     ok: true,
     mode: "api",

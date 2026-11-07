@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   },
   description:
     "A unified operating system for schools: admissions, academics, attendance, fees, staff and parent communication, with a separate workspace for every institution.",
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "School", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = { themeColor: "#0f2a2d", width: "device-width", initialScale: 1 };

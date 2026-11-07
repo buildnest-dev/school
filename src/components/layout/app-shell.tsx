@@ -1,5 +1,6 @@
 "use client";
 
+import { AppBanner } from "@/components/app/app-banner";
 import * as Dialog from "@radix-ui/react-dialog";
 import { FlaskConical, LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -269,6 +270,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
           id="app-main"
           className={cn("px-4 py-6 lg:px-8 lg:py-8", comfortable && "pb-28 text-[1.02rem] lg:pb-8")}
         >
+          <AppBanner />
           {children}
         </main>
       </div>

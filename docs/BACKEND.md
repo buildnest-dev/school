@@ -132,7 +132,7 @@ Steps:
 2. Create the tables: `npm run db:push:pg`; demo data (demo logins with the shared dev password) only on a branch that is not production: `npm run db:seed:pg` (it refuses when `NEON_BRANCH` is `production`). Before the first run, and after switching back from SQLite, generate the PostgreSQL client: `npx prisma generate --schema prisma/schema.postgres.prisma`. Switch back to SQLite with `npx prisma generate`.
 3. `npm run db:reset` always uses the local SQLite file, even when `.env.local` holds a Neon address. To run the app or the SQLite tests locally while `.env.local` has Neon, start it with `DATABASE_URL=file:./prisma/dev.db` in front.
 4. Run the test suite only on a throw-away branch (`neon branches reset dev --parent` empties it; Prisma blocks `db push --force-reset` from an AI agent).
-5. In Vercel, import the repository. `vercel.json` sets the build to `npm run build:vercel` (generates the PostgreSQL client, then builds). Add these environment variables: `DATABASE_URL` (pooled, from the production branch: `neon checkout production`, then read it from `.env.local`; paste it into Vercel yourself), `BANK_ENC_KEY` (long random secret; keep it, bank details cannot be read without it), `BREVO_API_KEY`, `MAIL_FROM`, `MAIL_FROM_NAME`, `ZAQSA_BASE_DOMAIN`. Create the production tables once with `npm run db:push:pg` while `.env.local` points at production, and do not seed it.
+5. In Vercel, import the repository. `vercel.json` sets the build to `npm run build:vercel` (generates the PostgreSQL client, then builds). Add these environment variables: `DATABASE_URL` (pooled, from the production branch: `neon checkout production`, then read it from `.env.local`; paste it into Vercel yourself), `BANK_ENC_KEY` (long random secret; keep it, bank details cannot be read without it), `BREVO_API_KEY`, `MAIL_FROM`, `MAIL_FROM_NAME`, `ZAQSA_BASE_DOMAIN`, and for notifications `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`. Create the production tables once with `npm run db:push:pg` while `.env.local` points at production, and do not seed it.
 
 Tables are created with `prisma db push`; there is no migration history yet, so schema changes on a live database need care. Verified: the full API suite (111 tests) passes against a Neon branch, and `next build` passes. Not verified: an actual Vercel deployment. The pg library prints a notice about `sslmode=require` becoming stricter in a future version.
 
@@ -162,6 +162,14 @@ No money passes through ZAQSA. The school saves its account and UPI ID (`GET/PUT
 ## Opening balances
 
 `POST /api/fees/opening-balances` (owner, principal, accountant) is the accountant's first job: for each student item, what the family owed this year and what was already paid before the school joined (`admissionNo, title, amount, paid, dueOn`, optionally `paidOn, mode, reference`). `commit:false` only checks and lists problems by line; `commit:true` saves every row or none, as an invoice plus a back-dated payment. An item with the same title is never entered twice for a student. Up to 500 rows per call.
+
+## Installable app and notifications
+
+The school and parent sites install on a phone (Android: "Install app"; iPhone: Share, then Add to Home Screen). `src/app/manifest.ts` is per address (the public site is not installable), `public/sw.js` only shows notifications and caches nothing, and `src/components/app/app-banner.tsx` offers install and, for parents, notifications.
+
+Notifications: `POST/DELETE /api/push/subscribe` (a phone opts in or out), `GET /api/push/public-key`, `GET /api/me/notifications` (the same messages inside the app). When a class's attendance is first **submitted**, each absent child's parent gets "<name> was absent today" (`src/server/push.ts`); drafts and later edits do not notify. Every message is stored even when it cannot be pushed. iPhones only receive notifications once the app is added to the Home Screen (iOS 16.4 or newer).
+
+Needs three environment variables, made once with `npx web-push generate-vapid-keys`: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (for example `mailto:you@example.com`). Without them parents see no "Turn on notifications" success and nothing is pushed. Real delivery to a phone has not been tested here, only the stored messages and the subscribe flow.
 
 ## Not built yet
 
