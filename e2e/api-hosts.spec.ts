@@ -52,6 +52,12 @@ test("platform users sign in only on the team address and are not asked for an a
   const me = await (await c.get("/api/me")).json();
   expect(me.mfaSetupRequired).toBeUndefined();
   expect((await c.get("/api/platform/schools")).status()).toBe(200);
+  // The team home screen: counts and service status, no school records.
+  const dash = await (await c.get("/api/platform/dashboard")).json();
+  expect(dash.stats.length).toBeGreaterThan(0);
+  expect(Array.isArray(dash.tenantsByStatus)).toBe(true);
+  const parts = await (await c.get("/api/platform/status")).json();
+  expect(parts.find((x: { name: string }) => x.name === "Database").state).toBe("operational");
   // The same session on a school address means nothing.
   expect((await c.get("/api/me", { headers: { "x-forwarded-host": STAFF } })).status()).toBe(401);
 });
