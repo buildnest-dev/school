@@ -22,6 +22,7 @@ import { LedgerTable } from "../school/operations";
 import { firstName, fmtDate, rupees } from "../shared/format";
 import { ChildPage, useActiveChild } from "./child";
 import { PayCard } from "./pay-card";
+import { ProofUpload } from "./proof-upload";
 
 const ICON = { homework: Pencil, fee: IndianRupee, notice: Bell, event: CalendarDays } as const;
 
@@ -240,6 +241,7 @@ function FeesBody({ id, s }: { id: string; s: ReturnType<typeof useServices> }) 
         )}
       </Card>
       {bal > 0 ? <PayCard amountRupees={bal} note="School fees" /> : null}
+      <ProofUpload studentId={id} due={bal} />
       <LedgerTable rows={d.data} />
     </>
   );

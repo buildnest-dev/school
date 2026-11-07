@@ -155,6 +155,10 @@ Base domain: `ZAQSA_BASE_DOMAIN` (default `zaqsa.com`). The shared rules are in 
 - Platform users must use the authenticator app: on the team address and on every production deployment. Until it is turned on, the only things such a session can reach are `/api/me`, `/api/auth/mfa/*` and sign-out; the app shows a setup screen (`src/components/app/mfa-gate.tsx`).
 - DNS (done in the DNS/Vercel dashboards, not in code): `school`, `team.schools`, `*.school` and `*.parents` under the base domain, all pointing at the Vercel project.
 
+## Paying the school: QR and screenshot
+
+No money passes through ZAQSA. The school saves its account and UPI ID (`GET/PUT /api/school/bank`, owner, principal, accountant). Parents see them, with a UPI QR for the balance (`GET /api/me/payment-info`), pay in their own UPI app, then send a screenshot: `POST /api/payment-proofs` (the phone shrinks it to about 100 KB; the server keeps only real JPEGs up to 500 KB). The accountant lists pending proofs (`GET /api/payment-proofs`), opens the image (`GET /api/payment-proofs/:id/image`, school staff or the sending parent only), and decides (`POST /api/payment-proofs/:id/decision`): approve picks the invoice and records a normal UPI payment once, refusing a transaction id already recorded and any amount above the balance; reject needs a reason. Screenshots are stored in the database for now (`PaymentProof.image`); moving them to object storage such as Cloudflare R2 only changes `src/server/proofs.ts` and the two image routes.
+
 ## Not built yet
 
 - **Platform billing:** subscription invoices, payout runs and settlement reports for schools. The ledger table exists and collects online payments only.

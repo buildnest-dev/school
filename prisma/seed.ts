@@ -170,7 +170,7 @@ async function demoSchool() {
       where: {
         tenantId_number: {
           tenantId: tenant.id,
-          number: `INV-2026-${String(i + 1).padStart(4, "0")}`,
+          number: `INV-2026-${String(i + 1).padStart(5, "0")}`,
         },
       },
       update: {},
@@ -178,7 +178,7 @@ async function demoSchool() {
         tenantId: tenant.id,
         yearId: year.id,
         studentId: s.id,
-        number: `INV-2026-${String(i + 1).padStart(4, "0")}`,
+        number: `INV-2026-${String(i + 1).padStart(5, "0")}`,
         title: "Term 1 tuition fee",
         amountPaise: 1_250_000,
         dueOn: new Date("2026-07-10"),

@@ -62,8 +62,10 @@ export const GET = handle(async (req: Request) => {
   const page = Math.max(1, Number(sp.get("page") ?? 1) || 1);
   const pageSize = Math.min(100, Math.max(1, Number(sp.get("pageSize") ?? 10) || 10));
   const q = sp.get("q")?.trim();
+  const studentId = sp.get("studentId") || undefined;
   const where = {
     tenantId,
+    ...(studentId ? { studentId } : {}),
     ...(q ? { OR: [{ number: like(q) }, { student: { name: like(q) } }] } : {}),
   };
   const [rows, total] = await Promise.all([

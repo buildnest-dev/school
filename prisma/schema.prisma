@@ -64,31 +64,32 @@ model Tenant {
   timezone     String    @default("Asia/Kolkata")
   createdAt    DateTime  @default(now())
 
-  boards       TenantBoard[]
-  campuses     Campus[]
-  users        Membership[]
-  years        AcademicYear[]
-  classes      ClassLevel[]
-  students     Student[]
-  guardians    Guardian[]
-  staff        Staff[]
-  bellSlots    BellSlot[]
-  homework     Homework[]
-  books        Book[]
-  vehicles     Vehicle[]
-  certificates Certificate[]
-  routes       TransportRoute[]
-  loans        Loan[]
-  periods      Period[]
-  subjects     Subject[]
-  feeHeads     FeeHead[]
-  bank         TenantBank?
-  invoices     Invoice[]
-  notices      Notice[]
-  exams        Exam[]
-  auditLogs    AuditLog[]
-  admissions   Admission[]
-  tickets      SupportTicket[]
+  boards        TenantBoard[]
+  paymentProofs PaymentProof[]
+  campuses      Campus[]
+  users         Membership[]
+  years         AcademicYear[]
+  classes       ClassLevel[]
+  students      Student[]
+  guardians     Guardian[]
+  staff         Staff[]
+  bellSlots     BellSlot[]
+  homework      Homework[]
+  books         Book[]
+  vehicles      Vehicle[]
+  certificates  Certificate[]
+  routes        TransportRoute[]
+  loans         Loan[]
+  periods       Period[]
+  subjects      Subject[]
+  feeHeads      FeeHead[]
+  bank          TenantBank?
+  invoices      Invoice[]
+  notices       Notice[]
+  exams         Exam[]
+  auditLogs     AuditLog[]
+  admissions    Admission[]
+  tickets       SupportTicket[]
 }
 
 model TenantBoard {
@@ -252,6 +253,7 @@ model Student {
   attendance    Attendance[]
   marks         Mark[]
   invoices      Invoice[]
+  paymentProofs PaymentProof[]
   homeworkRows  HomeworkStatus[]
   loans         Loan[]
   transport     StudentTransport?
@@ -920,4 +922,27 @@ model RateLimit {
   key     String   @id
   count   Int
   resetAt DateTime
+}
+
+/// A parent's screenshot of a UPI/bank payment made straight to the school. The accountant checks it
+/// against the school's bank statement and, on approval, it becomes a normal payment on an invoice.
+model PaymentProof {
+  id          String    @id @default(cuid())
+  tenantId    String
+  studentId   String
+  submittedBy String
+  amountPaise Int
+  reference   String? // UPI / bank transaction id, as typed by the parent
+  image       Bytes // a compressed JPEG; moves to object storage later
+  status      String    @default("pending") // pending | approved | rejected
+  reviewNote  String?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  paymentId   String?
+  createdAt   DateTime  @default(now())
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([studentId])
 }
