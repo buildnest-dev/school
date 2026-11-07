@@ -1,9 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import type { Role, SessionUser } from "@/types";
 import { isWrite } from "./context";
 import { prisma } from "./db";
+import { classifyHost, hostAllows, type HostInfo } from "./hosts";
 import { decryptSecret } from "./secret";
 import { effectiveSubscription, isReadOnly } from "./subscription";
 import { verifyCode } from "./totp";
@@ -17,7 +18,21 @@ export interface Auth {
   user: SessionUser;
   sessionId: string;
   tenant?: { status: string; subscription: string };
+  /** A platform user who has not turned on the authenticator app yet: they may only set it up. */
+  mfaSetupRequired?: boolean;
 }
+
+/** The ZAQSA address this request came to. */
+export async function currentHost(): Promise<HostInfo> {
+  const h = await headers();
+  return classifyHost(h.get("x-forwarded-host") ?? h.get("host"));
+}
+
+/**
+ * Platform users must use the authenticator app. It is required on the team address and on any
+ * production deployment; local development and tests are exempt so they stay quick to run.
+ */
+const mfaRequired = (h: HostInfo) => h.kind === "team" || process.env.NODE_ENV === "production";
 
 /** Constant-ish time: compare against a dummy hash when the user is unknown so timing does not reveal accounts. */
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 10);
@@ -34,6 +49,9 @@ export async function login(
   });
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !ok || !user.active) return null;
+  const host = await currentHost();
+  // The wrong address looks exactly like a wrong password, so it reveals nothing about accounts.
+  if (user.isPlatformAdmin && !hostAllows(host, { platform: true })) return null;
 
   // Second step for people who turned on an authenticator app. A code works only once.
   if (user.totpEnabled && user.totpCipher) {
@@ -45,10 +63,13 @@ export async function login(
 
   let tenantId: string | null = null;
   if (!user.isPlatformAdmin) {
+    const onTenantHost = host.kind === "school" || host.kind === "parents";
+    const wantSlug = onTenantHost ? host.slug : tenantSlug;
     const m =
-      (tenantSlug ? user.memberships.find((x) => x.tenant.slug === tenantSlug) : undefined) ??
-      user.memberships[0];
+      (wantSlug ? user.memberships.find((x) => x.tenant.slug === wantSlug) : undefined) ??
+      (onTenantHost ? undefined : user.memberships[0]);
     if (!m) return null;
+    if (!hostAllows(host, { platform: false, role: m.role, slug: m.tenant.slug })) return null;
     const family = m.role === "parent" || m.role === "student";
     // Suspended: staff are locked out, families can still read their records.
     if (m.tenant.status === "suspended" && !family) return null;
@@ -93,9 +114,12 @@ export async function getAuth(): Promise<Auth | null> {
     include: { user: true },
   });
   if (!s || s.expiresAt < new Date() || !s.user.active) return null;
+  const host = await currentHost();
 
   if (s.user.isPlatformAdmin) {
+    if (!hostAllows(host, { platform: true })) return null;
     return {
+      mfaSetupRequired: mfaRequired(host) && !s.user.totpEnabled ? true : undefined,
       sessionId: s.id,
       user: {
         id: s.user.id,
@@ -114,6 +138,7 @@ export async function getAuth(): Promise<Auth | null> {
   });
   if (!m) return null;
   const role = m.role as Role;
+  if (!hostAllows(host, { platform: false, role, slug: m.tenant.slug })) return null;
   // A suspended school's staff are signed out at once; families can still read their records.
   if (m.tenant.status === "suspended" && role !== "parent" && role !== "student") return null;
   return {
@@ -144,9 +169,15 @@ export class HttpError extends Error {
 }
 
 /** Use at the top of every route: 401 when signed out, 403 when the role is not allowed. */
-export async function requireAuth(roles?: Role[]) {
+export async function requireAuth(roles?: Role[], opts?: { mfaExempt?: boolean }) {
   const a = await getAuth();
   if (!a) throw new HttpError(401, "unauthenticated", "Please sign in.");
+  if (a.mfaSetupRequired && !opts?.mfaExempt)
+    throw new HttpError(
+      403,
+      "mfa_setup_required",
+      "Turn on the authenticator app to continue. Platform accounts must use it.",
+    );
   if (roles && !roles.includes(a.user.role))
     throw new HttpError(403, "forbidden", "You do not have access to this.");
   return a;

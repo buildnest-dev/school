@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { HttpError, requireAuth } from "./auth";
 import { prisma } from "./db";
+import { RESERVED_SLUGS } from "./hosts";
 import { effectiveSubscription } from "./subscription";
 
 const base = () => process.env.ZAQSA_BASE_DOMAIN ?? "zaqsa.com";
@@ -11,23 +12,7 @@ export const hostsFor = (slug: string) => ({
   parents: `${slug}.parents.${base()}`,
 });
 
-const RESERVED = new Set([
-  "www",
-  "admin",
-  "schools",
-  "school",
-  "parents",
-  "api",
-  "app",
-  "mail",
-  "static",
-  "support",
-  "help",
-  "billing",
-  "status",
-  "demo",
-  "test",
-]);
+const RESERVED = RESERVED_SLUGS;
 
 /** A school's name in its addresses: 3-30 lowercase letters, digits or hyphens, not reserved. */
 export const slugField = z

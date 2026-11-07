@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
+import { classifyHost } from "@/server/hosts";
 import { handle } from "@/server/http";
 
 /**
@@ -8,19 +9,15 @@ import { handle } from "@/server/http";
  * open, so it is safe to call before sign-in.
  */
 export const GET = handle(async (req: Request) => {
-  const host = (new URL(req.url).searchParams.get("host") ?? "").toLowerCase().split(":")[0] ?? "";
-  const base = process.env.ZAQSA_BASE_DOMAIN ?? "zaqsa.com";
-  const m = new RegExp(`^([a-z0-9-]+)\\.(school|parents)\\.${base.replace(/\./g, "\\.")}$`).exec(
-    host,
-  );
+  const h = classifyHost(new URL(req.url).searchParams.get("host"));
   const notFound = NextResponse.json(
     { code: "not_found", message: "Unknown address." },
     { status: 404 },
   );
-  if (!m) return notFound;
-  const t = await prisma.tenant.findUnique({ where: { slug: m[1]! } });
+  if (h.kind !== "school" && h.kind !== "parents") return notFound;
+  const t = await prisma.tenant.findUnique({ where: { slug: h.slug } });
   if (!t) return notFound;
-  const kind = m[2] as "school" | "parents";
+  const kind = h.kind;
   return NextResponse.json({
     kind,
     slug: t.slug,

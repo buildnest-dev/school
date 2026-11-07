@@ -25,7 +25,7 @@ const Disable = Code.extend({ password: z.string().min(1) });
 export const POST = handle(async (req: Request, ctx: { params: Promise<{ action: string }> }) => {
   assertSameOrigin(req);
   const { action } = await ctx.params;
-  const { user } = await requireAuth();
+  const { user } = await requireAuth(undefined, { mfaExempt: true });
   await throttle(`mfa|${user.id}`, 10, 10 * 60_000);
   const row = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
 
