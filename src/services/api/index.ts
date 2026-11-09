@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/client";
+import { ApiError, apiRequest } from "@/lib/api/client";
 import type { ListParams, MutationResult, Page } from "@/types";
 import { ENDPOINTS, RESOURCE_PATHS } from "../endpoints";
 import type { ListService, ResourceKey, ResourceMap, Services } from "../types";
@@ -203,7 +203,27 @@ const ADAPT: Partial<
   },
 };
 
+/**
+ * Parts of the product whose backend is not built yet. They say so plainly instead of failing with a
+ * "404". Each needs its own tables and rules (see docs/NOT_CONNECTED.md).
+ */
+const notBuilt = () =>
+  Promise.reject(
+    new ApiError(404, { code: "not_available", message: "This part is not available yet." }),
+  );
+const NOT_BUILT = new Set<ResourceKey>([
+  "vendors",
+  "calendar",
+  "leaves",
+  "approvals",
+  "eventPlans",
+  "queries",
+  "exams",
+  "feeHeads",
+]);
+
 function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]> {
+  if (NOT_BUILT.has(key)) return { list: notBuilt, get: notBuilt } as ListService<ResourceMap[K]>;
   const a = ADAPT[key];
   const path = a?.path ?? RESOURCE_PATHS[key];
   const shape = (r: Raw) => (a ? a.row(r) : r) as ResourceMap[K];
@@ -306,7 +326,7 @@ export function createApiServices(): Services {
     },
     notices: { create: (input) => post(e.notices, input) },
     leave: { request: (input) => post(e.leaveRequests, input) },
-    approvals: { decide: (id, decision, note) => post(e.approvalDecision(id), { decision, note }) },
+    approvals: { decide: () => notBuilt() },
     certificates: {
       create: (input) =>
         post("/certificates", {
@@ -314,13 +334,13 @@ export function createApiServices(): Services {
           type: input.type.toLowerCase(),
           purpose: input.purpose,
         }),
-      verify: (certNo) => apiRequest(e.certificateVerify(certNo)),
+      verify: () => notBuilt(),
     },
     rollover: {
-      checks: () => apiRequest(e.rolloverChecks),
-      preview: (rules) => apiRequest(e.rolloverPreview, { method: "POST", body: rules }),
-      sections: () => apiRequest(e.rolloverSections),
-      submit: (input) => apiRequest(e.rolloverSubmit, { method: "POST", body: input }),
+      checks: () => notBuilt(),
+      preview: () => notBuilt(),
+      sections: () => notBuilt(),
+      submit: () => notBuilt(),
     },
     family: {
       // The screens print "Class <classSection>", so the backend's "Class 8 A" drops its prefix.
@@ -337,9 +357,9 @@ export function createApiServices(): Services {
       results: (id) => apiRequest(e.child(id, "results")),
       ledger: (id) => apiRequest(e.child(id, "ledger")),
       timetable: (id) => apiRequest(e.child(id, "timetable")),
-      exams: (id) => apiRequest(e.child(id, "exams")),
-      ptmSlots: () => apiRequest(e.ptmSlots),
-      bookPtm: (slotId) => post(e.ptmBook(slotId), {}),
+      exams: async () => [],
+      ptmSlots: async () => [],
+      bookPtm: () => notBuilt(),
       requestCertificate: (childId, type, purpose) =>
         post("/certificates", { studentId: childId, type: type.toLowerCase(), purpose }),
       certificateRequests: async (childId) => {
