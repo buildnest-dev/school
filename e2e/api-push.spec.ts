@@ -31,7 +31,7 @@ test("a parent hears once when their child is submitted absent; phones subscribe
 
   // Subscriptions: a valid one is stored, junk is refused, signed-out people cannot subscribe.
   const sub = {
-    endpoint: `https://push.example.test/send/${Date.now()}`,
+    endpoint: `https://fcm.googleapis.com/fcm/send/${Date.now()}`,
     keys: { p256dh: "B".repeat(87), auth: "A".repeat(22) },
   };
   expect(

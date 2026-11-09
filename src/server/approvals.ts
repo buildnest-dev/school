@@ -53,6 +53,13 @@ const getStore = () => store ?? firestoreStore();
 
 export const approvalsOn = () => store !== null || firestoreConfigured();
 
+/**
+ * On Vercel (production or preview) the approval step cannot be skipped: if its settings go
+ * missing, team members are locked out instead of being let in with a password alone.
+ */
+export const approvalsMandatory = () =>
+  process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview";
+
 export const hashCode = (id: string, code: string) =>
   createHash("sha256").update(`${id}:${code}`).digest("hex");
 
@@ -94,7 +101,8 @@ async function rememberDevice(userId: string) {
   });
 }
 
-export type StepResult = "ok" | "approval_invalid" | "approval_required" | `approval_cooldown:${number}`;
+export type StepResult =
+  "ok" | "approval_invalid" | "approval_required" | `approval_cooldown:${number}`;
 
 /**
  * The approval step of a team sign-in, after the password was right. A remembered browser skips it.

@@ -13,6 +13,30 @@ const configured = () =>
 
 export const vapidPublicKey = () => process.env.VAPID_PUBLIC_KEY ?? null;
 
+/**
+ * Only the browsers' own push services may be stored. The server sends to these addresses, so
+ * accepting any URL would let a signed-in person aim it at internal or third-party addresses.
+ */
+const PUSH_HOSTS = [
+  "fcm.googleapis.com",
+  "android.googleapis.com",
+  "updates.push.services.mozilla.com",
+  "push.services.mozilla.com",
+  "web.push.apple.com",
+  "push.apple.com",
+  "notify.windows.com",
+];
+export function isPushEndpoint(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443"))
+      return false;
+    return PUSH_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith("." + h));
+  } catch {
+    return false;
+  }
+}
+
 export interface Notice {
   title: string;
   body: string;

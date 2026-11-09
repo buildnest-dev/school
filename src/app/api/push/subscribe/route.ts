@@ -3,9 +3,14 @@ import { z } from "zod";
 import { requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle, throttle } from "@/server/http";
+import { isPushEndpoint } from "@/server/push";
 
 const Sub = z.object({
-  endpoint: z.string().url().max(2000),
+  endpoint: z
+    .string()
+    .url()
+    .max(2000)
+    .refine(isPushEndpoint, "That is not a browser push address."),
   keys: z.object({ p256dh: z.string().min(10).max(200), auth: z.string().min(10).max(100) }),
 });
 

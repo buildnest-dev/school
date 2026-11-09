@@ -21,6 +21,7 @@ export const GET = handle(async (_req: Request, ctx: { params: Promise<{ id: str
       "Content-Type": "image/jpeg",
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": "inline; filename=\"payment-proof.jpg\"",
     },
   });
 });

@@ -16,7 +16,13 @@ const Body = z.object({
 export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   const body = Body.parse(await req.json());
-  const key = `${body.email.toLowerCase()}|${req.headers.get("x-forwarded-for") ?? "local"}`;
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  const email = body.email.toLowerCase();
+  const key = `${email}|${ip}`;
+  // Three limits: this person from this address, this person from anywhere (a rotating address
+  // cannot get round it), and one address trying many people.
+  await throttle(`login-email|${email}`, 25, 15 * 60_000);
+  await throttle(`login-ip|${ip}`, 60, 10 * 60_000);
   await throttle(key);
   const ok = await login(body.email, body.password, body.school, body.code, body.remember);
   if (ok === "mfa_required")
@@ -36,8 +42,13 @@ export const POST = handle(async (req: Request) => {
       `That request was not approved. Try again in ${ok.split(":")[1]} minute(s).`,
     );
   if (ok === "approval_invalid")
-    throw new HttpError(401, "approval_invalid", "That code is not valid or has expired. Start again.");
+    throw new HttpError(
+      401,
+      "approval_invalid",
+      "That code is not valid or has expired. Start again.",
+    );
   if (!ok) throw new HttpError(401, "invalid_credentials", "Email or password is incorrect.");
   await clearThrottle(key);
+  await clearThrottle(`login-email|${email}`);
   return NextResponse.json({ ok: true });
 });

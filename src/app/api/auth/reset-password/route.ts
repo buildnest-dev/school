@@ -48,6 +48,7 @@ export const POST = handle(async (req: Request) => {
     if (claim.count !== 1) throw bad;
     await tx.user.update({ where: { id: row.userId }, data: { passwordHash } });
     await tx.session.deleteMany({ where: { userId: row.userId } });
+    await tx.trustedDevice.deleteMany({ where: { userId: row.userId } });
     await tx.passwordToken.updateMany({
       where: { userId: row.userId, usedAt: null },
       data: { usedAt: new Date() },

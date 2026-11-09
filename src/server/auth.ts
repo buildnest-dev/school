@@ -6,7 +6,7 @@ import { isWrite } from "./context";
 import { prisma } from "./db";
 import { classifyHost, hostAllows, type HostInfo } from "./hosts";
 import { decryptSecret } from "./secret";
-import { approvalsOn, platformStep, type StepResult } from "./approvals";
+import { approvalsMandatory, approvalsOn, platformStep, type StepResult } from "./approvals";
 import { effectiveSubscription, isReadOnly } from "./subscription";
 import { verifyCode } from "./totp";
 
@@ -49,6 +49,7 @@ export async function login(
   // The wrong address looks exactly like a wrong password, so it reveals nothing about accounts.
   if (user.isPlatformAdmin && !hostAllows(host, { platform: true })) return null;
   // ZAQSA team members also need an admin at admin.zaqsa.com to approve each sign-in.
+  if (user.isPlatformAdmin && !approvalsOn() && approvalsMandatory()) return null;
   if (user.isPlatformAdmin && approvalsOn()) {
     const step = await platformStep(user, code, remember);
     if (step !== "ok") return step;

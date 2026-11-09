@@ -22,6 +22,11 @@ export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response
           { status: 422 },
         );
       }
+      if (e instanceof SyntaxError && /JSON/i.test(e.message))
+        return NextResponse.json(
+          { code: "bad_json", message: "The request could not be read." },
+          { status: 400 },
+        );
       console.error(e);
       return NextResponse.json(
         { code: "server_error", message: "Something went wrong." },

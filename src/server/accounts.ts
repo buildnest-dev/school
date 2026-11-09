@@ -1,3 +1,4 @@
+import { classifyHost } from "./hosts";
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -148,7 +149,17 @@ export async function createLogin(
   return { userId: user.id };
 }
 
+/**
+ * The address a link in an e-mail should point to. In production it must be one of our own
+ * addresses (never a Host header an attacker chose); anywhere else the request's own address is used.
+ */
 export const originOf = (req: Request) => {
   const u = new URL(req.url);
-  return `${u.protocol}//${req.headers.get("host") ?? u.host}`;
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? u.host;
+  if (process.env.NODE_ENV === "production" && classifyHost(host).kind === "other") {
+    const fallback = process.env.APP_ORIGIN;
+    if (fallback) return fallback.replace(/\/$/, "");
+    return `https://school.${process.env.ZAQSA_BASE_DOMAIN ?? "zaqsa.com"}`;
+  }
+  return `${u.protocol}//${host.split(",")[0]!.trim()}`;
 };
