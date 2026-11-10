@@ -174,7 +174,12 @@ export function DevSignIn() {
             </Button>
           </form>
         )}
-        <p className="text-sm">
+        <p className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {env.dataSource === "mock" ? null : (
+            <Link href="/forgot-password" className="underline underline-offset-4">
+              Forgot your password?
+            </Link>
+          )}
           <Link href="/" className="underline underline-offset-4">
             Back to the website
           </Link>

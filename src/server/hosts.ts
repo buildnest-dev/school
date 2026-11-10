@@ -80,7 +80,9 @@ export function hostAllows(h: HostInfo, who: Who): boolean {
 export function pathAllowed(h: HostInfo, pathname: string): boolean {
   const first = "/" + (pathname.split("/")[1] ?? "");
   if (["/_next", "/robots.txt", "/favicon.ico"].includes(first)) return true;
-  if (first === "/sign-in") return h.kind !== "public";
+  // The pages the sign-in screen and the e-mailed links lead to.
+  if (["/sign-in", "/forgot-password", "/reset-password"].includes(first))
+    return h.kind !== "public";
   if (first === "/api")
     return h.kind !== "public" || pathname === "/api/public" || pathname.startsWith("/api/public/");
   switch (h.kind) {

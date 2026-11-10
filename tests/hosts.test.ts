@@ -95,6 +95,15 @@ describe("pathAllowed", () => {
     expect(pathAllowed(h, "/api/publicity")).toBe(false);
   });
   it("each signed-in address keeps to its own areas", () => {
+    for (const h of [
+      { kind: "team" },
+      { kind: "school", slug: "a" },
+      { kind: "parents", slug: "a" },
+    ] as const) {
+      expect(pathAllowed(h, "/reset-password")).toBe(true);
+      expect(pathAllowed(h, "/forgot-password")).toBe(true);
+    }
+    expect(pathAllowed({ kind: "public" }, "/reset-password")).toBe(false);
     expect(pathAllowed({ kind: "team" }, "/platform/schools")).toBe(true);
     expect(pathAllowed({ kind: "team" }, "/school")).toBe(false);
     expect(pathAllowed({ kind: "school", slug: "a" }, "/teacher")).toBe(true);
