@@ -55,11 +55,20 @@ export async function sendMail(m: {
   if (!req) return;
   try {
     const res = await fetch(req.url, { ...req.init, signal: AbortSignal.timeout(10_000) });
+    let why = "";
+    if (!res.ok) {
+      // Brevo says what is wrong (unverified sender, blocked address, bad key); keep that.
+      const j = (await res.json().catch(() => ({}))) as { code?: string; message?: string };
+      why = [j.code, j.message].filter(Boolean).join(": ");
+    }
     await prisma.outbox.update({
       where: { id: row.id },
       data: res.ok
         ? { status: "sent", sentAt: new Date(), body: "(sent; text not kept)" }
-        : { status: "failed", error: `Brevo answered ${res.status}` },
+        : {
+            status: "failed",
+            error: `Brevo answered ${res.status}${why ? ` (${why})` : ""}`.slice(0, 300),
+          },
     });
   } catch (e) {
     await prisma.outbox.update({
