@@ -13,6 +13,7 @@ import { useServices } from "@/hooks/use-services";
 import { useSession } from "@/hooks/use-session";
 import type { ResourceKey } from "@/services/types";
 import type { Role } from "@/types";
+import { NewSchool } from "../platform/new-school";
 import { CertificateActions } from "../school/certificate-actions";
 import { fmtDate, prettyKey, rupees } from "./format";
 import type { ScreenProps } from "./planned-screen";
@@ -26,7 +27,7 @@ export interface TableConfig {
   fixedFilters?: Record<string, string>;
   /** Navigate instead of opening the details dialog. */
   rowHref?: (row: any) => string;
-  actions?: (role: Role) => ReactNode;
+  actions?: (role: Role, reload: () => void) => ReactNode;
   emptyHint?: string;
   /** Buttons under the details dialog; call done() after a change to reload the table. */
   detailActions?: (row: Record<string, unknown>, done: () => void) => ReactNode;
@@ -48,6 +49,10 @@ export const TABLES: Record<string, TableConfig> = {
   "platform-tenants": {
     resource: "tenants",
     searchPlaceholder: "Search schools",
+    actions: (role, reload) =>
+      role === "platform_admin" && env.dataSource === "api" ? (
+        <NewSchool onCreated={reload} />
+      ) : null,
     columns: [
       { key: "name", header: "School", sortable: true },
       { key: "plan", header: "Plan", sortable: true },
@@ -440,7 +445,7 @@ export function ResourceTableScreen({ screen }: ScreenProps) {
       <PageHeader
         title={screen.title}
         description={screen.description}
-        actions={cfg.actions?.(user.role)}
+        actions={cfg.actions?.(user.role, () => setReloadKey((k) => k + 1))}
       />
       <DataTable
         caption={screen.title}
