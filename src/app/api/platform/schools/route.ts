@@ -7,6 +7,7 @@ import { assertSameOrigin, handle } from "@/server/http";
 import { idempotent } from "@/server/idempotency";
 import { PLANS, schoolRow, slugField, requirePlatform } from "@/server/platform";
 import { personName, phone } from "@/server/validators";
+import { addSchoolDomains } from "@/server/vercel-domains";
 
 const Body = z.object({
   name: z.string().trim().min(3, "Enter the school name").max(120),
@@ -132,6 +133,10 @@ export const POST = handle(async (req: Request) => {
       role: "school_owner",
       origin: originOf(req),
     });
-    return { status: 201, body: { ok: true, mode: "api", school: await schoolRow(tenant) } };
+    const domains = await addSchoolDomains(tenant.slug);
+    return {
+      status: 201,
+      body: { ok: true, mode: "api", school: await schoolRow(tenant), domains },
+    };
   });
 });

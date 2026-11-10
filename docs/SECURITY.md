@@ -54,5 +54,7 @@ student, platform admin and a second school). Every attack below is now a test i
 ## Settings that must exist on Vercel
 
 `BANK_ENC_KEY` (bank account numbers cannot be read or saved without it), `FIREBASE_SERVICE_ACCOUNT`
-(team sign-in approval), `BREVO_API_KEY`, `VAPID_*`. Optional: `APP_ORIGIN` (the address used in
+(team sign-in approval), `BREVO_API_KEY`, `VAPID_*`, `VERCEL_TOKEN` and `VERCEL_PROJECT_ID` (adds each new school's two
+addresses to the project; also `VERCEL_TEAM_ID` if the project is in a team. The token can add and
+remove domains, so keep it only on the `school` project). Optional: `APP_ORIGIN` (the address used in
 e-mailed links if a request arrives on an unknown host).
