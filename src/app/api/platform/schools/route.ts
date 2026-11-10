@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createLogin, originOf } from "@/server/accounts";
+import { createLogin } from "@/server/accounts";
 import { HttpError } from "@/server/auth";
 import { like, prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { idempotent } from "@/server/idempotency";
-import { PLANS, schoolRow, slugField, requirePlatform } from "@/server/platform";
+import { PLANS, hostsFor, schoolRow, slugField, requirePlatform } from "@/server/platform";
 import { personName, phone } from "@/server/validators";
 import { addSchoolDomains } from "@/server/vercel-domains";
 
@@ -131,7 +131,8 @@ export const POST = handle(async (req: Request) => {
       email: b.ownerEmail,
       name: b.ownerName,
       role: "school_owner",
-      origin: originOf(req),
+      // The owner signs in at the school's own address, not on the team site this request came from.
+      origin: `https://${hostsFor(tenant.slug).school}`,
     });
     const domains = await addSchoolDomains(tenant.slug);
     return {
