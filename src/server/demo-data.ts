@@ -267,6 +267,7 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
       title,
       amountPaise,
       dueOn: day(off),
+      createdAt: day(off - 30),
     })),
   );
   await tx.invoice.createMany({ data: invoiceRows });
@@ -370,6 +371,22 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
     ),
   );
   await tx.mark.createMany({ data: markRows });
+  // Marks count in results only once their sheet is submitted.
+  await tx.markSheet.createMany({
+    data: exams.flatMap((ex) =>
+      sectionDefs.flatMap((d) =>
+        subjectsOf(d.cls.id)
+          .filter((sub) => SUBJECTS.includes(sub.name))
+          .map((sub) => ({
+            tenantId,
+            examId: ex.id,
+            sectionId: d.section.id,
+            subjectId: sub.id,
+            status: "submitted",
+          })),
+      ),
+    ),
+  });
 
   // Homework with who did it.
   const hwTitles: [string, string][] = [
