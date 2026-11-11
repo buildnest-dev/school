@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { HttpError } from "./auth";
 import { STANDARD_CLASSES } from "./classes";
 import { prisma } from "./db";
@@ -663,4 +664,79 @@ export async function clearDemoData(tenantId: string) {
     },
     { timeout: 55_000, maxWait: 10_000 },
   );
+}
+
+/** One login per role for the demonstration school. Everything about them is fictional. */
+const DEMO_LOGINS: { email: string; name: string; role: string; staffName?: string }[] = [
+  { email: "principal@demoschool.test", name: "Anita Sharma", role: "principal" },
+  { email: "vice-principal@demoschool.test", name: "Rohit Banerjee", role: "vice_principal" },
+  {
+    email: "teacher@demoschool.test",
+    name: "Priya Nair",
+    role: "teacher",
+    staffName: "Priya Nair",
+  },
+  {
+    email: "teacher2@demoschool.test",
+    name: "Rahul Menon",
+    role: "teacher",
+    staffName: "Rahul Menon",
+  },
+  {
+    email: "accountant@demoschool.test",
+    name: "Vikram Singh",
+    role: "accountant",
+    staffName: "Vikram Singh",
+  },
+  {
+    email: "librarian@demoschool.test",
+    name: "Meena Kulkarni",
+    role: "librarian",
+    staffName: "Meena Kulkarni",
+  },
+  { email: "transport@demoschool.test", name: "Dinesh Patil", role: "transport" },
+  { email: "admissions@demoschool.test", name: "Kavita Joshi", role: "admission_officer" },
+  { email: "hr@demoschool.test", name: "Sneha Pillai", role: "hr" },
+  { email: "reception@demoschool.test", name: "Arjun Malhotra", role: "reception" },
+];
+
+/**
+ * Gives the demonstration school a login for every role, all with the password the caller chooses
+ * (it is not kept anywhere in the code). Existing logins are left as they are. The student login
+ * goes to Aarav Test, so the student area has a child to show.
+ */
+export async function createDemoLogins(tenantId: string, password: string) {
+  const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+  if (!isDemoSlug(tenant.slug))
+    throw new HttpError(403, "not_demo", "Demo logins can only be made in the demo school.");
+  const passwordHash = await bcrypt.hash(password, 10);
+  const staff = await prisma.staff.findMany({ where: { tenantId } });
+  const aarav = await prisma.student.findFirst({
+    where: { tenantId, name: "Aarav Test", userId: null },
+  });
+  const all = [
+    ...DEMO_LOGINS,
+    ...(aarav
+      ? [
+          {
+            email: "student@demoschool.test",
+            name: "Aarav Test",
+            role: "student",
+            staffName: undefined,
+          },
+        ]
+      : []),
+  ];
+  const made: string[] = [];
+  for (const l of all) {
+    if (await prisma.user.findUnique({ where: { email: l.email } })) continue;
+    const user = await prisma.user.create({ data: { email: l.email, name: l.name, passwordHash } });
+    await prisma.membership.create({ data: { userId: user.id, tenantId, role: l.role } });
+    const person = l.staffName ? staff.find((s) => s.name === l.staffName && !s.userId) : undefined;
+    if (person) await prisma.staff.update({ where: { id: person.id }, data: { userId: user.id } });
+    if (l.role === "student" && aarav)
+      await prisma.student.update({ where: { id: aarav.id }, data: { userId: user.id } });
+    made.push(`${l.role}: ${l.email}`);
+  }
+  return { made };
 }

@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 import { ApiError, apiRequest } from "@/lib/api/client";
 
 function Shell({
@@ -140,9 +141,8 @@ export function ResetPassword({ token }: { token: string }) {
         <form onSubmit={submit} className="grid gap-4" noValidate>
           <Field id="password" label="New password" required>
             {(a) => (
-              <Input
+              <PasswordInput
                 {...a}
-                type="password"
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -151,9 +151,8 @@ export function ResetPassword({ token }: { token: string }) {
           </Field>
           <Field id="again" label="New password again" required>
             {(a) => (
-              <Input
+              <PasswordInput
                 {...a}
-                type="password"
                 autoComplete="new-password"
                 value={again}
                 onChange={(e) => setAgain(e.target.value)}

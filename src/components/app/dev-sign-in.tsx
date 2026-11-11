@@ -8,6 +8,7 @@ import { BrandLogo } from "@/components/layout/brand-logo";
 import { Avatar } from "@/components/shared/blocks";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 import { AREA_ROOT, ROLE_AREA, ROLE_LABEL } from "@/config/screens";
 import { env } from "@/config/env";
 import { useSession } from "@/hooks/use-session";
@@ -126,9 +127,8 @@ export function DevSignIn() {
             </Field>
             <Field id="password" label="Password" required>
               {(a) => (
-                <Input
+                <PasswordInput
                   {...a}
-                  type="password"
                   autoComplete="current-password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
