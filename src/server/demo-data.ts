@@ -297,7 +297,7 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
       mode: pick(["upi", "cash", "netbanking", "upi"], i),
       reference: m % 2 ? `DEMO-TXN-${pad(i + 1, 5)}` : null,
       receiptNo: `REC-2026-${pad(++rec, 5)}`,
-      paidOn: day(-100 + (i % 60)),
+      paidOn: day(-45 + (i % 45)), // some this month, so "collected this month" is not empty
     });
   });
   await tx.payment.createMany({ data: payRows });
@@ -573,6 +573,11 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
       guardianPhone: `+91 98${pad(76543210 + i, 8)}`,
       stage,
     })),
+  });
+  // The demonstration school is fictional, so it needs no go-live checklist; families can sign in.
+  await tx.tenant.update({
+    where: { id: tenantId },
+    data: { status: "live", wentLiveAt: new Date() },
   });
   await tx.auditLog.create({
     data: { tenantId, userId, action: "demo.load", entity: "tenant", entityId: tenantId },
