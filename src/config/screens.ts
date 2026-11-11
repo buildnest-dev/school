@@ -948,7 +948,6 @@ export const NO_BACKEND_YET: ReadonlySet<string> = new Set([
   "school-queries",
   "school-events",
   "school-leave",
-  "school-fee-structure",
   "school-vendors",
   "school-exams",
   "school-rollover",

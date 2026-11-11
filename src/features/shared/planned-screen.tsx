@@ -25,6 +25,22 @@ export function PlannedScreen({ screen }: { screen: ScreenDef }) {
   );
 }
 
+/** Shown with the real backend for a screen that works on sample data only. */
+export function ComingSoon({ screen }: { screen: ScreenDef }) {
+  return (
+    <>
+      <PageHeader title={screen.title} description={screen.description} />
+      <Card className="max-w-xl">
+        <p className="text-ink font-semibold">Coming soon</p>
+        <p className="text-muted mt-1 text-sm">
+          This part is not ready for your school yet. Nothing is lost; it will appear here when it
+          is switched on.
+        </p>
+      </Card>
+    </>
+  );
+}
+
 export interface ScreenProps {
   screen: ScreenDef;
   params: Record<string, string>;

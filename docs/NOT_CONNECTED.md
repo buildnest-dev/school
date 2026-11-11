@@ -13,7 +13,7 @@ behave before it is built, so none of them was guessed at.
 | Events planning | No event plans table. |
 | Parent queries | No queries/messages table between parents and the school. |
 | Exam datesheet | Exams exist (name, marks) but have no dates, subjects, classes or rooms. |
-| Fee structure by class | Fee heads exist (name, GST). Amounts per class and frequency are not stored; invoices carry the amounts. |
+| Fee structure by class | Screen built: fee heads (name, GST) and "Raise a fee" for a class or section with a preview. Amounts per class and frequency are still not stored; each raised fee carries its own amount. |
 | Year-end rollover wizard | The backend has a one-step promote (`POST /api/academic-years/rollover`), but the screen is a different, rules-based flow (attendance and marks thresholds, section capacity, checks). One of the two must change. |
 | Parent-teacher meeting slots | No slots or bookings. |
 | Certificate verification inside the school portal | The public check exists (`/api/public/certificates/verify`, needs school and serial). The screen only sends a serial. |

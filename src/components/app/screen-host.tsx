@@ -7,9 +7,17 @@ import { AppShell } from "@/components/layout/app-shell";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { LoadingBlock } from "@/components/ui/states";
-import { AREA_ROOT, ROLE_AREA, ROLE_LABEL, canAccess, matchScreen } from "@/config/screens";
+import { env } from "@/config/env";
+import {
+  AREA_ROOT,
+  NO_BACKEND_YET,
+  ROLE_AREA,
+  ROLE_LABEL,
+  canAccess,
+  matchScreen,
+} from "@/config/screens";
 import { SCREEN_COMPONENTS } from "@/features/registry";
-import { PlannedScreen } from "@/features/shared/planned-screen";
+import { ComingSoon, PlannedScreen } from "@/features/shared/planned-screen";
 import { useSession } from "@/hooks/use-session";
 import type { Area } from "@/types";
 
@@ -110,9 +118,14 @@ export function ScreenHost({ area, slug }: { area: Area; slug: string[] }) {
   }
 
   const Component = SCREEN_COMPONENTS[match.screen.id];
+  // With the real backend, a screen whose backend is not built must not show sample data or an
+  // error: say plainly that it is coming.
+  const comingSoon = env.dataSource === "api" && NO_BACKEND_YET.has(match.screen.id);
   return (
     <AppShell area={area}>
-      {Component ? (
+      {comingSoon ? (
+        <ComingSoon screen={match.screen} />
+      ) : Component ? (
         <Component screen={match.screen} params={match.params} />
       ) : (
         <PlannedScreen screen={match.screen} />

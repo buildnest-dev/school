@@ -24,6 +24,8 @@ import {
   ResultsOverview,
   StudentDetail,
 } from "./school/operations";
+import { env } from "@/config/env";
+import { FeeStructure } from "./school/fee-structure";
 import { OpeningBalances } from "./school/opening-balances";
 import { PaymentDetails } from "./school/payment-details";
 import { PaymentProofs } from "./school/payment-proofs";
@@ -65,6 +67,9 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-refunds": plain(Refunds),
   "school-payment-details": plain(PaymentDetails),
   "school-opening-balances": plain(OpeningBalances),
+  // Real fee heads and "raise a fee" with the live backend; the sample-data table otherwise.
+  "school-fee-structure":
+    env.dataSource === "api" ? plain(FeeStructure) : (ResourceTableScreen as C),
   "school-payment-proofs": plain(PaymentProofs),
   "school-notice-new": plain(NoticeNew),
   "school-certificate-new": plain(CertificateNew),
