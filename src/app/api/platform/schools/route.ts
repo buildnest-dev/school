@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createLogin } from "@/server/accounts";
+import { TEAM_EMAIL_MESSAGE, createLogin } from "@/server/accounts";
 import { HttpError } from "@/server/auth";
 import { like, prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
@@ -77,6 +77,8 @@ export const POST = handle(async (req: Request) => {
   return idempotent(req, "platform", "school.create", raw, async () => {
     if (await prisma.tenant.findUnique({ where: { slug: b.slug } }))
       throw new HttpError(409, "slug_taken", "That school address name is already used.");
+    const owner = await prisma.user.findUnique({ where: { email: b.ownerEmail } });
+    if (owner?.isPlatformAdmin) throw new HttpError(422, "team_email", TEAM_EMAIL_MESSAGE);
     const boards = await prisma.board.findMany({ where: { code: { in: b.boardCodes } } });
     if (boards.length !== new Set(b.boardCodes).size)
       throw new HttpError(422, "bad_board", "One of the boards is not recognised.");

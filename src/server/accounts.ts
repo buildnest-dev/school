@@ -118,6 +118,9 @@ export type LoginRole = (typeof loginRoles)[number];
  * has a user (for example a parent with a child in another school) just gains this membership.
  * The response is the same either way, so it cannot be used to find out who has an account.
  */
+export const TEAM_EMAIL_MESSAGE =
+  "This e-mail belongs to a ZAQSA team member, who can only sign in on the team address. Use a different e-mail for the school.";
+
 export async function createLogin(
   tenantId: string,
   schoolName: string,
@@ -130,6 +133,8 @@ export async function createLogin(
   });
   if (existing?.memberships.length)
     throw new HttpError(409, "has_login", "This e-mail already has a login at this school.");
+  // A ZAQSA team member can only sign in on the team address, never at a school.
+  if (existing?.isPlatformAdmin) throw new HttpError(422, "team_email", TEAM_EMAIL_MESSAGE);
 
   let user = existing;
   let invited = false;
