@@ -164,7 +164,7 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
     ["Ramesh Yadav", "driver", "Bus Driver", "9811100007"],
   ];
   const kept = await tx.staff.findMany({ where: { tenantId } }); // staff with a login survive a clear
-  const haveStaff = kept.length;
+  const haveStaff = Math.max(0, ...kept.map((k) => Number(k.employeeNo.split("-").pop()) || 0));
   await tx.staff.createMany({
     data: staffSeed
       .filter(([name]) => !kept.some((k) => k.name === name))
