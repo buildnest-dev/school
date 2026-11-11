@@ -211,7 +211,7 @@ const notBuilt = () =>
   Promise.reject(
     new ApiError(404, { code: "not_available", message: "This part is not available yet." }),
   );
-const NOT_BUILT = new Set<ResourceKey>([
+export const NOT_BUILT = new Set<ResourceKey>([
   "vendors",
   "calendar",
   "leaves",

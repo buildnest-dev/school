@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { LoadingBlock } from "@/components/ui/states";
+import { isDemoHost } from "@/config/demo";
 import { env } from "@/config/env";
 import {
   AREA_ROOT,
@@ -120,7 +121,8 @@ export function ScreenHost({ area, slug }: { area: Area; slug: string[] }) {
   const Component = SCREEN_COMPONENTS[match.screen.id];
   // With the real backend, a screen whose backend is not built must not show sample data or an
   // error: say plainly that it is coming.
-  const comingSoon = env.dataSource === "api" && NO_BACKEND_YET.has(match.screen.id);
+  const comingSoon =
+    env.dataSource === "api" && NO_BACKEND_YET.has(match.screen.id) && !isDemoHost();
   return (
     <AppShell area={area}>
       {comingSoon ? (

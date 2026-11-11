@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { Avatar } from "@/components/shared/blocks";
+import { isDemoHost } from "@/config/demo";
 import {
   AREA_ROOT,
   ROLE_LABEL,
@@ -40,7 +41,7 @@ function useNav(area: Area, role: Role | undefined) {
         s.nav &&
         role !== undefined &&
         canAccess(role, s) &&
-        !(env.dataSource === "api" && NO_BACKEND_YET.has(s.id)),
+        !(env.dataSource === "api" && NO_BACKEND_YET.has(s.id) && !isDemoHost()),
     );
     const groups = new Map<string, ScreenDef[]>();
     for (const s of items.sort((a, b) => (a.nav?.order ?? 0) - (b.nav?.order ?? 0))) {
