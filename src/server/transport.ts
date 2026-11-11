@@ -75,7 +75,7 @@ export const vehicleView = (v: {
   insuranceExpiry: Date | null;
   fitnessExpiry: Date | null;
   status: string;
-  routes?: { id: string; name: string }[];
+  routes?: { id: string; name: string; driver?: { name: string } | null }[];
 }) => ({
   id: v.id,
   regNo: v.regNo,
@@ -85,7 +85,8 @@ export const vehicleView = (v: {
   fitnessExpiry: v.fitnessExpiry ? dayStr(v.fitnessExpiry) : null,
   compliance: compliance(v),
   status: v.status,
-  route: v.routes?.[0] ?? null,
+  route: v.routes?.[0] ? { id: v.routes[0].id, name: v.routes[0].name } : null,
+  driver: v.routes?.[0]?.driver?.name ?? null,
 });
 
 export const routeInclude = {

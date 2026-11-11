@@ -23,3 +23,16 @@ export const prettyKey = (k: string) =>
 /** "Dr. Meera Nair" → "Meera" */
 export const firstName = (full: string) =>
   full.replace(/^(Dr|Mr|Mrs|Ms|Prof)\.?\s+/i, "").split(" ")[0] ?? full;
+
+/** "11 Nov 2026, 10:37 pm" in Indian time. */
+export const fmtDateTime = (iso: string | null | undefined) =>
+  iso
+    ? new Date(iso).toLocaleString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone: "Asia/Kolkata",
+      })
+    : "—";

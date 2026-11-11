@@ -10,7 +10,7 @@ export const GET = handle(async () => {
   const rows = await prisma.vehicle.findMany({
     where: { tenantId },
     orderBy: { regNo: "asc" },
-    include: { routes: { select: { id: true, name: true } } },
+    include: { routes: { select: { id: true, name: true, driver: { select: { name: true } } } } },
   });
   const items = rows.map(vehicleView);
   return NextResponse.json({ items, total: items.length, page: 1, pageSize: items.length });

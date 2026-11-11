@@ -16,7 +16,7 @@ import type { Role } from "@/types";
 import { NewSchool } from "../platform/new-school";
 import { AddStudent } from "../school/add-student";
 import { CertificateActions } from "../school/certificate-actions";
-import { fmtDate, prettyKey, rupees } from "./format";
+import { fmtDate, fmtDateTime, prettyKey, rupees } from "./format";
 import type { ScreenProps } from "./planned-screen";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -149,7 +149,7 @@ export const TABLES: Record<string, TableConfig> = {
     searchPlaceholder: "Search history",
     initialSort: { key: "at", order: "desc" },
     columns: [
-      { key: "at", header: "When", sortable: true },
+      { key: "at", header: "When", sortable: true, render: (r) => fmtDateTime(r.at) },
       { key: "actor", header: "Who", sortable: true },
       { key: "action", header: "What" },
       { key: "target", header: "On" },

@@ -20,6 +20,19 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
 const num = (v: unknown) => (typeof v === "number" ? v : 0);
 const obj = (v: unknown): Raw => (v && typeof v === "object" ? (v as Raw) : {});
 
+/** Plain wording for the codes in the audit history. */
+const ACTION_LABEL: Record<string, string> = {
+  "demo.load": "Sample data loaded",
+  "demo.clear": "Sample data cleared",
+  "student.create": "Student added",
+  "subjects.add": "Subjects added",
+  "classes.standard": "Standard classes created",
+  "timetable.save": "Timetable saved",
+  "guardian.login": "Parent login created",
+  "student.login": "Student login created",
+  "school.golive": "School went live",
+};
+
 const CERT_TYPE: Record<string, string> = {
   bonafide: "Bonafide",
   character: "Character",
@@ -83,7 +96,7 @@ const ADAPT: Partial<
       id: r.id,
       regNo: r.regNo,
       route: str(obj(r.route).name),
-      driver: "",
+      driver: str(r.driver),
       capacity: num(r.capacity),
       status: r.status === "maintenance" ? "maintenance" : "active",
     }),
@@ -165,7 +178,7 @@ const ADAPT: Partial<
       id: r.id,
       at: r.at,
       actor: str(r.by) || "System",
-      action: r.action,
+      action: ACTION_LABEL[str(r.action)] ?? str(r.action),
       target: str(r.entity),
       area: str(r.entity),
     }),

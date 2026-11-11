@@ -31,6 +31,7 @@ import { PaymentDetails } from "./school/payment-details";
 import { PaymentProofs } from "./school/payment-proofs";
 import { Refunds } from "./school/refunds";
 import { Rollover } from "./school/rollover";
+import { Curriculum } from "./school/curriculum";
 import { Settings } from "./school/settings";
 import { SchoolTimetable } from "./school/timetable";
 import { ResourceTableScreen, TABLES } from "./shared/resource-table";
@@ -78,6 +79,12 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-rollover": plain(Rollover),
   "school-reports": plain(Reports),
   // Real timetable with the live backend; the sample build keeps the placeholder.
+  "school-curriculum":
+    env.dataSource === "api"
+      ? plain(Curriculum)
+      : function Placeholder(p: ScreenProps) {
+          return <PlannedScreen screen={p.screen} />;
+        },
   "school-timetable":
     env.dataSource === "api"
       ? plain(SchoolTimetable)

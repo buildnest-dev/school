@@ -317,9 +317,10 @@ export const SCREENS: readonly ScreenDef[] = [
     area: "school",
     path: "curriculum",
     title: "Classes, subjects & syllabus",
-    description: "Class, section, subject and syllabus configuration.",
+    description: "Each class with its sections and subjects.",
     roles: SCHOOL_ADMIN,
-    status: "planned",
+    nav: { group: "Academics", icon: "book", order: 6 },
+    status: "partial",
     features: ["8"],
   }),
 
