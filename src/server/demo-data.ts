@@ -585,3 +585,60 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
     marks: markRows.length,
   };
 }
+
+/**
+ * Clears the demonstration school's operational data (students, fees, attendance, results,
+ * homework, timetable, library, transport, notices, staff, admissions) so it can be filled again,
+ * or so the school can start clean. Classes, the school's own settings and every login stay. A
+ * student whose guardian has a login is kept, with that guardian.
+ */
+export async function clearDemoData(tenantId: string) {
+  const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+  if (!isDemoSlug(tenant.slug))
+    throw new HttpError(403, "not_demo", "Only the demo school can be cleared this way.");
+  return prisma.$transaction(
+    async (tx) => {
+      const where = { tenantId };
+      await tx.refund.deleteMany({ where });
+      await tx.feeReminder.deleteMany({ where });
+      await tx.paymentProof.deleteMany({ where });
+      await tx.paymentAttempt.deleteMany({ where });
+      await tx.ledgerEntry.deleteMany({ where });
+      await tx.certificate.deleteMany({ where });
+      await tx.payment.deleteMany({ where });
+      await tx.invoice.deleteMany({ where });
+      await tx.feeHead.deleteMany({ where });
+      await tx.attendance.deleteMany({ where });
+      await tx.attendanceSheet.deleteMany({ where });
+      await tx.mark.deleteMany({ where });
+      await tx.markSheet.deleteMany({ where });
+      await tx.exam.deleteMany({ where });
+      await tx.homeworkStatus.deleteMany({ where });
+      await tx.homework.deleteMany({ where });
+      await tx.period.deleteMany({ where });
+      await tx.bellSlot.deleteMany({ where });
+      await tx.loan.deleteMany({ where });
+      await tx.book.deleteMany({ where });
+      await tx.studentTransport.deleteMany({ where });
+      await tx.routeStop.deleteMany({ where });
+      await tx.transportRoute.deleteMany({ where });
+      await tx.vehicle.deleteMany({ where });
+      await tx.notice.deleteMany({ where });
+      await tx.admission.deleteMany({ where });
+      await tx.staff.deleteMany({ where: { tenantId, userId: null } });
+      const students = await tx.student.deleteMany({
+        where: {
+          tenantId,
+          userId: null,
+          OR: [{ guardianId: null }, { guardian: { userId: null } }],
+        },
+      });
+      await tx.guardian.deleteMany({ where: { tenantId, userId: null, students: { none: {} } } });
+      await tx.auditLog.create({
+        data: { tenantId, action: "demo.clear", entity: "tenant", entityId: tenantId },
+      });
+      return { studentsRemoved: students.count };
+    },
+    { timeout: 55_000, maxWait: 10_000 },
+  );
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { HttpError, requireTenant } from "@/server/auth";
-import { loadDemoData } from "@/server/demo-data";
+import { clearDemoData, loadDemoData } from "@/server/demo-data";
 import { assertSameOrigin, handle } from "@/server/http";
 
 export const maxDuration = 60;
@@ -21,4 +21,11 @@ export const POST = handle(async (req: Request) => {
       e instanceof Error ? e.message.slice(0, 600) : "failed",
     );
   }
+});
+
+/** DELETE: clears the demonstration school's sample data again. */
+export const DELETE = handle(async (req: Request) => {
+  assertSameOrigin(req);
+  const { tenantId } = await requireTenant(["school_owner", "principal"]);
+  return NextResponse.json({ ok: true, ...(await clearDemoData(tenantId)) });
 });
