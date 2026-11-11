@@ -163,17 +163,20 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
     ["Meena Kulkarni", "librarian", "Librarian", "9811100006"],
     ["Ramesh Yadav", "driver", "Bus Driver", "9811100007"],
   ];
-  const haveStaff = await tx.staff.count({ where: { tenantId } });
+  const kept = await tx.staff.findMany({ where: { tenantId } }); // staff with a login survive a clear
+  const haveStaff = kept.length;
   await tx.staff.createMany({
-    data: staffSeed.map(([name, role, designation, phone], i) => ({
-      tenantId,
-      employeeNo: `EMP-2026-${pad(haveStaff + i + 1)}`,
-      name,
-      role,
-      designation,
-      phone: `+91 ${phone}`,
-      joinedOn: new Date("2024-06-03"),
-    })),
+    data: staffSeed
+      .filter(([name]) => !kept.some((k) => k.name === name))
+      .map(([name, role, designation, phone], i) => ({
+        tenantId,
+        employeeNo: `EMP-2026-${pad(haveStaff + i + 1)}`,
+        name,
+        role,
+        designation,
+        phone: `+91 ${phone}`,
+        joinedOn: new Date("2024-06-03"),
+      })),
   });
   const staff = await tx.staff.findMany({
     where: { tenantId },
@@ -579,6 +582,25 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
       status: "published",
       authorName: userName,
       publishedAt: day(-3 - i),
+    })),
+  });
+  // Certificates: two waiting for the principal, one already issued.
+  await tx.certificate.createMany({
+    data: [
+      ["bonafide", "requested", "Bank account opening", null],
+      ["transfer", "requested", "Moving to another city", null],
+      ["character", "issued", "Scholarship application", "CHA/2026/0001"],
+    ].map(([type, status, purpose, serialNo], i) => ({
+      tenantId,
+      studentId: students[i + 3]!.id,
+      type: type!,
+      status: status!,
+      purpose,
+      requestedById: userId,
+      requestedByName: "Office",
+      serialNo,
+      issuedOn: serialNo ? day(-9) : null,
+      issuedByName: serialNo ? userName : null,
     })),
   });
   const c1 = classes.find((c) => c.name === "Class 1")!;
