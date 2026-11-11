@@ -82,27 +82,35 @@ const SECTIONS: [string, string][] = [
   ["Class 10", "A"],
 ];
 
-export async function loadDemoData(tenantId: string, userId: string, userName: string) {
-  const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+export function loadDemoData(tenantId: string, userId: string, userName: string) {
+  // One transaction: either all the sample data is there or none of it.
+  return prisma.$transaction((tx) => fill(tx, tenantId, userId, userName), {
+    timeout: 55_000,
+    maxWait: 10_000,
+  });
+}
+
+type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+async function fill(tx: Tx, tenantId: string, userId: string, userName: string) {
+  const tenant = await tx.tenant.findUniqueOrThrow({ where: { id: tenantId } });
   if (!isDemoSlug(tenant.slug))
     throw new HttpError(403, "not_demo", "Sample data can only be loaded into the demo school.");
-  if ((await prisma.student.count({ where: { tenantId } })) > 3)
+  if ((await tx.student.count({ where: { tenantId } })) > 3)
     throw new HttpError(409, "already_loaded", "This school already has students.");
 
   const year =
-    (await prisma.academicYear.findFirst({ where: { tenantId, current: true } })) ??
-    (await prisma.academicYear.findFirstOrThrow({ where: { tenantId } }));
-  const campus = await prisma.campus.findFirst({ where: { tenantId } });
+    (await tx.academicYear.findFirst({ where: { tenantId, current: true } })) ??
+    (await tx.academicYear.findFirstOrThrow({ where: { tenantId } }));
+  const campus = await tx.campus.findFirst({ where: { tenantId } });
 
   // Classes and sections A and B (what is already there is kept).
-  const have = new Set(
-    (await prisma.classLevel.findMany({ where: { tenantId } })).map((c) => c.name),
-  );
+  const have = new Set((await tx.classLevel.findMany({ where: { tenantId } })).map((c) => c.name));
   const fresh = STANDARD_CLASSES.map((c, position) => ({ ...c, position })).filter(
     (c) => !have.has(c.name),
   );
   if (fresh.length)
-    await prisma.classLevel.createMany({
+    await tx.classLevel.createMany({
       data: fresh.map((c) => ({
         tenantId,
         campusId: campus?.id,
@@ -111,7 +119,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
         position: c.position,
       })),
     });
-  const levels = await prisma.classLevel.findMany({
+  const levels = await tx.classLevel.findMany({
     where: { tenantId },
     include: { sections: true },
   });
@@ -120,11 +128,11 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       .filter((n) => !l.sections.some((s) => s.name === n))
       .map((name) => ({ tenantId, classId: l.id, name })),
   );
-  if (missing.length) await prisma.section.createMany({ data: missing });
+  if (missing.length) await tx.section.createMany({ data: missing });
 
   // Subjects for every class.
   const haveSubj = new Set(
-    (await prisma.subject.findMany({ where: { tenantId } })).map((s) => `${s.classId}|${s.name}`),
+    (await tx.subject.findMany({ where: { tenantId } })).map((s) => `${s.classId}|${s.name}`),
   );
   const subjRows = levels.flatMap((l) =>
     SUBJECTS.filter((n) => !haveSubj.has(`${l.id}|${n}`)).map((name) => ({
@@ -133,9 +141,9 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       name,
     })),
   );
-  if (subjRows.length) await prisma.subject.createMany({ data: subjRows });
+  if (subjRows.length) await tx.subject.createMany({ data: subjRows });
 
-  const classes = await prisma.classLevel.findMany({
+  const classes = await tx.classLevel.findMany({
     where: { tenantId },
     include: { sections: true, subjects: true },
   });
@@ -154,8 +162,8 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
     ["Meena Kulkarni", "librarian", "Librarian", "9811100006"],
     ["Ramesh Yadav", "driver", "Bus Driver", "9811100007"],
   ];
-  const haveStaff = await prisma.staff.count({ where: { tenantId } });
-  await prisma.staff.createMany({
+  const haveStaff = await tx.staff.count({ where: { tenantId } });
+  await tx.staff.createMany({
     data: staffSeed.map(([name, role, designation, phone], i) => ({
       tenantId,
       employeeNo: `EMP-2026-${pad(haveStaff + i + 1)}`,
@@ -166,7 +174,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       joinedOn: new Date("2024-06-03"),
     })),
   });
-  const staff = await prisma.staff.findMany({
+  const staff = await tx.staff.findMany({
     where: { tenantId },
     orderBy: { employeeNo: "asc" },
   });
@@ -175,7 +183,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
   const driver = staff.find((s) => s.role === "driver");
 
   // Students, in families (some brothers and sisters share a guardian).
-  const existing = await prisma.student.findMany({ where: { tenantId } });
+  const existing = await tx.student.findMany({ where: { tenantId } });
   const taken = new Set(existing.map((s) => s.admissionNo));
   let adm = 0;
   const nextAdm = () => {
@@ -204,7 +212,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
     }
   });
   const families = [...new Set(plan.map((p) => p.family))];
-  await prisma.guardian.createMany({
+  await tx.guardian.createMany({
     data: families.map((f) => ({
       tenantId,
       name: `${pick(FATHERS, f)} ${pick(LAST, f * 5)}`,
@@ -212,12 +220,12 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       phone: `+91 98${pad(10000000 + mix(f, 89999999), 8)}`,
     })),
   });
-  const newGuardians = await prisma.guardian.findMany({
+  const newGuardians = await tx.guardian.findMany({
     where: { tenantId, userId: null, students: { none: {} } },
     orderBy: { id: "asc" },
   });
   const gByFamily = new Map(families.map((f, i) => [f, newGuardians[i]!.id]));
-  await prisma.student.createMany({
+  await tx.student.createMany({
     data: plan.map((p, i) => ({
       tenantId,
       admissionNo: nextAdm(),
@@ -231,13 +239,13 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
     })),
   });
   const demoSectionIds = sectionDefs.map((d) => d.section.id);
-  const students = await prisma.student.findMany({
+  const students = await tx.student.findMany({
     where: { tenantId, sectionId: { in: demoSectionIds }, status: "active" },
     orderBy: { admissionNo: "asc" },
   });
 
   // Fee heads, and two terms of tuition for everybody with realistic payments.
-  await prisma.feeHead.createMany({
+  await tx.feeHead.createMany({
     data: [
       { tenantId, name: "Tuition", gstPercent: 0 },
       { tenantId, name: "Transport", gstPercent: 0 },
@@ -245,7 +253,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       { tenantId, name: "Annual charges", gstPercent: 0 },
     ],
   });
-  const haveInv = await prisma.invoice.count({ where: { tenantId } });
+  const haveInv = await tx.invoice.count({ where: { tenantId } });
   const terms: [string, number, number][] = [
     ["Term 1 tuition fee", -120, 1_250_000],
     ["Term 2 tuition fee", 20, 1_250_000],
@@ -261,12 +269,12 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       dueOn: day(off),
     })),
   );
-  await prisma.invoice.createMany({ data: invoiceRows });
-  const invoices = await prisma.invoice.findMany({
+  await tx.invoice.createMany({ data: invoiceRows });
+  const invoices = await tx.invoice.findMany({
     where: { tenantId, studentId: { in: students.map((s) => s.id) } },
     orderBy: { number: "asc" },
   });
-  const havePay = await prisma.payment.count({ where: { tenantId } });
+  const havePay = await tx.payment.count({ where: { tenantId } });
   let rec = havePay;
   const payRows: {
     tenantId: string;
@@ -292,7 +300,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       paidOn: day(-100 + (i % 60)),
     });
   });
-  await prisma.payment.createMany({ data: payRows });
+  await tx.payment.createMany({ data: payRows });
 
   // Attendance for the last 15 school days.
   const dates: Date[] = [];
@@ -312,8 +320,8 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       };
     }),
   );
-  await prisma.attendance.createMany({ data: attRows });
-  await prisma.attendanceSheet.createMany({
+  await tx.attendance.createMany({ data: attRows });
+  await tx.attendanceSheet.createMany({
     data: dates.flatMap((d) =>
       demoSectionIds.map((sectionId) => ({
         tenantId,
@@ -332,7 +340,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       ["Unit Test 1", 50],
       ["Term 1", 100],
     ].map(([name, maxMarks]) =>
-      prisma.exam.create({
+      tx.exam.create({
         data: {
           tenantId,
           yearId: year.id,
@@ -361,7 +369,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
         })),
     ),
   );
-  await prisma.mark.createMany({ data: markRows });
+  await tx.mark.createMany({ data: markRows });
 
   // Homework with who did it.
   const hwTitles: [string, string][] = [
@@ -386,8 +394,8 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       };
     }),
   );
-  await prisma.homework.createMany({ data: hwRows });
-  const homework = await prisma.homework.findMany({ where: { tenantId } });
+  await tx.homework.createMany({ data: hwRows });
+  const homework = await tx.homework.findMany({ where: { tenantId } });
   const hsRows = homework.flatMap((h, hi) =>
     students
       .filter((s) => s.sectionId === h.sectionId)
@@ -398,7 +406,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
         status: mix(hi * 13 + si, 10) < 7 ? "done" : "missing",
       })),
   );
-  await prisma.homeworkStatus.createMany({ data: hsRows });
+  await tx.homeworkStatus.createMany({ data: hsRows });
 
   // Timetable: bell schedule plus a week for each demo section.
   const bell: [number, string, string, string, boolean][] = [
@@ -410,8 +418,8 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
     [6, "Period 5", "11:00", "11:40", false],
     [7, "Period 6", "11:40", "12:20", false],
   ];
-  if ((await prisma.bellSlot.count({ where: { tenantId } })) === 0)
-    await prisma.bellSlot.createMany({
+  if ((await tx.bellSlot.count({ where: { tenantId } })) === 0)
+    await tx.bellSlot.createMany({
       data: bell.map(([slot, label, startsAt, endsAt, isBreak]) => ({
         tenantId,
         slot,
@@ -435,7 +443,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       })),
     ),
   );
-  await prisma.period.createMany({ data: periodRows });
+  await tx.period.createMany({ data: periodRows });
 
   // Library.
   const books: [string, string, string, string, number][] = [
@@ -446,7 +454,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
     ["Concise Mathematics Class 8", "Selina Publishers", "Textbook", "Shelf E1", 5],
     ["Gitanjali", "Rabindranath Tagore", "Poetry", "Shelf B5", 2],
   ];
-  await prisma.book.createMany({
+  await tx.book.createMany({
     data: books.map(([title, author, category, shelf, copies], i) => ({
       tenantId,
       accessionNo: `LIB-${pad(i + 1)}`,
@@ -458,9 +466,9 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       availableCopies: copies,
     })),
   });
-  const lent = await prisma.book.findFirstOrThrow({ where: { tenantId, accessionNo: "LIB-0004" } });
+  const lent = await tx.book.findFirstOrThrow({ where: { tenantId, accessionNo: "LIB-0004" } });
   const borrowers = students.slice(0, 2);
-  await prisma.loan.createMany({
+  await tx.loan.createMany({
     data: borrowers.map((s, i) => ({
       tenantId,
       bookId: lent.id,
@@ -470,13 +478,13 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       issuedById: accountant?.userId ?? userId,
     })),
   });
-  await prisma.book.update({
+  await tx.book.update({
     where: { id: lent.id },
     data: { availableCopies: { decrement: borrowers.length } },
   });
 
   // Transport: two vehicles (one with an expired fitness certificate), one route, riders.
-  const bus = await prisma.vehicle.create({
+  const bus = await tx.vehicle.create({
     data: {
       tenantId,
       regNo: "WB02AB1234",
@@ -486,7 +494,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       fitnessExpiry: day(200),
     },
   });
-  await prisma.vehicle.create({
+  await tx.vehicle.create({
     data: {
       tenantId,
       regNo: "WB02CD5678",
@@ -496,7 +504,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       fitnessExpiry: day(-10),
     },
   });
-  const route = await prisma.transportRoute.create({
+  const route = await tx.transportRoute.create({
     data: {
       tenantId,
       name: "Route 1 - North",
@@ -510,7 +518,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
     ["Yelahanka Gate", "07:15", "15:15"],
     ["School Gate", "07:45", "15:00"],
   ];
-  await prisma.routeStop.createMany({
+  await tx.routeStop.createMany({
     data: stops.map(([name, pickupTime, dropTime], i) => ({
       tenantId,
       routeId: route.id,
@@ -520,8 +528,8 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       dropTime,
     })),
   });
-  const routeStops = await prisma.routeStop.findMany({ where: { routeId: route.id } });
-  await prisma.studentTransport.createMany({
+  const routeStops = await tx.routeStop.findMany({ where: { routeId: route.id } });
+  await tx.studentTransport.createMany({
     data: students.slice(0, 9).map((s, i) => ({
       tenantId,
       studentId: s.id,
@@ -531,7 +539,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
   });
 
   // Notices and admission enquiries.
-  await prisma.notice.createMany({
+  await tx.notice.createMany({
     data: [
       [
         "Annual sports day",
@@ -556,7 +564,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
     })),
   });
   const c1 = classes.find((c) => c.name === "Class 1")!;
-  await prisma.admission.createMany({
+  await tx.admission.createMany({
     data: ["new", "documents", "review", "decision"].map((stage, i) => ({
       tenantId,
       studentName: ["Riya Menon", "Dev Kapoor", "Sana Sheikh", "Om Tiwari"][i]!,
@@ -566,7 +574,7 @@ export async function loadDemoData(tenantId: string, userId: string, userName: s
       stage,
     })),
   });
-  await prisma.auditLog.create({
+  await tx.auditLog.create({
     data: { tenantId, userId, action: "demo.load", entity: "tenant", entityId: tenantId },
   });
   return {
