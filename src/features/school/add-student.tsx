@@ -128,7 +128,9 @@ export function AddStudent({ onCreated }: { onCreated: () => void }) {
         title="Add student"
         description="Adds the student to a class and records the guardian."
       >
-        {classes && classes.length === 0 ? (
+        {classes === null ? (
+          <p className="text-muted text-sm">Loading…</p>
+        ) : classes.length === 0 ? (
           <div className="grid gap-3">
             <p className="text-sm">
               This school has no classes yet. Create the standard ones (Nursery to Class 12, section
