@@ -235,7 +235,8 @@ export function FeeStructure() {
             </p>
             {classes.length === 0 ? (
               <p className="text-sm">
-                This school has no classes yet. Add classes first, then come back here.
+                This school has no classes yet. On the Students page press Add student; it offers to
+                create the classes. Then come back here.
               </p>
             ) : (
               <div className="grid gap-4">

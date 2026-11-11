@@ -14,6 +14,7 @@ import { useSession } from "@/hooks/use-session";
 import type { ResourceKey } from "@/services/types";
 import type { Role } from "@/types";
 import { NewSchool } from "../platform/new-school";
+import { AddStudent } from "../school/add-student";
 import { CertificateActions } from "../school/certificate-actions";
 import { fmtDate, prettyKey, rupees } from "./format";
 import type { ScreenProps } from "./planned-screen";
@@ -117,7 +118,9 @@ export const TABLES: Record<string, TableConfig> = {
       },
       { key: "subscription", header: "Subscription", render: badge("subscription") },
     ],
-    filters: [{ key: "plan", label: "Plan", options: opts("trial", "starter", "growth", "premium") }],
+    filters: [
+      { key: "plan", label: "Plan", options: opts("trial", "starter", "growth", "premium") },
+    ],
     emptyHint: "Pricing, billing periods and renewals are provided by the backend.",
   },
   "platform-support": {
@@ -163,6 +166,10 @@ export const TABLES: Record<string, TableConfig> = {
   "school-students": {
     resource: "students",
     searchPlaceholder: "Search by name, class or guardian",
+    actions: (role, reload) =>
+      SCHOOL_ADMIN.includes(role) && env.dataSource === "api" ? (
+        <AddStudent onCreated={reload} />
+      ) : null,
     rowHref: (r) => `/school/students/${r.id}`,
     columns: [
       { key: "name", header: "Student", sortable: true },
