@@ -4,6 +4,7 @@ import { createLogin, originOf } from "@/server/accounts";
 import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
+import { hostsFor } from "@/server/platform";
 
 const Body = z.object({ email: z.string().trim().email().optional() });
 
@@ -32,7 +33,11 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
     email,
     name: g.name,
     role: "parent",
-    origin: originOf(req),
+    // Families sign in at the school's parents address, not the staff one this request came from.
+    origin:
+      process.env.NODE_ENV === "production"
+        ? `https://${hostsFor(tenant.slug).parents}`
+        : originOf(req),
   });
   await prisma.$transaction([
     prisma.guardian.update({
