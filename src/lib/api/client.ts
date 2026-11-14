@@ -64,6 +64,17 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     } catch {
       /* non-JSON error body */
     }
+    // A tab left open past the session's life: send the person to sign in instead of leaving
+    // every screen on a bare error. Sign-in itself and the session check are exempt.
+    if (
+      res.status === 401 &&
+      typeof window !== "undefined" &&
+      path !== "/me" &&
+      !path.startsWith("/auth/") &&
+      !window.location.pathname.startsWith("/sign-in")
+    ) {
+      window.location.href = "/sign-in";
+    }
     throw new ApiError(res.status, body);
   }
   if (res.status === 204) return undefined as T;
