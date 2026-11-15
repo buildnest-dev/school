@@ -17,6 +17,7 @@ import { NewSchool } from "../platform/new-school";
 import { AddStudent } from "../school/add-student";
 import { CertificateActions } from "../school/certificate-actions";
 import { fmtDate, fmtDateTime, prettyKey, rupees } from "./format";
+import { ApiAction, QuickAdd } from "./quick-add";
 import type { ScreenProps } from "./planned-screen";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -267,6 +268,39 @@ export const TABLES: Record<string, TableConfig> = {
   "school-queries": {
     resource: "queries",
     searchPlaceholder: "Search queries",
+    detailActions: (row, done) =>
+      env.dataSource === "api" ? (
+        <div className="flex flex-wrap gap-2">
+          <QuickAdd
+            label="Reply"
+            title="Reply to the parent"
+            endpoint={`/parent-queries/${row.id}`}
+            method="PATCH"
+            variant="ghost"
+            onCreated={done}
+            fields={[{ key: "reply", label: "Your reply", type: "textarea" }]}
+          />
+          {row.status === "open" && (
+            <ApiAction
+              label="Take it"
+              method="PATCH"
+              endpoint={`/parent-queries/${row.id}`}
+              body={{ status: "in_progress" }}
+              onDone={done}
+            />
+          )}
+          {row.status !== "resolved" && (
+            <ApiAction
+              label="Mark resolved"
+              method="PATCH"
+              endpoint={`/parent-queries/${row.id}`}
+              body={{ status: "resolved" }}
+              variant="primary"
+              onDone={done}
+            />
+          )}
+        </div>
+      ) : null,
     columns: [
       { key: "subject", header: "Query", sortable: true },
       { key: "parent", header: "Parent" },
@@ -285,6 +319,38 @@ export const TABLES: Record<string, TableConfig> = {
   "school-events": {
     resource: "eventPlans",
     searchPlaceholder: "Search events",
+    actions: (role, reload) =>
+      SCHOOL_ADMIN.includes(role) && env.dataSource === "api" ? (
+        <QuickAdd
+          label="Add event"
+          title="Add an event"
+          endpoint="/events"
+          onCreated={reload}
+          fields={[
+            { key: "name", label: "Event name" },
+            { key: "date", label: "Date", type: "date" },
+            { key: "owner", label: "Who is in charge" },
+            { key: "budget", label: "Budget (rupees)", type: "number", required: false },
+          ]}
+        />
+      ) : null,
+    detailActions: (row, done) =>
+      env.dataSource === "api" ? (
+        <div className="flex flex-wrap gap-2">
+          {["planning", "confirmed", "done"]
+            .filter((x) => x !== row.status)
+            .map((x) => (
+              <ApiAction
+                key={x}
+                label={`Mark ${x}`}
+                method="PATCH"
+                endpoint={`/events/${row.id}`}
+                body={{ status: x }}
+                onDone={done}
+              />
+            ))}
+        </div>
+      ) : null,
     columns: [
       { key: "name", header: "Event", sortable: true },
       { key: "date", header: "Date", sortable: true, render: date("date") },
@@ -297,6 +363,36 @@ export const TABLES: Record<string, TableConfig> = {
   "school-exams": {
     resource: "exams",
     searchPlaceholder: "Search the datesheet",
+    actions: (role, reload) =>
+      SCHOOL_ADMIN.includes(role) && env.dataSource === "api" ? (
+        <QuickAdd
+          label="Add exam"
+          title="Add to the datesheet"
+          endpoint="/exams/datesheet"
+          onCreated={reload}
+          fields={[
+            { key: "date", label: "Date", type: "date" },
+            { key: "subject", label: "Subject" },
+            { key: "classSection", label: "Class", placeholder: "Class 8 A" },
+            {
+              key: "kind",
+              label: "Type",
+              type: "select",
+              options: ["Written", "Practical", "Oral"].map((x) => ({ value: x, label: x })),
+            },
+            { key: "room", label: "Room", required: false },
+          ]}
+        />
+      ) : null,
+    detailActions: (row, done) =>
+      env.dataSource === "api" ? (
+        <ApiAction
+          label="Remove from datesheet"
+          method="DELETE"
+          endpoint={`/exams/datesheet/${row.id}`}
+          onDone={done}
+        />
+      ) : null,
     columns: [
       { key: "date", header: "Date", sortable: true, render: date("date") },
       { key: "subject", header: "Subject", sortable: true },
@@ -318,6 +414,30 @@ export const TABLES: Record<string, TableConfig> = {
   "school-vendors": {
     resource: "vendors",
     searchPlaceholder: "Search vendors",
+    actions: (role, reload) =>
+      (SCHOOL_ADMIN.includes(role) || role === "accountant") && env.dataSource === "api" ? (
+        <QuickAdd
+          label="Add vendor"
+          title="Add a vendor"
+          endpoint="/vendors"
+          onCreated={reload}
+          fields={[
+            { key: "name", label: "Vendor name" },
+            { key: "category", label: "What they supply", placeholder: "Stationery, uniforms…" },
+            { key: "contact", label: "Phone or e-mail", required: false },
+          ]}
+        />
+      ) : null,
+    detailActions: (row, done) =>
+      env.dataSource === "api" ? (
+        <ApiAction
+          label={row.status === "active" ? "Mark inactive" : "Mark active"}
+          method="PATCH"
+          endpoint={`/vendors/${row.id}`}
+          body={{ status: row.status === "active" ? "inactive" : "active" }}
+          onDone={done}
+        />
+      ) : null,
     columns: [
       { key: "name", header: "Vendor", sortable: true },
       { key: "category", header: "Category", sortable: true },

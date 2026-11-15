@@ -224,16 +224,7 @@ const notBuilt = () =>
   Promise.reject(
     new ApiError(404, { code: "not_available", message: "This part is not available yet." }),
   );
-export const NOT_BUILT = new Set<ResourceKey>([
-  "vendors",
-  "calendar",
-  "leaves",
-  "approvals",
-  "eventPlans",
-  "queries",
-  "exams",
-  "feeHeads",
-]);
+export const NOT_BUILT = new Set<ResourceKey>(["feeHeads"]);
 
 function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]> {
   if (NOT_BUILT.has(key)) return { list: notBuilt, get: notBuilt } as ListService<ResourceMap[K]>;
@@ -298,7 +289,7 @@ export function createApiServices(): Services {
       classes: () => apiRequest(e.teacherClasses),
       timetable: () => apiRequest(e.teacherTimetable),
       syllabus: () => apiRequest(e.teacherSyllabus),
-      leaves: async () => [],
+      leaves: () => apiRequest(e.teacherLeaves),
     },
     attendance: {
       getSheet: (classId, date) => apiRequest(e.attendanceSheet(classId, date)),
@@ -339,7 +330,9 @@ export function createApiServices(): Services {
     },
     notices: { create: (input) => post(e.notices, input) },
     leave: { request: (input) => post(e.leaveRequests, input) },
-    approvals: { decide: () => notBuilt() },
+    approvals: {
+      decide: (id, decision, note) => post(e.approvalDecision(id), { decision, note }),
+    },
     certificates: {
       create: (input) =>
         post("/certificates", {
@@ -370,9 +363,9 @@ export function createApiServices(): Services {
       results: (id) => apiRequest(e.child(id, "results")),
       ledger: (id) => apiRequest(e.child(id, "ledger")),
       timetable: (id) => apiRequest(e.child(id, "timetable")),
-      exams: async () => [],
-      ptmSlots: async () => [],
-      bookPtm: () => notBuilt(),
+      exams: (id) => apiRequest(e.child(id, "exams")),
+      ptmSlots: () => apiRequest(e.ptmSlots),
+      bookPtm: (slotId) => post(e.ptmBook(slotId), {}),
       requestCertificate: (childId, type, purpose) =>
         post("/certificates", { studentId: childId, type: type.toLowerCase(), purpose }),
       certificateRequests: async (childId) => {

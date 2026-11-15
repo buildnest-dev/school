@@ -6,20 +6,23 @@ behave before it is built, so none of them was guessed at.
 
 | Screen | What is missing |
 | --- | --- |
-| Vendors | No vendors table or routes. |
-| School calendar | No calendar events table. |
-| Staff leave requests (teachers and admin) | No leave table or approval rules. |
-| Approvals inbox | No approvals model; depends on what needs approval (leave, expenses, certificates?). |
-| Events planning | No event plans table. |
-| Parent queries | No queries/messages table between parents and the school. |
-| Exam datesheet | Exams exist (name, marks) but have no dates, subjects, classes or rooms. |
-| Fee structure by class | Screen built: fee heads (name, GST) and "Raise a fee" for a class or section with a preview. Amounts per class and frequency are still not stored; each raised fee carries its own amount. |
 | Year-end rollover wizard | The backend has a one-step promote (`POST /api/academic-years/rollover`), but the screen is a different, rules-based flow (attendance and marks thresholds, section capacity, checks). One of the two must change. |
 | Parent-teacher meeting slots | No slots or bookings. |
+| Results overview (school) | Needs a per-class results summary endpoint over the existing marks. |
+| Reports (school) | Needs report definitions (which reports, which columns). |
+| Syllabus progress (teacher) | Syllabus coverage is not tracked. |
 | Certificate verification inside the school portal | The public check exists (`/api/public/certificates/verify`, needs school and serial). The screen only sends a serial. |
 
 Connected and working: students, staff, admissions enquiries, campuses, invoices and payments, fee
-heads (admin API), notices, library books and loans, transport, certificates (requests and register),
-attendance, homework, marks, report cards, teacher workspace, family views, school bank details,
-payment screenshots, opening balances, phone notifications, and the ZAQSA team screens (schools,
-plans and usage, onboarding, support, system status).
+heads and "raise a fee", notices, library books and loans, transport, certificates (requests and
+register), attendance, homework, marks, report cards, teacher workspace, family views, school bank
+details, payment screenshots, opening balances, phone notifications, the ZAQSA team screens (schools,
+plans and usage, onboarding, support, system status), and, added later: school calendar (staff,
+parents and students each see what is meant for them), staff leave requests with the approval inbox
+(approve or reject once), vendors, events and functions, parent queries (parents ask from "Ask the
+school", the office replies), and the exam datesheet (also shown to the parent and student of that
+class).
+
+The database tables for the later group (`CalendarEvent`, `LeaveRequest`, `Vendor`, `EventPlan`,
+`ParentQuery`, `ExamSlot`) are new: run `npm run db:push:pg` against the production database once
+before the version that uses them goes live.

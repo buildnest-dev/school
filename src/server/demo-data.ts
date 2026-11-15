@@ -614,6 +614,114 @@ async function fill(tx: Tx, tenantId: string, userId: string, userName: string) 
       stage,
     })),
   });
+  // Calendar, staff leave, vendors, events, parent queries and the exam datesheet.
+  await tx.calendarEvent.createMany({
+    data: [
+      [3, "Parent-teacher meeting", "meeting", "all"],
+      [10, "Annual sports day", "event", "all"],
+      [14, "Unit Test 2 begins", "exam", "all"],
+      [20, "Winter break begins", "holiday", "all"],
+      [-4, "Staff training day", "meeting", "staff"],
+    ].map(([off, title, kind, audience]) => ({
+      tenantId,
+      date: day(off as number),
+      title: title as string,
+      kind: kind as string,
+      audience: audience as string,
+    })),
+  });
+  await tx.leaveRequest.createMany({
+    data: [
+      ["Neha Verma", 2, 3, "casual", "pending"],
+      ["Rohit Sharma", 5, 5, "sick", "pending"],
+      ["Anita Desai", -8, -7, "casual", "approved"],
+    ].map(([name, from, to, type, status]) => ({
+      tenantId,
+      userId,
+      staffName: name as string,
+      fromDate: day(from as number),
+      toDate: day(to as number),
+      type: type as string,
+      reason: "Personal work",
+      status: status as string,
+      ...(status === "approved" ? { decidedBy: userName, decidedAt: day(-9) } : {}),
+    })),
+  });
+  await tx.vendor.createMany({
+    data: [
+      ["Shree Stationers", "Stationery", "98200 11111"],
+      ["Bright Uniforms", "Uniforms", "98200 22222"],
+      ["City Bus Services", "Transport", "98200 33333"],
+      ["Fresh Canteen Supplies", "Canteen", "98200 44444"],
+    ].map(([name, category, contact], i) => ({
+      tenantId,
+      name: name!,
+      category: category!,
+      contact: contact!,
+      status: i === 3 ? "inactive" : "active",
+    })),
+  });
+  await tx.eventPlan.createMany({
+    data: [
+      ["Annual sports day", 10, "Games teacher", 45000, "confirmed"],
+      ["Science exhibition", 30, "Science department", 25000, "planning"],
+      ["Independence Day programme", -90, "Principal", 15000, "done"],
+    ].map(([name, off, owner, budget, status]) => ({
+      tenantId,
+      name: name as string,
+      date: day(off as number),
+      owner: owner as string,
+      budget: budget as number,
+      status: status as string,
+    })),
+  });
+  await tx.parentQuery.createMany({
+    data: [
+      ["Bus timing for Class 8", "Could you share the morning pick-up time for Route 1?", "open"],
+      ["Fee receipt copy", "Please send a copy of the Term 1 receipt.", "in_progress"],
+      ["Homework not visible", "Maths homework did not show on the app yesterday.", "resolved"],
+    ].map(([subject, body, status], i) => ({
+      tenantId,
+      userId: "demo-parent",
+      parentName: `Parent ${i + 1}`,
+      subject: subject!,
+      body: body!,
+      status: status!,
+      assignedTo: status === "open" ? null : userName,
+      reply: status === "resolved" ? "Fixed. It shows now." : null,
+      openedAt: day(-2 - i),
+    })),
+  });
+  await tx.ptmSlot.createMany({
+    data: [
+      ["Mrs. Kavita Iyer", 5, "10:00 am"],
+      ["Mrs. Kavita Iyer", 5, "10:30 am"],
+      ["Mr. Arun Das", 5, "11:00 am"],
+      ["Ms. Priya Sen", 6, "10:00 am"],
+    ].map(([teacherName, off, time]) => ({
+      tenantId,
+      teacherName: teacherName as string,
+      date: day(off as number),
+      time: time as string,
+    })),
+  });
+  const usedSections = new Set(students.map((st) => st.sectionId));
+  const secLabels = classes.flatMap((c) =>
+    c.sections.filter((sec) => usedSections.has(sec.id)).map((sec) => `${c.name} ${sec.name}`),
+  );
+  const slotSubjects = ["English", "Mathematics", "Science", "Social Studies", "Hindi"];
+  await tx.examSlot.createMany({
+    data: secLabels.flatMap((label, ci) =>
+      slotSubjects.map((subject, si) => ({
+        tenantId,
+        date: day(14 + si * 2),
+        subject,
+        classSection: label,
+        kind: "Written",
+        room: `Room ${101 + ci}`,
+      })),
+    ),
+  });
   // The demonstration school is fictional, so it needs no go-live checklist; families can sign in.
   await tx.tenant.update({
     where: { id: tenantId },
@@ -669,6 +777,14 @@ export async function clearDemoData(tenantId: string) {
       await tx.transportRoute.deleteMany({ where });
       await tx.vehicle.deleteMany({ where });
       await tx.notice.deleteMany({ where });
+      await tx.calendarEvent.deleteMany({ where });
+      await tx.leaveRequest.deleteMany({ where });
+      await tx.vendor.deleteMany({ where });
+      await tx.eventPlan.deleteMany({ where });
+      await tx.parentQuery.deleteMany({ where });
+      await tx.examSlot.deleteMany({ where });
+      await tx.ptmSlot.deleteMany({ where });
+      await tx.syllabusProgress.deleteMany({ where });
       await tx.admission.deleteMany({ where });
       await tx.staff.deleteMany({ where: { tenantId, userId: null } });
       const students = await tx.student.deleteMany({

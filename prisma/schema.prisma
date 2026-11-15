@@ -92,6 +92,14 @@ model Tenant {
   auditLogs         AuditLog[]
   admissions        Admission[]
   tickets           SupportTicket[]
+  calendarEvents    CalendarEvent[]
+  leaveRequests     LeaveRequest[]
+  vendors           Vendor[]
+  eventPlans        EventPlan[]
+  parentQueries     ParentQuery[]
+  examSlots         ExamSlot[]
+  ptmSlots          PtmSlot[]
+  syllabus          SyllabusProgress[]
 }
 
 model TenantBoard {
@@ -995,4 +1003,122 @@ model TrustedDevice {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ---------- School calendar, leave, vendors, events, parent queries, exam datesheet ----------
+
+model CalendarEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  date      DateTime
+  title     String
+  kind      String // holiday | exam | event | meeting
+  audience  String   @default("all") // all | staff | parents | students
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+}
+
+model LeaveRequest {
+  id        String    @id @default(cuid())
+  tenantId  String
+  userId    String // who asked
+  staffName String
+  fromDate  DateTime
+  toDate    DateTime
+  type      String // casual | sick | earned | other
+  reason    String?
+  status    String    @default("pending") // pending | approved | rejected
+  decidedBy String?
+  decidedAt DateTime?
+  note      String?
+  createdAt DateTime  @default(now())
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([userId])
+}
+
+model Vendor {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  category String
+  contact  String @default("")
+  status   String @default("active") // active | inactive
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model EventPlan {
+  id       String   @id @default(cuid())
+  tenantId String
+  name     String
+  date     DateTime
+  owner    String
+  budget   Int      @default(0)
+  status   String   @default("planning") // planning | confirmed | done
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model ParentQuery {
+  id         String    @id @default(cuid())
+  tenantId   String
+  userId     String // the parent's login
+  parentName String
+  subject    String
+  body       String
+  assignedTo String?
+  status     String    @default("open") // open | in_progress | resolved
+  reply      String?
+  openedAt   DateTime  @default(now())
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([userId])
+}
+
+model ExamSlot {
+  id           String   @id @default(cuid())
+  tenantId     String
+  date         DateTime
+  subject      String
+  classSection String // "Class 8 A"
+  kind         String   @default("Written")
+  room         String   @default("")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+}
+
+// A parent-teacher meeting slot the school offers; the first parent to book it holds it.
+model PtmSlot {
+  id             String   @id @default(cuid())
+  tenantId       String
+  teacherName    String
+  date           DateTime
+  time           String // "10:00 am"
+  bookedByUserId String?
+  bookedByName   String?
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+}
+
+// How much of a subject a class has covered, as told by the teacher.
+model SyllabusProgress {
+  id        String   @id @default(cuid())
+  tenantId  String
+  sectionId String
+  subjectId String
+  pct       Int      @default(0)
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, subjectId])
+  @@index([tenantId])
 }

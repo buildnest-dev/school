@@ -190,6 +190,17 @@ export const SCREENS: readonly ScreenDef[] = [
     status: "partial",
     features: ["2", "13"],
   }),
+  screen({
+    id: "school-ptm",
+    area: "school",
+    path: "ptm",
+    title: "Parent-teacher meetings",
+    description: "Offer meeting slots that parents can book.",
+    roles: SCHOOL_ADMIN,
+    nav: { group: "Communication", icon: "message", order: 4 },
+    status: "implemented",
+    features: ["12"],
+  }),
 
   screen({
     id: "school-students",
@@ -798,6 +809,17 @@ export const SCREENS: readonly ScreenDef[] = [
     features: ["12"],
   }),
   screen({
+    id: "parent-queries",
+    area: "parent",
+    path: "ask",
+    title: "Ask the school",
+    description: "Send a question to the school office.",
+    roles: ["parent"],
+    nav: { group: "More", icon: "message", order: 5 },
+    status: "implemented",
+    features: ["12"],
+  }),
+  screen({
     id: "parent-certificates",
     area: "parent",
     path: "certificates",
@@ -945,23 +967,7 @@ export const SCREENS: readonly ScreenDef[] = [
  * against the real API (they still work on sample data). Remove an id here when its backend ships.
  */
 export const NO_BACKEND_YET: ReadonlySet<string> = new Set([
-  "school-approvals",
-  "school-calendar",
-  "school-queries",
-  "school-events",
-  "school-leave",
-  "school-vendors",
-  "school-exams",
   "school-rollover",
-  "school-results",
-  "school-reports",
-  "teacher-leave",
-  "teacher-syllabus",
-  "parent-ptm",
-  "parent-calendar",
-  "student-calendar",
-  "student-exams",
-  "parent-exams",
 ]);
 
 export const AREA_ROOT: Record<Area, string> = {

@@ -14,17 +14,8 @@ export function createServices(): Services {
   return {
     ...api,
     resource: (key) => (NOT_BUILT.has(key) ? mock.resource(key) : api.resource(key)),
-    approvals: mock.approvals,
     certificates: { ...api.certificates, verify: mock.certificates.verify },
     rollover: mock.rollover,
-    leave: mock.leave,
-    teacher: { ...api.teacher, leaves: mock.teacher.leaves },
-    family: {
-      ...api.family,
-      exams: mock.family.exams,
-      ptmSlots: mock.family.ptmSlots,
-      bookPtm: mock.family.bookPtm,
-    },
   };
 }
 

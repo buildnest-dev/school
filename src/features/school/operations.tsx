@@ -12,12 +12,13 @@ import { Select } from "@/components/ui/field";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
-import { todayIso } from "@/config/env";
+import { env, todayIso } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import type { Approval, Student } from "@/types";
 import { fmtDate, rupees } from "../shared/format";
 import type { ScreenProps } from "../shared/planned-screen";
+import { QuickAdd } from "../shared/quick-add";
 
 /** Approve / reject routine requests, with confirmation. The backend must record and enforce the decision. */
 export function ApprovalInbox() {
@@ -114,7 +115,42 @@ export function CalendarScreen({ screen }: ScreenProps) {
   const d = useAsync(() => s.resource("calendar").list({ pageSize: 200 }), [s]);
   return (
     <>
-      <PageHeader title={screen.title} description={screen.description} />
+      <PageHeader
+        title={screen.title}
+        description={screen.description}
+        actions={
+          env.dataSource === "api" && screen.area === "school" ? (
+            <QuickAdd
+              label="Add to calendar"
+              title="Add to the calendar"
+              endpoint="/calendar/events"
+              onCreated={d.reload}
+              fields={[
+                { key: "date", label: "Date", type: "date" },
+                { key: "title", label: "What is happening" },
+                {
+                  key: "kind",
+                  label: "Kind",
+                  type: "select",
+                  options: ["holiday", "exam", "event", "meeting"].map((x) => ({
+                    value: x,
+                    label: x.charAt(0).toUpperCase() + x.slice(1),
+                  })),
+                },
+                {
+                  key: "audience",
+                  label: "Who sees it",
+                  type: "select",
+                  options: ["all", "staff", "parents", "students"].map((x) => ({
+                    value: x,
+                    label: x.charAt(0).toUpperCase() + x.slice(1),
+                  })),
+                },
+              ]}
+            />
+          ) : null
+        }
+      />
       {d.error ? (
         <ErrorState message={d.error.message} onRetry={d.reload} />
       ) : !d.data ? (

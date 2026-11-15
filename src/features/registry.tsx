@@ -12,6 +12,7 @@ import {
   ParentCertificates,
   ParentPtm,
 } from "./family/screens";
+import { AskSchool } from "./family/ask-school";
 import { PlatformHome, PlatformStatus, SchoolHome } from "./school/dashboards";
 import { CertificateNew, CertificateVerify, NoticeNew } from "./school/forms";
 import {
@@ -32,6 +33,9 @@ import { PaymentProofs } from "./school/payment-proofs";
 import { Refunds } from "./school/refunds";
 import { Rollover } from "./school/rollover";
 import { Curriculum } from "./school/curriculum";
+import { LiveReports, LiveResults } from "./school/live-reports";
+import { PtmAdmin } from "./school/ptm-admin";
+import { LiveSyllabus } from "./teacher/live-syllabus";
 import { Settings } from "./school/settings";
 import { SchoolTimetable } from "./school/timetable";
 import { ResourceTableScreen, TABLES } from "./shared/resource-table";
@@ -63,7 +67,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-calendar": CalendarScreen,
   "school-student-detail": StudentDetail,
   "school-attendance": plain(AttendanceOverview),
-  "school-results": plain(ResultsOverview),
+  "school-results": plain(env.dataSource === "api" ? LiveResults : ResultsOverview),
   "school-fees": plain(FeesOverview),
   "school-fee-ledger": plain(FeeLedger),
   "school-refunds": plain(Refunds),
@@ -77,7 +81,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-certificate-new": plain(CertificateNew),
   "school-certificate-verify": plain(CertificateVerify),
   "school-rollover": plain(Rollover),
-  "school-reports": plain(Reports),
+  "school-reports": plain(env.dataSource === "api" ? LiveReports : Reports),
   // Real timetable with the live backend; the sample build keeps the placeholder.
   "school-curriculum":
     env.dataSource === "api"
@@ -92,6 +96,12 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
           return <PlannedScreen screen={p.screen} />;
         },
   "school-settings": plain(Settings),
+  "school-ptm":
+    env.dataSource === "api"
+      ? plain(PtmAdmin)
+      : function Placeholder(p: ScreenProps) {
+          return <PlannedScreen screen={p.screen} />;
+        },
 
   "teacher-home": plain(TeacherHome),
   "teacher-today": plain(TeacherToday),
@@ -102,7 +112,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "teacher-homework-new": plain(HomeworkNew),
   "teacher-marks": plain(MarksPick),
   "teacher-marks-class": MarksClass,
-  "teacher-syllabus": plain(Syllabus),
+  "teacher-syllabus": plain(env.dataSource === "api" ? LiveSyllabus : Syllabus),
   "teacher-leave": plain(LeavePage),
 
   "parent-home": plain(FamilyHome),
@@ -113,6 +123,12 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "parent-calendar": CalendarScreen,
   "parent-timetable": plain(FamilyTimetable),
   "parent-ptm": plain(ParentPtm),
+  "parent-queries":
+    env.dataSource === "api"
+      ? plain(AskSchool)
+      : function Placeholder(p: ScreenProps) {
+          return <PlannedScreen screen={p.screen} />;
+        },
   "parent-certificates": plain(ParentCertificates),
 
   "student-home": plain(FamilyHome),

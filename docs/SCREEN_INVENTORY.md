@@ -4,7 +4,7 @@ _Generated from `src/config/screens.ts` by `npm run docs:inventory`. Do not edit
 
 **Status legend.** Implemented = working UI against the development mock with the documented service contract. Partial = works but covers only part of the feature, or uses sample data. Planned = route exists and shows an honest "not built yet" page.
 
-**Totals:** 82 screens: 64 implemented, 8 partial, 10 planned.
+**Totals:** 84 screens: 66 implemented, 10 partial, 8 planned.
 
 The public marketing site (`/`, `/placeholder/*`, `/sign-in`, `/get-started`) lives outside this table; `/get-started` (registration/onboarding) is a placeholder.
 
@@ -35,6 +35,7 @@ Root: `/school`
 | `/school/notices/new` | Compose notice | School owner, Principal | Implemented (mock data) | 12 |
 | `/school/queries` | Parent queries | School owner, Principal | Implemented (mock data) | 12 |
 | `/school/events` | Events & functions | School owner, Principal | Partial | 2, 13 |
+| `/school/ptm` | Parent-teacher meetings | School owner, Principal | Implemented (mock data) | 12 |
 | `/school/students` | Students | School owner, Principal | Implemented (mock data) | 4 |
 | `/school/students/:id` | Student profile | School owner, Principal | Implemented (mock data) | 4 |
 | `/school/admissions` | Admissions | School owner, Principal | Implemented (mock data) | 4 |
@@ -45,8 +46,8 @@ Root: `/school`
 | `/school/exams` | Exam datesheet | School owner, Principal | Implemented (mock data) | 9 |
 | `/school/results` | Results overview | School owner, Principal | Partial | 9 |
 | `/school/rollover` | Academic-year rollover | School owner, Principal | Implemented (mock data) | 3 |
-| `/school/timetable` | Timetable builder | School owner, Principal | Planned | 7 |
-| `/school/curriculum` | Classes, subjects & syllabus | School owner, Principal | Planned | 8 |
+| `/school/timetable` | Timetable | School owner, Principal | Partial | 7 |
+| `/school/curriculum` | Classes, subjects & syllabus | School owner, Principal | Partial | 8 |
 | `/school/fees` | Fee collection | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/fees/structure` | Fee structure | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/fees/ledger` | Student ledger | School owner, Principal, Accountant | Implemented (mock data) | 10 |
@@ -104,6 +105,7 @@ Root: `/parent`
 | `/parent/calendar` | Calendar | Parent | Implemented (mock data) | 2 |
 | `/parent/timetable` | Timetable | Parent | Implemented (mock data) | 7 |
 | `/parent/ptm` | Meet a teacher | Parent | Implemented (mock data) | 12 |
+| `/parent/ask` | Ask the school | Parent | Implemented (mock data) | 12 |
 | `/parent/certificates` | Certificates | Parent | Implemented (mock data) | 5 |
 | `/parent/documents` | Documents | Parent | Planned | 16 |
 | `/parent/profile` | Profile & preferences | Parent | Planned | 12 |
