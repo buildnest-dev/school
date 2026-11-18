@@ -4,6 +4,9 @@ import { prisma } from "@/server/db";
 import { ADMIN_FIN, dayStr, listOf } from "@/server/extras";
 import { handle } from "@/server/http";
 
+const nice = (d: Date) =>
+  d.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
+
 /** The approval inbox: today it holds staff leave requests waiting for a decision. */
 export const GET = handle(async (req: Request) => {
   const { tenantId } = await requireTenant([...ADMIN_FIN]);
@@ -17,7 +20,9 @@ export const GET = handle(async (req: Request) => {
       rows.map((l) => ({
         id: l.id,
         kind: "Leave",
-        subject: `${l.type} leave, ${dayStr(l.fromDate)} to ${dayStr(l.toDate)}`,
+        subject: `${l.type.charAt(0).toUpperCase()}${l.type.slice(1)} leave, ${nice(l.fromDate)}${
+          dayStr(l.fromDate) === dayStr(l.toDate) ? "" : ` to ${nice(l.toDate)}`
+        }`,
         requestedBy: l.staffName,
         requestedOn: dayStr(l.createdAt),
         status: l.status,

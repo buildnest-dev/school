@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, FlaskConical, Upload } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
+import { env } from "@/config/env";
 import { cn } from "@/lib/utils";
 import type { AuditEntry, CalendarEvent, Stat } from "@/types";
 
@@ -73,6 +74,8 @@ export function BarList({ rows }: { rows: { label: string; pct: number; text?: s
 
 /** Explains that a result came from the development mock, not a server. */
 export function DevNote({ children }: { children: ReactNode }) {
+  // With the live backend there is no mock to explain, so the note would only confuse.
+  if (env.dataSource === "api") return null;
   return (
     <p className="border-warn/40 flex items-start gap-2 rounded-md border bg-[#fbf3e1] px-3 py-2 text-sm text-[#6b4306]">
       <FlaskConical className="mt-0.5 size-4 flex-none" aria-hidden="true" />
