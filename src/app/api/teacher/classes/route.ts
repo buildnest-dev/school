@@ -55,8 +55,9 @@ export const GET = handle(async () => {
     return {
       id,
       label: c.label,
-      subject: c.subject,
-      subjectId: c.subjectId,
+      // Today's lesson wins, so this list agrees with the "Today" screen.
+      subject: t?.subject ?? c.subject,
+      subjectId: t?.subjectId ?? c.subjectId,
       period: t?.period ?? "Not today",
       time: t?.time ?? "",
       room: t?.room || c.room,
