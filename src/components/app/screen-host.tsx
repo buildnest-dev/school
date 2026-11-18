@@ -72,6 +72,20 @@ export function ScreenHost({ area, slug }: { area: Area; slug: string[] }) {
     if (status === "signedOut") router.replace("/sign-in");
   }, [status, router]);
 
+  // A screen the person may not use is not shown at all: they are sent to their own home. The
+  // home itself is never the target, so a role with no home screen cannot loop.
+  const target =
+    user && status === "ready"
+      ? ROLE_AREA[user.role] !== area
+        ? AREA_ROOT[ROLE_AREA[user.role]]
+        : match && !canAccess(user.role, match.screen) && match.screen.path !== ""
+          ? AREA_ROOT[area]
+          : null
+      : null;
+  useEffect(() => {
+    if (target) router.replace(target);
+  }, [target, router]);
+
   useEffect(() => {
     if (match) document.title = `${match.screen.title} · ${user?.tenantName ?? "Platform"}`;
   }, [match, user]);
@@ -88,6 +102,13 @@ export function ScreenHost({ area, slug }: { area: Area; slug: string[] }) {
   }
 
   const ownArea = ROLE_AREA[user.role];
+  if (target) {
+    return (
+      <Centered>
+        <LoadingBlock label="Taking you to your home" rows={2} />
+      </Centered>
+    );
+  }
   if (ownArea !== area) {
     return (
       <Unauthorized role={ROLE_LABEL[user.role]} homeHref={AREA_ROOT[ownArea]} inShell={false} />
