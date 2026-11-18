@@ -1,10 +1,21 @@
 import { Construction } from "lucide-react";
 import { PageHeader } from "@/components/shared/blocks";
 import { Card } from "@/components/ui/card";
+import { env } from "@/config/env";
 import type { ScreenDef } from "@/config/screens";
 
 /** Honest placeholder for screens in the inventory that are not built yet. */
 export function PlannedScreen({ screen }: { screen: ScreenDef }) {
+  if (env.dataSource === "api")
+    return (
+      <>
+        <PageHeader title={screen.title} description={screen.description} />
+        <Card className="max-w-xl">
+          <p className="text-ink font-semibold">Coming soon</p>
+          <p className="text-muted mt-1 text-sm">This screen is not available yet.</p>
+        </Card>
+      </>
+    );
   return (
     <>
       <PageHeader title={screen.title} description={screen.description} />

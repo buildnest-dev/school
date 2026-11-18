@@ -41,6 +41,8 @@ function useNav(area: Area, role: Role | undefined) {
         s.nav &&
         role !== undefined &&
         canAccess(role, s) &&
+        // A screen that is not built yet is not offered in the menu of the live app.
+        !(env.dataSource === "api" && s.status === "planned") &&
         !(env.dataSource === "api" && NO_BACKEND_YET.has(s.id) && !isDemoHost()),
     );
     const groups = new Map<string, ScreenDef[]>();

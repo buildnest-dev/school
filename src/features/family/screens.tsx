@@ -198,7 +198,7 @@ function ResultsBody({ id, s }: { id: string; s: ReturnType<typeof useServices> 
       <Card className="max-w-2xl">
         <BarList
           rows={d.data.map((r) => ({
-            label: r.subject,
+            label: `${r.subject} · ${r.assessment}`,
             pct: Math.round((r.marks / r.max) * 100),
             text: `${r.marks}/${r.max} · ${r.grade}`,
           }))}
