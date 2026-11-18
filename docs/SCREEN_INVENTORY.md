@@ -56,7 +56,7 @@ Root: `/school`
 | `/school/fees/opening-balances` | Opening balances | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/fees/payment-details` | Payment details | School owner, Principal, Accountant | Implemented (mock data) | 10 |
 | `/school/fees/refunds` | Refunds | School owner, Principal, Accountant | Implemented (mock data) | 10 |
-| `/school/certificates` | Certificate requests | School owner, Principal, Accountant | Implemented (mock data) | 5 |
+| `/school/certificates` | Certificate requests | School owner, Principal | Implemented (mock data) | 5 |
 | `/school/certificates/new` | Generate certificate | School owner, Principal | Implemented (mock data) | 5 |
 | `/school/certificates/register` | Issue register | School owner, Principal | Implemented (mock data) | 5 |
 | `/school/certificates/verify` | Verify a certificate | School owner, Principal | Partial | 5 |

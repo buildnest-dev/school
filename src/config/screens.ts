@@ -430,7 +430,7 @@ export const SCREENS: readonly ScreenDef[] = [
     path: "certificates",
     title: "Certificate requests",
     description: "Requests, approvals and issue status.",
-    roles: [...SCHOOL_ADMIN, "accountant"],
+    roles: [...SCHOOL_ADMIN],
     nav: { group: "Certificates", icon: "award", order: 1 },
     status: "implemented",
     features: ["5"],
