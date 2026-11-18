@@ -804,10 +804,12 @@ export async function clearDemoData(tenantId: string) {
   );
 }
 
-/** One login per role for the demonstration school. Everything about them is fictional. */
+/**
+ * One login for each role that has screens today (vice principal, admission officer, HR and
+ * reception have none yet, so the demo leaves them out). Everything about them is fictional.
+ */
 const DEMO_LOGINS: { email: string; name: string; role: string; staffName?: string }[] = [
   { email: "principal@demoschool.test", name: "Anita Sharma", role: "principal" },
-  { email: "vice-principal@demoschool.test", name: "Rohit Banerjee", role: "vice_principal" },
   {
     email: "teacher@demoschool.test",
     name: "Priya Nair",
@@ -833,9 +835,6 @@ const DEMO_LOGINS: { email: string; name: string; role: string; staffName?: stri
     staffName: "Meena Kulkarni",
   },
   { email: "transport@demoschool.test", name: "Dinesh Patil", role: "transport" },
-  { email: "admissions@demoschool.test", name: "Kavita Joshi", role: "admission_officer" },
-  { email: "hr@demoschool.test", name: "Sneha Pillai", role: "hr" },
-  { email: "reception@demoschool.test", name: "Arjun Malhotra", role: "reception" },
 ];
 
 /**
