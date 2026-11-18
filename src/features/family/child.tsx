@@ -89,11 +89,7 @@ export function ChildPage({
     <>
       <PageHeader
         title={title}
-        description={
-          a.isParent
-            ? `${description ?? ""} ${a.child.name}, Class ${a.child.classSection}.`.trim()
-            : description
-        }
+        description={`${description ?? ""} ${a.child.name}, Class ${a.child.classSection}.`.trim()}
         actions={picker}
       />
       {children(a.child.id)}
