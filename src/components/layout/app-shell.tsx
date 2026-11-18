@@ -58,7 +58,7 @@ function isActive(pathname: string, s: ScreenDef) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function Breadcrumbs({ area, pathname }: { area: Area; pathname: string }) {
+function Breadcrumbs({ area, pathname, role }: { area: Area; pathname: string; role?: Role }) {
   const rest = pathname.slice(AREA_ROOT[area].length).split("/").filter(Boolean);
   const crumbs: { label: string; href: string }[] = [{ label: "Home", href: AREA_ROOT[area] }];
   let acc = "";
@@ -67,7 +67,12 @@ function Breadcrumbs({ area, pathname }: { area: Area; pathname: string }) {
     const s = SCREENS.find((x) => x.area === area && screenHref(x) === `${AREA_ROOT[area]}${acc}`);
     crumbs.push({ label: s?.title ?? decodeURIComponent(seg), href: `${AREA_ROOT[area]}${acc}` });
   }
-  if (crumbs.length < 2) return <span className="text-muted text-sm">{AREA_LABEL[area]}</span>;
+  if (crumbs.length < 2)
+    return (
+      <span className="text-muted text-sm">
+        {area === "school" && role ? `${ROLE_LABEL[role]} workspace` : AREA_LABEL[area]}
+      </span>
+    );
   return (
     <nav aria-label="Breadcrumb" className="text-sm">
       <ol className="text-muted flex flex-wrap items-center gap-1.5">
@@ -251,7 +256,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>
-            <Breadcrumbs area={area} pathname={pathname} />
+            <Breadcrumbs area={area} pathname={pathname} role={user.role} />
           </div>
           <div className="text-muted hidden items-center gap-2 text-sm sm:flex">
             {user.tenantName ? (
