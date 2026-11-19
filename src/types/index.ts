@@ -108,6 +108,8 @@ export interface Student {
   classSection: string;
   rollNo: number;
   guardian: string;
+  guardianRelation?: string;
+  guardianEmail?: string;
   phone: string;
   status: "active" | "pending" | "withdrawn" | "transferred" | "graduated";
   feeStatus: "paid" | "partial" | "overdue";

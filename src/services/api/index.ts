@@ -256,8 +256,35 @@ function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]>
     },
     get: async (id) => {
       const r = await apiRequest<Raw | null>(`${path}/${encodeURIComponent(id)}`);
+      if (r && key === "students") return (await studentView(r)) as unknown as ResourceMap[K];
       return r ? shape(r) : null;
     },
+  };
+}
+
+/**
+ * One student's page. The detail answer has the guardian as an object and no fee or attendance
+ * summary, so the summary is taken from the students list (same figures as the table) and the two
+ * are put together in the shape the screen reads.
+ */
+async function studentView(r: Raw): Promise<Raw> {
+  const g = obj(r.guardian);
+  const page = await apiRequest<Page<Raw>>("/students", {
+    query: { q: str(r.admissionNo), pageSize: 20 },
+  });
+  const row = page.items.find((x) => x.id === r.id) ?? {};
+  return {
+    ...row,
+    id: r.id,
+    admissionNo: r.admissionNo,
+    name: r.name,
+    classSection: str(r.classSection) || "Unassigned",
+    status:
+      r.status === "active" ? "active" : r.status === "transferred" ? "transferred" : "withdrawn",
+    guardian: str(g.name),
+    guardianRelation: str(g.relation),
+    guardianEmail: str(g.email),
+    phone: str(g.phone),
   };
 }
 

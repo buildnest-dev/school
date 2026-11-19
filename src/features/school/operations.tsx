@@ -187,7 +187,7 @@ export function StudentDetail({ params }: ScreenProps) {
       <PageHeader
         eyebrow={`Admission no. ${stu.admissionNo}`}
         title={stu.name}
-        description={`Class ${stu.classSection} · Roll no. ${stu.rollNo}`}
+        description={stu.classSection}
         actions={<StatusBadge status={stu.status} />}
       />
       <Tabs defaultValue="overview">
@@ -219,12 +219,24 @@ export function StudentDetail({ params }: ScreenProps) {
             <dl className="grid gap-2 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted">Guardian</dt>
-                <dd className="font-medium">{stu.guardian}</dd>
+                <dd className="font-medium">{stu.guardian || "Not added"}</dd>
               </div>
+              {stu.guardianRelation ? (
+                <div className="flex justify-between">
+                  <dt className="text-muted">Relation</dt>
+                  <dd className="font-medium">{stu.guardianRelation}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between">
                 <dt className="text-muted">Phone</dt>
-                <dd className="font-medium">{stu.phone}</dd>
+                <dd className="font-medium">{stu.phone || "Not added"}</dd>
               </div>
+              {stu.guardianEmail ? (
+                <div className="flex justify-between">
+                  <dt className="text-muted">E-mail</dt>
+                  <dd className="font-medium">{stu.guardianEmail}</dd>
+                </div>
+              ) : null}
             </dl>
           </Card>
         </TabsContent>
