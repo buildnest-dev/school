@@ -19,7 +19,7 @@ interface Head {
 interface ClassRow {
   id: string;
   name: string;
-  sections: { id: string; name: string }[];
+  sections: { id: string; name: string; students?: number }[];
 }
 interface Summary {
   matched: number;
@@ -249,16 +249,20 @@ export function FeeStructure() {
                   {(a) => (
                     <Select {...a} {...bind("target")}>
                       <option value="">Choose a class or section</option>
-                      {classes.map((c) => (
-                        <optgroup key={c.id} label={c.name}>
-                          <option value={`c:${c.id}`}>Whole {c.name}</option>
-                          {c.sections.map((s) => (
-                            <option key={s.id} value={`s:${s.id}`}>
-                              {c.name} · {s.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
+                      {classes
+                        .filter((c) => c.sections.some((s) => (s.students ?? 1) > 0))
+                        .map((c) => (
+                          <optgroup key={c.id} label={c.name}>
+                            <option value={`c:${c.id}`}>Whole {c.name}</option>
+                            {c.sections
+                              .filter((s) => (s.students ?? 1) > 0)
+                              .map((s) => (
+                                <option key={s.id} value={`s:${s.id}`}>
+                                  {c.name} · {s.name}
+                                </option>
+                              ))}
+                          </optgroup>
+                        ))}
                     </Select>
                   )}
                 </Field>
@@ -347,6 +351,11 @@ export function FeeStructure() {
                     {busy ? "Working…" : "Raise fee"}
                   </Button>
                 </div>
+                {!summary ? (
+                  <p className="text-muted text-sm">
+                    Press Check totals first. Raise fee turns on once the check finds students.
+                  </p>
+                ) : null}
               </div>
             )}
           </Card>
