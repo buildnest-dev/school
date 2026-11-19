@@ -294,13 +294,17 @@ function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]>
       // server does not search come back whole, so the rows that do not match are dropped here.
       const scored = shaped
         .map((r, i) => ({ r, i, ...matchScore(r, words) }))
-        .filter((x) => SERVER_SEARCH.has(key) || x.hit);
+        .filter((x) => x.hit);
       scored.sort((x, y) => x.score - y.score || x.i - y.i);
       const items = scored.map((x) => x.r);
+      // Only rows that really show what was typed are listed, even when the server sent more.
       return {
         ...page,
         items,
-        total: SERVER_SEARCH.has(key) ? (page.total ?? items.length) : items.length,
+        total:
+          SERVER_SEARCH.has(key) && items.length === shaped.length
+            ? (page.total ?? items.length)
+            : items.length,
       };
     },
     get: async (id) => {
