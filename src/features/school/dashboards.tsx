@@ -83,9 +83,18 @@ export function SchoolHome() {
               <ul className="grid gap-3">
                 {data.pendingApprovals.map((a) => (
                   <li key={a.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span>
+                    <Link
+                      href={
+                        a.kind === "Certificate"
+                          ? "/school/certificates"
+                          : a.kind === "Refund"
+                            ? "/school/fees/refunds"
+                            : "/school/approvals"
+                      }
+                      className="hover:underline"
+                    >
                       <strong>{a.kind}</strong> · {a.subject}
-                    </span>
+                    </Link>
                     <StatusBadge status={a.status} />
                   </li>
                 ))}

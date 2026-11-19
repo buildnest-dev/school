@@ -57,7 +57,7 @@ export function ApprovalInbox() {
     <>
       <PageHeader
         title="Approval inbox"
-        description="Requests waiting for a decision. Each decision asks you to confirm."
+        description="Staff leave requests waiting for a decision. Certificates and refunds are decided on their own screens."
       />
       {list.error ? (
         <ErrorState message={list.error.message} onRetry={list.reload} />
@@ -66,7 +66,7 @@ export function ApprovalInbox() {
       ) : list.data.items.length === 0 ? (
         <EmptyState
           title="Nothing is waiting for you"
-          hint="New requests from staff, parents and the office appear here."
+          hint="New leave requests from staff appear here."
         />
       ) : (
         <ul className="grid gap-3">
