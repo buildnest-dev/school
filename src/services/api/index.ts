@@ -226,6 +226,26 @@ const notBuilt = () =>
   );
 export const NOT_BUILT = new Set<ResourceKey>(["feeHeads"]);
 
+/**
+ * How well a row matches the search words: 0 when a field is exactly what was typed, 1 when a field
+ * starts with it, 2 when a word in a field starts with it, 3 when it only appears inside.
+ */
+function matchScore(row: unknown, words: string[]): { hit: boolean; score: number } {
+  const values = Object.values(row as Record<string, unknown>)
+    .filter((v) => typeof v === "string" || typeof v === "number")
+    .map((v) => String(v).toLowerCase());
+  const all = values.join(" ");
+  if (!words.every((w) => all.includes(w))) return { hit: false, score: 9 };
+  const typed = words.join(" ");
+  let best = 3;
+  for (const v of values) {
+    if (v === typed) best = Math.min(best, 0);
+    else if (v.startsWith(typed)) best = Math.min(best, 1);
+    else if (v.split(/[\s,·-]+/).some((t) => t.startsWith(words[0]!))) best = Math.min(best, 2);
+  }
+  return { hit: true, score: best };
+}
+
 /** Lists whose own endpoint already searches on the server. */
 const SERVER_SEARCH: ReadonlySet<ResourceKey> = new Set<ResourceKey>([
   "students",
@@ -263,23 +283,24 @@ function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]>
       });
       const rows = a?.keep ? page.items.filter(a.keep) : page.items;
       const shaped = rows.map(shape);
-      // These lists come back whole and the server does not search them, so the search box is
-      // applied here: only the rows that mention the words are kept.
       const words = (p.q ?? "").toLowerCase().split(/\s+/).filter(Boolean);
-      if (words.length && !SERVER_SEARCH.has(key)) {
-        const hit = shaped.filter((r) => {
-          const text = Object.values(r as unknown as Record<string, unknown>)
-            .filter((v) => typeof v === "string" || typeof v === "number")
-            .join(" ")
-            .toLowerCase();
-          return words.every((w) => text.includes(w));
-        });
-        return { ...page, items: hit, total: hit.length };
-      }
+      if (!words.length)
+        return {
+          ...page,
+          items: shaped,
+          total: a?.keep ? rows.length : (page.total ?? rows.length),
+        };
+      // The rows that mention the words come first, the closest match at the very top. Lists the
+      // server does not search come back whole, so the rows that do not match are dropped here.
+      const scored = shaped
+        .map((r, i) => ({ r, i, ...matchScore(r, words) }))
+        .filter((x) => SERVER_SEARCH.has(key) || x.hit);
+      scored.sort((x, y) => x.score - y.score || x.i - y.i);
+      const items = scored.map((x) => x.r);
       return {
         ...page,
-        items: shaped,
-        total: a?.keep ? rows.length : (page.total ?? rows.length),
+        items,
+        total: SERVER_SEARCH.has(key) ? (page.total ?? items.length) : items.length,
       };
     },
     get: async (id) => {
