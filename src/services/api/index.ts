@@ -226,6 +226,20 @@ const notBuilt = () =>
   );
 export const NOT_BUILT = new Set<ResourceKey>(["feeHeads"]);
 
+/** Lists whose own endpoint already searches on the server. */
+const SERVER_SEARCH: ReadonlySet<ResourceKey> = new Set<ResourceKey>([
+  "students",
+  "staff",
+  "vendors",
+  "enquiries",
+  "invoices",
+  "certificateRequests",
+  "issueRegister",
+  "loans",
+  "books",
+  "queries",
+]);
+
 function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]> {
   if (NOT_BUILT.has(key)) return { list: notBuilt, get: notBuilt } as ListService<ResourceMap[K]>;
   const a = ADAPT[key];
@@ -248,9 +262,23 @@ function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]>
         },
       });
       const rows = a?.keep ? page.items.filter(a.keep) : page.items;
+      const shaped = rows.map(shape);
+      // These lists come back whole and the server does not search them, so the search box is
+      // applied here: only the rows that mention the words are kept.
+      const words = (p.q ?? "").toLowerCase().split(/\s+/).filter(Boolean);
+      if (words.length && !SERVER_SEARCH.has(key)) {
+        const hit = shaped.filter((r) => {
+          const text = Object.values(r as unknown as Record<string, unknown>)
+            .filter((v) => typeof v === "string" || typeof v === "number")
+            .join(" ")
+            .toLowerCase();
+          return words.every((w) => text.includes(w));
+        });
+        return { ...page, items: hit, total: hit.length };
+      }
       return {
         ...page,
-        items: rows.map(shape),
+        items: shaped,
         total: a?.keep ? rows.length : (page.total ?? rows.length),
       };
     },
