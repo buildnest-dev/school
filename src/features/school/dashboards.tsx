@@ -71,7 +71,9 @@ export function SchoolHome() {
               title="Waiting for a decision"
               action={
                 <Button asChild variant="ghost" size="sm">
-                  <Link href="/school/approvals">Open inbox</Link>
+                  <Link href={role === "accountant" ? "/school/fees/refunds" : "/school/approvals"}>
+                    {role === "accountant" ? "Open refunds" : "Open inbox"}
+                  </Link>
                 </Button>
               }
             />

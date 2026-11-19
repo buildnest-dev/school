@@ -131,7 +131,7 @@ export const SCREENS: readonly ScreenDef[] = [
     path: "approvals",
     title: "Approval inbox",
     description: "Requests waiting for a decision.",
-    roles: [...SCHOOL_ADMIN, "accountant"],
+    roles: SCHOOL_ADMIN,
     nav: { group: "Overview", icon: "inbox", order: 2 },
     status: "implemented",
     features: ["7", "16"],
@@ -966,9 +966,7 @@ export const SCREENS: readonly ScreenDef[] = [
  * School screens whose backend does not exist yet. They are hidden from the menu when the app runs
  * against the real API (they still work on sample data). Remove an id here when its backend ships.
  */
-export const NO_BACKEND_YET: ReadonlySet<string> = new Set([
-  "school-rollover",
-]);
+export const NO_BACKEND_YET: ReadonlySet<string> = new Set(["school-rollover"]);
 
 export const AREA_ROOT: Record<Area, string> = {
   platform: "/platform",

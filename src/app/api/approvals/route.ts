@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
-import { ADMIN_FIN, dayStr, listOf } from "@/server/extras";
+import { ADMIN, dayStr, listOf } from "@/server/extras";
 import { handle } from "@/server/http";
 
 const nice = (d: Date) =>
@@ -9,7 +9,7 @@ const nice = (d: Date) =>
 
 /** The approval inbox: today it holds staff leave requests waiting for a decision. */
 export const GET = handle(async (req: Request) => {
-  const { tenantId } = await requireTenant([...ADMIN_FIN]);
+  const { tenantId } = await requireTenant([...ADMIN]);
   const status = new URL(req.url).searchParams.get("filter[status]");
   const rows = await prisma.leaveRequest.findMany({
     where: { tenantId, ...(status ? { status } : {}) },

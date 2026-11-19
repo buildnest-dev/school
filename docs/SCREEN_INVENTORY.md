@@ -29,7 +29,7 @@ Root: `/school`
 | Route | Screen | Roles | Status | Catalogue § |
 |---|---|---|---|---|
 | `/school` | Dashboard | School owner, Principal, Accountant, Librarian, Transport coordinator | Implemented (mock data) | 17 |
-| `/school/approvals` | Approval inbox | School owner, Principal, Accountant | Implemented (mock data) | 7, 16 |
+| `/school/approvals` | Approval inbox | School owner, Principal | Implemented (mock data) | 7, 16 |
 | `/school/calendar` | Calendar & holidays | School owner, Principal | Implemented (mock data) | 2 |
 | `/school/notices` | Notices | School owner, Principal | Implemented (mock data) | 12 |
 | `/school/notices/new` | Compose notice | School owner, Principal | Implemented (mock data) | 12 |
