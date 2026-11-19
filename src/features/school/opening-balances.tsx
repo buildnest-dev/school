@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DevNote, PageHeader } from "@/components/shared/blocks";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,8 +9,10 @@ import { env } from "@/config/env";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { rupees } from "../shared/format";
 
-const EXAMPLE = `ADM-0001,Term 1 fee,12500,5000,2026-04-30,2026-04-10,upi,UTR1234567
-ADM-0002,Term 1 fee,12500,0,2026-04-30`;
+/** An example line built from real admission numbers of this school. */
+const example = (a: string, b: string) =>
+  `${a},Term 1 fee,12500,5000,2026-04-30,2026-04-10,upi,UTR1234567
+${b},Term 1 fee,12500,0,2026-04-30`;
 
 type Parsed = Record<string, unknown>;
 
@@ -47,6 +49,12 @@ function parse(text: string): { rows: Parsed[]; problem?: string } {
 export function OpeningBalances() {
   const { toast } = useToast();
   const [text, setText] = useState("");
+  const [nos, setNos] = useState<string[]>([]);
+  useEffect(() => {
+    apiRequest<{ items: { admissionNo: string }[] }>("/students", { query: { pageSize: 2 } })
+      .then((r) => setNos(r.items.map((x) => x.admissionNo)))
+      .catch(() => undefined);
+  }, []);
   const [busy, setBusy] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
   const [checked, setChecked] = useState<{
@@ -95,7 +103,9 @@ export function OpeningBalances() {
             One line per student and item:{" "}
             <code>admission no, item, amount, paid so far, due date</code>, and optionally{" "}
             <code>paid on, mode, reference</code>. Dates are YYYY-MM-DD. Mode is cash (default),
-            upi, cheque, dd, netbanking or card; anything except cash needs a reference.
+            upi, cheque, dd, netbanking or card; anything except cash needs a reference. The
+            admission number is in the Student ledger list and the Students screen
+            {nos[0] ? ` (for example ${nos[0]})` : ""}.
           </p>
           <label htmlFor="ob-text" className="text-sm font-semibold">
             Lines
@@ -108,7 +118,11 @@ export function OpeningBalances() {
               setText(e.target.value);
               setChecked(null);
             }}
-            placeholder={EXAMPLE}
+            placeholder={
+              nos.length === 2
+                ? example(nos[0]!, nos[1]!)
+                : "Admission no, item, amount, paid so far, due date"
+            }
             className="border-line bg-surface min-h-48 w-full rounded-md border p-3 font-mono text-sm"
           />
           {problems.length ? (
@@ -123,6 +137,11 @@ export function OpeningBalances() {
             <p className="text-sm">
               All {checked.rows} lines are fine. Total owed {rupees(checked.totalDue)}, already paid{" "}
               {rupees(checked.totalPaid)}.
+            </p>
+          ) : null}
+          {!checked ? (
+            <p className="text-muted text-sm">
+              Press Check first. Save turns on once every line passes.
             </p>
           ) : null}
           <div className="flex gap-2">

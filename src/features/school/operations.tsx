@@ -381,7 +381,7 @@ export function FeeLedger() {
           <option value="">Choose a student</option>
           {students.data?.items.map((x) => (
             <option key={x.id} value={x.id}>
-              {x.name} · {x.classSection}
+              {x.name} · {x.classSection} · {x.admissionNo}
             </option>
           ))}
         </Select>

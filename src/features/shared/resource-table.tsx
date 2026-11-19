@@ -175,7 +175,7 @@ export const TABLES: Record<string, TableConfig> = {
     columns: [
       { key: "name", header: "Student", sortable: true },
       { key: "classSection", header: "Class", sortable: true },
-      { key: "rollNo", header: "Roll no.", sortable: true, hideOnMobile: true },
+      { key: "admissionNo", header: "Admission no.", hideOnMobile: true },
       { key: "guardian", header: "Guardian", hideOnMobile: true },
       { key: "feeStatus", header: "Fees", render: badge("feeStatus") },
       {
