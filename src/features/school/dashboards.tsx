@@ -25,7 +25,7 @@ const QUICK: Record<string, { href: string; label: string }[]> = {
   accountant: [
     { href: "/school/fees", label: "Fee collection" },
     { href: "/school/fees/ledger", label: "Student ledger" },
-    { href: "/school/certificates", label: "Certificate clearance" },
+    { href: "/school/fees/refunds", label: "Refunds" },
   ],
   librarian: [
     { href: "/school/library", label: "Catalogue" },
