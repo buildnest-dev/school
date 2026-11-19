@@ -68,18 +68,15 @@ export const GET = handle(async (req: Request) => {
     ...(studentId ? { studentId } : {}),
     ...(q ? { OR: [{ number: like(q) }, { student: { name: like(q) } }] } : {}),
   };
-  const [rows, total] = await Promise.all([
-    prisma.invoice.findMany({
-      where,
-      orderBy: { dueOn: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: { payments: true, student: { include: { section: { include: { class: true } } } } },
-    }),
-    prisma.invoice.count({ where }),
-  ]);
+  const wanted = sp.get("filter[status]");
+  // The status comes from the payments, so it is worked out first and the page is cut after.
+  const rows = await prisma.invoice.findMany({
+    where,
+    orderBy: { dueOn: "asc" },
+    include: { payments: true, student: { include: { section: { include: { class: true } } } } },
+  });
   const now = new Date();
-  const items = rows.map((i) => {
+  const all = rows.map((i) => {
     const paid = i.payments.reduce((s, p) => s + p.amountPaise, 0);
     const status =
       paid >= i.amountPaise ? "paid" : i.dueOn < now ? "overdue" : paid > 0 ? "partial" : "pending";
@@ -97,5 +94,8 @@ export const GET = handle(async (req: Request) => {
       status,
     };
   });
+  const matching = wanted ? all.filter((i) => i.status === wanted) : all;
+  const total = matching.length;
+  const items = matching.slice((page - 1) * pageSize, page * pageSize);
   return NextResponse.json({ items, total, page, pageSize });
 });
