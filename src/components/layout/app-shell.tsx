@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { FlaskConical, LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "@/components/shared/blocks";
 import { isDemoHost } from "@/config/demo";
 import {
@@ -25,6 +25,9 @@ import { cn } from "@/lib/utils";
 import type { Area, Role } from "@/types";
 import { BrandLogo } from "./brand-logo";
 import { NAV_ICONS } from "./nav-icons";
+
+/** How far the side menu was scrolled, kept while moving between pages. */
+let menuScroll = 0;
 
 const AREA_LABEL: Record<Area, string> = {
   platform: "Platform administration",
@@ -152,6 +155,17 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const nav = useNav(area, user?.role);
+  const asideRef = useRef<HTMLElement>(null);
+  const signedIn = !!user;
+  // The menu is drawn again on every page, so it would jump back to the top. Keep where it was
+  // scrolled, and make sure the page you are on is in view.
+  useLayoutEffect(() => {
+    const el = asideRef.current;
+    if (!el) return;
+    el.scrollTop = menuScroll;
+    el.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
+    menuScroll = el.scrollTop;
+  }, [signedIn, pathname]);
   if (!user) return null;
 
   const comfortable = area === "teacher" || area === "parent" || area === "student";
@@ -199,6 +213,10 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
       </a>
 
       <aside
+        ref={asideRef}
+        onScroll={(e) => {
+          menuScroll = e.currentTarget.scrollTop;
+        }}
         className="on-dark bg-ink sticky top-0 hidden h-screen flex-col overflow-y-auto px-4 py-5 lg:flex"
         aria-label={`${AREA_LABEL[area]} navigation`}
       >
