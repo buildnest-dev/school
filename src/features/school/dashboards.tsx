@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AuditHistory, BarList, PageHeader, StatGrid } from "@/components/shared/blocks";
+import { BarList, PageHeader, StatGrid } from "@/components/shared/blocks";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -121,6 +121,8 @@ export function SchoolHome() {
 export function PlatformHome() {
   const s = useServices();
   const d = useAsync(() => s.dashboards.platform(), [s]);
+  // The overview answer carries no service list, so it is read from the status endpoint.
+  const health = useAsync(() => s.platform.status(), [s]);
   if (d.error) return <ErrorState message={d.error.message} onRetry={d.reload} />;
   if (!d.data) return <LoadingBlock label="Loading the overview" />;
   const data = d.data;
@@ -153,24 +155,13 @@ export function PlatformHome() {
             }
           />
           <ul className="grid gap-3 text-sm">
-            {data.status.map((x) => (
+            {(health.data ?? []).map((x) => (
               <li key={x.name} className="flex items-center justify-between gap-3">
                 <span>{x.name}</span>
                 <StatusBadge status={x.state} />
               </li>
             ))}
           </ul>
-        </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader
-            title="Recent activity"
-            action={
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/platform/audit">All activity</Link>
-              </Button>
-            }
-          />
-          <AuditHistory entries={data.recentAudit} />
         </Card>
       </div>
     </>

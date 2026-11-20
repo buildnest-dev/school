@@ -14,6 +14,7 @@ import { useSession } from "@/hooks/use-session";
 import type { ResourceKey } from "@/services/types";
 import type { Role } from "@/types";
 import { NewSchool } from "../platform/new-school";
+import { SchoolActions } from "../platform/school-actions";
 import { AddStudent } from "../school/add-student";
 import { CertificateActions } from "../school/certificate-actions";
 import { fmtDate, fmtDateTime, prettyKey, rupees } from "./format";
@@ -55,6 +56,8 @@ export const TABLES: Record<string, TableConfig> = {
       role === "platform_admin" && env.dataSource === "api" ? (
         <NewSchool onCreated={reload} />
       ) : null,
+    detailActions: (row, done) =>
+      env.dataSource === "api" ? <SchoolActions id={String(row.id)} onDone={done} /> : null,
     columns: [
       { key: "name", header: "School", sortable: true },
       { key: "plan", header: "Plan", sortable: true },
@@ -602,7 +605,15 @@ export function ResourceTableScreen({ screen }: ScreenProps) {
                 .map(([k, v]) => (
                   <div key={k} className="border-line flex justify-between gap-4 border-b pb-2">
                     <dt className="text-muted">{prettyKey(k)}</dt>
-                    <dd className="text-right font-medium">{String(v ?? "—")}</dd>
+                    <dd className="text-right font-medium">
+                      {typeof v === "string" && /^\d{4}-\d{2}-\d{2}T/.test(v)
+                        ? new Date(v).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : String(v ?? "—")}
+                    </dd>
                   </div>
                 ))
             : null}

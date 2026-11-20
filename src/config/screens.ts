@@ -74,7 +74,7 @@ export const SCREENS: readonly ScreenDef[] = [
     area: "platform",
     path: "subscriptions",
     title: "Plans & usage",
-    description: "Plan, limits and usage per school. Pricing and billing come from the backend.",
+    description: "Each school's plan, student limit and how many students it uses.",
     roles: ["platform_admin"],
     nav: { group: "Platform", icon: "credit", order: 4 },
     status: "partial",
