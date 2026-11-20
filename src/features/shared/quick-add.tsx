@@ -52,8 +52,11 @@ export function QuickAdd({
     setBusy(true);
     setErrors({});
     try {
+      // A blank optional text box is left out, so the server does not read "" as a bad value.
       const body = Object.fromEntries(
-        fields.map((f) => [f.key, f.type === "number" ? Number(form[f.key] || 0) : form[f.key]]),
+        fields
+          .filter((f) => f.required !== false || f.type === "number" || form[f.key] !== "")
+          .map((f) => [f.key, f.type === "number" ? Number(form[f.key] || 0) : form[f.key]]),
       );
       await apiRequest(endpoint, { method, body });
       toast({ title: "Saved", description: title });

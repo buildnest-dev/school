@@ -64,6 +64,8 @@ const ADAPT: Partial<
       role: str(r.role),
       department: str(r.department) || str(r.designation),
       phone: str(r.phone),
+      email: str(r.email),
+      hasLogin: r.hasLogin === true,
       status: r.status === "active" ? "active" : "inactive",
       joined: str(r.joinedOn),
     }),

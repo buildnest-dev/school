@@ -47,6 +47,16 @@ const opts = (...v: string[]): FilterDef["options"] =>
 
 const SCHOOL_ADMIN: Role[] = ["school_owner", "principal"];
 
+/** Staff kinds the school can add here; the first four can also be given a login. */
+const STAFF_LOGIN_ROLES = [
+  { value: "teacher", label: "Teacher" },
+  { value: "accountant", label: "Accountant" },
+  { value: "librarian", label: "Librarian" },
+  { value: "admin", label: "Transport in-charge" },
+  { value: "driver", label: "Driver (no login)" },
+  { value: "other", label: "Other (no login)" },
+];
+
 /** One entry per list-style screen: resource, columns, filters. Add a screen = add an entry here. */
 export const TABLES: Record<string, TableConfig> = {
   "platform-tenants": {
@@ -232,6 +242,44 @@ export const TABLES: Record<string, TableConfig> = {
   "school-staff": {
     resource: "staff",
     searchPlaceholder: "Search staff",
+    actions: (role, reload) =>
+      SCHOOL_ADMIN.includes(role) && env.dataSource === "api" ? (
+        <QuickAdd
+          label="Add staff"
+          title="Add a staff member"
+          description="After adding, open the person and create their login so they can sign in."
+          endpoint="/staff"
+          onCreated={reload}
+          fields={[
+            { key: "name", label: "Full name" },
+            {
+              key: "role",
+              label: "Role",
+              type: "select",
+              options: STAFF_LOGIN_ROLES,
+            },
+            { key: "phone", label: "Phone (10 digits)", required: false },
+            { key: "email", label: "Email", required: false },
+            { key: "department", label: "Department", required: false },
+          ]}
+        />
+      ) : null,
+    detailActions: (row, done) =>
+      env.dataSource === "api" &&
+      !row.hasLogin &&
+      row.status === "active" &&
+      ["teacher", "accountant", "librarian", "admin"].includes(String(row.role)) ? (
+        <QuickAdd
+          label="Create login"
+          title={`Login for ${String(row.name)}`}
+          description="An invite is e-mailed. They choose their own password. Use an email that no one else at the school uses."
+          endpoint={`/staff/${row.id}/login`}
+          onCreated={done}
+          fields={[{ key: "email", label: "Their email" }]}
+        />
+      ) : row.hasLogin ? (
+        <p className="text-muted mt-4 text-sm">This person already has a login.</p>
+      ) : null,
     columns: [
       { key: "name", header: "Name", sortable: true },
       { key: "role", header: "Role", sortable: true },
