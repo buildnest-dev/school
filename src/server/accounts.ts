@@ -98,6 +98,7 @@ export async function createToken(userId: string, purpose: "reset" | "invite", h
 export const hashToken = sha256;
 
 export const loginRoles = [
+  "principal",
   "teacher",
   "accountant",
   "librarian",

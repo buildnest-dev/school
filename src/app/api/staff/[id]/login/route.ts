@@ -7,9 +7,10 @@ import { assertSameOrigin, handle } from "@/server/http";
 
 const Body = z.object({ email: z.string().trim().email() });
 
-/** Which login role each kind of staff member gets. Principal and owner are never granted here. */
+/** Which login role each kind of staff member gets. The owner login is never granted here. */
 const ROLE_FOR: Record<
   string,
+  | "principal"
   | "teacher"
   | "accountant"
   | "librarian"
@@ -19,6 +20,7 @@ const ROLE_FOR: Record<
   | "hr"
   | "reception"
 > = {
+  principal: "principal",
   teacher: "teacher",
   accountant: "accountant",
   librarian: "librarian",
@@ -31,7 +33,7 @@ const ROLE_FOR: Record<
 
 /**
  * Creates a login for a staff member and e-mails them a link to choose their own password; the
- * school never sees or sets it. Teachers, accountants, librarians and the transport in-charge only.
+ * school never sees or sets it. Only the owner can give a principal login.
  */
 export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
   assertSameOrigin(req);
@@ -46,6 +48,8 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
   const role = ROLE_FOR[staff.role];
   if (!role)
     throw new HttpError(422, "no_login_role", "This kind of staff member does not get a login.");
+  if (role === "principal" && user.role !== "school_owner")
+    throw new HttpError(403, "owner_only", "Only the school owner can give a principal login.");
 
   const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
   const { userId } = await createLogin(tenantId, tenant.name, {

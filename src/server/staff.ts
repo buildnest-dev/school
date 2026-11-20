@@ -4,6 +4,7 @@ import { prisma } from "./db";
 import { personName, phone } from "./validators";
 
 export const STAFF_ROLES = [
+  "principal",
   "teacher",
   "accountant",
   "admin",

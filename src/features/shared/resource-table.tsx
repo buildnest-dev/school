@@ -49,6 +49,7 @@ const SCHOOL_ADMIN: Role[] = ["school_owner", "principal"];
 
 /** Staff kinds the school can add here; the first four can also be given a login. */
 const STAFF_LOGIN_ROLES = [
+  { value: "principal", label: "Principal" },
   { value: "teacher", label: "Teacher" },
   { value: "accountant", label: "Accountant" },
   { value: "librarian", label: "Librarian" },
@@ -268,7 +269,7 @@ export const TABLES: Record<string, TableConfig> = {
       env.dataSource === "api" &&
       !row.hasLogin &&
       row.status === "active" &&
-      ["teacher", "accountant", "librarian", "admin"].includes(String(row.role)) ? (
+      ["principal", "teacher", "accountant", "librarian", "admin"].includes(String(row.role)) ? (
         <QuickAdd
           label="Create login"
           title={`Login for ${String(row.name)}`}
