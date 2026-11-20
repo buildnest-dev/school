@@ -61,7 +61,12 @@ export const TABLES: Record<string, TableConfig> = {
     columns: [
       { key: "name", header: "School", sortable: true },
       { key: "plan", header: "Plan", sortable: true },
-      { key: "status", header: "Status", render: badge("status") },
+      {
+        key: "status",
+        header: "Status",
+        // "Trial" is a plan; a school that is not live yet is still being set up.
+        render: (r) => <StatusBadge status={r.status === "trial" ? "setting_up" : String(r.status)} />,
+      },
       { key: "campuses", header: "Campuses", sortable: true },
       {
         key: "students",
@@ -78,7 +83,15 @@ export const TABLES: Record<string, TableConfig> = {
       },
     ],
     filters: [
-      { key: "status", label: "Status", options: opts("active", "trial", "suspended") },
+      {
+        key: "status",
+        label: "Status",
+        options: [
+          { value: "active", label: "Active" },
+          { value: "trial", label: "Setting up" },
+          { value: "suspended", label: "Suspended" },
+        ],
+      },
       { key: "plan", label: "Plan", options: opts("trial", "starter", "growth", "premium") },
     ],
   },

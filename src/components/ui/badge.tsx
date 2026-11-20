@@ -31,6 +31,7 @@ const STATUS: Record<string, [string, Tone, LucideIcon?]> = {
   inactive: ["Inactive", "neutral"],
   suspended: ["Suspended", "bad"],
   trial: ["Trial", "info"],
+  setting_up: ["Setting up", "info"],
   on_leave: ["On leave", "warn"],
   withdrawn: ["Withdrawn", "neutral"],
   transferred: ["Transferred", "neutral"],
