@@ -134,28 +134,16 @@ const ADAPT: Partial<
     }),
   },
   onboarding: {
-    path: "/platform/provisioning-requests",
-    query: (f): Record<string, string> => ({
-      ...(f.status
-        ? {
-            status:
-              f.status === "done"
-                ? "provisioned"
-                : f.status === "blocked"
-                  ? "rejected"
-                  : "requested,verifying,approved",
-          }
-        : {}),
-    }),
+    // Schools the team added that are not live yet, plus activation requests from sales.
+    path: "/platform/onboarding",
+    query: (f): Record<string, string> => (f.status ? { status: f.status } : {}),
     row: (r) => ({
       id: r.id,
-      tenant: str(r.organisation),
-      stage: str(r.status).replace(/^./, (c) => c.toUpperCase()),
-      progressPct:
-        { requested: 10, verifying: 40, approved: 70, provisioned: 100 }[str(r.status)] ?? 0,
-      owner: str(r.contactEmail),
-      status:
-        r.status === "provisioned" ? "done" : r.status === "rejected" ? "blocked" : "on_track",
+      tenant: str(r.tenant),
+      stage: str(r.stage),
+      progressPct: num(r.progressPct),
+      owner: str(r.owner),
+      status: r.status,
     }),
   },
   support: {
