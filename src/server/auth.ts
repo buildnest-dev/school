@@ -38,7 +38,9 @@ export async function login(
   tenantSlug?: string,
   code?: string,
   remember = false,
-): Promise<true | null | "mfa_required" | "mfa_invalid" | Exclude<StepResult, "ok">> {
+): Promise<
+  true | null | "mfa_required" | "mfa_invalid" | "school_not_live" | Exclude<StepResult, "ok">
+> {
   const user = await prisma.user.findUnique({
     where: { email: email.trim().toLowerCase() },
     include: { memberships: { include: { tenant: true } } },
@@ -75,8 +77,9 @@ export async function login(
     const family = m.role === "parent" || m.role === "student";
     // Suspended: staff are locked out, families can still read their records.
     if (m.tenant.status === "suspended" && !family) return null;
-    // Provisioned: the school is still being set up, so families cannot sign in yet.
-    if (m.tenant.status === "provisioned" && family) return null;
+    // Provisioned: the school is still being set up, so families cannot sign in yet. The password
+    // was already right, so saying why reveals nothing to a stranger.
+    if (m.tenant.status === "provisioned" && family) return "school_not_live";
     tenantId = m.tenantId;
   }
 

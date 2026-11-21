@@ -29,6 +29,12 @@ export const POST = handle(async (req: Request) => {
     throw new HttpError(401, "mfa_required", "Enter the 6-digit code from your authenticator app.");
   if (ok === "mfa_invalid")
     throw new HttpError(401, "mfa_invalid", "That code is not valid. Try the next one.");
+  if (ok === "school_not_live")
+    throw new HttpError(
+      403,
+      "school_not_live",
+      "Your password is correct, but this school is not live yet. You can sign in once the school goes live. Please ask the school.",
+    );
   if (ok === "approval_required")
     throw new HttpError(
       401,
