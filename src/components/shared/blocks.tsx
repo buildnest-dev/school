@@ -1,6 +1,16 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, FlaskConical, Upload } from "lucide-react";
+import {
+  CalendarCheck,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Coins,
+  FlaskConical,
+  GraduationCap,
+  Upload,
+  Users,
+} from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -36,18 +46,52 @@ export function PageHeader({
   );
 }
 
+const STAT_ICONS = [Users, GraduationCap, CalendarCheck, Coins];
+
+/** Picks an icon from the words in the label, so a fee card never shows a person. */
+function statIcon(label: string, i: number) {
+  const l = label.toLowerCase();
+  if (/fee|collect|₹|rupee|paid|refund|payment/.test(l)) return Coins;
+  if (/attend|present|absent/.test(l)) return CalendarCheck;
+  if (/teacher|staff|class/.test(l)) return GraduationCap;
+  if (/student|enrol|school|child/.test(l)) return Users;
+  if (/overdue|pending|approval|waiting|request|open/.test(l)) return Clock;
+  return STAT_ICONS[i % STAT_ICONS.length]!;
+}
+
 export function StatGrid({ stats }: { stats: Stat[] }) {
   return (
     <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {stats.map((s) => (
-        <div key={s.label} className="border-line bg-surface rounded-lg border p-4">
-          <dt className="text-muted text-xs font-semibold tracking-wide uppercase">{s.label}</dt>
-          <dd className="font-display text-ink mt-1 text-[1.75rem] leading-tight tabular-nums">
-            {s.value}
-          </dd>
-          {s.hint ? <dd className="text-muted text-xs">{s.hint}</dd> : null}
-        </div>
-      ))}
+      {stats.map((s, i) => {
+        const Icon = statIcon(s.label, i);
+        const gold = i % 2 === 1;
+        return (
+          <div
+            key={s.label}
+            className={cn(
+              "border-line shadow-card hover:border-gold/60 relative flex items-center gap-4 overflow-hidden rounded-2xl border p-4 transition-[border-color,transform] duration-200 hover:-translate-y-0.5",
+              gold ? "bg-[#fdf3dc]" : "bg-[#f1f8e2]",
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "grid size-12 flex-none place-items-center rounded-xl",
+                gold ? "bg-[#f7dc9c] text-[#8a5a0c]" : "bg-[#d6efa4] text-[#2f6b12]",
+              )}
+            >
+              <Icon className="size-6" />
+            </span>
+            <div className="min-w-0">
+              <dt className="text-ink text-sm font-semibold">{s.label}</dt>
+              <dd className="font-display text-ink text-[1.75rem] leading-tight tabular-nums">
+                {s.value}
+              </dd>
+              {s.hint ? <dd className="text-muted text-xs">{s.hint}</dd> : null}
+            </div>
+          </div>
+        );
+      })}
     </dl>
   );
 }

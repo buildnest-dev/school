@@ -129,9 +129,9 @@ function NavList({
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 text-white/85 transition-colors hover:bg-white/10 hover:text-white",
+                      "flex items-center gap-3 rounded-full px-3 text-white/85 transition-colors hover:bg-white/10 hover:text-white",
                       large ? "min-h-12 text-base" : "min-h-10 text-sm",
-                      active && "bg-white/15 font-semibold text-white",
+                      active && "bg-accent-light hover:bg-accent-light font-semibold text-ink hover:text-ink",
                     )}
                   >
                     <Icon className="size-[18px] flex-none" aria-hidden="true" />
@@ -204,7 +204,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   );
 
   return (
-    <div className="bg-paper min-h-screen lg:grid lg:grid-cols-[264px_1fr]">
+    <div className="bg-page min-h-screen lg:grid lg:grid-cols-[264px_1fr]">
       <a
         href="#app-main"
         className="bg-ink fixed top-[-60px] left-4 z-[100] rounded-sm px-4 py-2.5 text-white focus:top-3"
@@ -217,7 +217,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
         onScroll={(e) => {
           menuScroll = e.currentTarget.scrollTop;
         }}
-        className="on-dark bg-ink sticky top-0 hidden h-screen flex-col overflow-y-auto px-4 py-5 lg:flex"
+        className="on-dark bg-sidebar sticky top-0 hidden h-screen flex-col overflow-y-auto px-4 py-5 lg:flex"
         aria-label={`${AREA_LABEL[area]} navigation`}
       >
         <BrandLogo onDark className="mb-1 px-1" />
@@ -239,7 +239,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
           </div>
         ) : null}
 
-        <header className="border-line bg-paper sticky top-0 z-30 flex min-h-14 items-center justify-between gap-3 border-b px-4 lg:px-8">
+        <header className="border-line bg-paper/90 sticky top-0 z-30 flex min-h-14 items-center justify-between gap-3 border-b px-4 lg:px-8">
           <div className="flex items-center gap-3">
             <Dialog.Root open={open} onOpenChange={setOpen}>
               <Dialog.Trigger
@@ -252,7 +252,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
                 <Dialog.Overlay className="bg-ink/50 fixed inset-0 z-50 lg:hidden" />
                 <Dialog.Content
                   aria-describedby={undefined}
-                  className="on-dark bg-ink fixed inset-y-0 left-0 z-50 w-[300px] max-w-[88vw] overflow-y-auto px-4 py-5 lg:hidden"
+                  className="on-dark bg-sidebar fixed inset-y-0 left-0 z-50 w-[300px] max-w-[88vw] overflow-y-auto px-4 py-5 lg:hidden"
                 >
                   <Dialog.Title className="sr-only">Menu</Dialog.Title>
                   <div className="mb-5 flex items-center justify-between">

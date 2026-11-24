@@ -2,27 +2,48 @@
 
 /* Design tokens. Tailwind generates utilities from these: bg-ink, text-muted, font-display, ... */
 @theme {
-  --color-ink: #0f2a2d;
-  --color-ink-2: #17383c;
-  --color-ink-line: #2c4a4e;
-  --color-paper: #f7f4ee;
-  --color-paper-2: #efeae0;
-  --color-surface: #fffdf9;
-  --color-line: #ddd6c8;
-  --color-muted: #566768;
-  --color-accent: #b8501e;
-  --color-accent-ink: #9a4116;
-  --color-accent-light: #f2a766;
-  --color-ok: #2d7556;
-  --color-bad: #a93a3a;
+  /* Heritage green and gold: cream pages, chocolate brown, lime and gold. */
+  --color-ink: #3a1d12;
+  --color-ink-2: #4a2a1c;
+  --color-ink-line: #66402b;
+  --color-paper: #fbf3e4;
+  --color-paper-2: #f3e6cf;
+  --color-surface: #fffdf6;
+  --color-line: #e6d8bb;
+  --color-muted: #6f5f50;
+  --color-accent: #4e9a1f;
+  --color-accent-ink: #2f6b12;
+  --color-accent-light: #c8f169;
+  --color-gold: #d9a53a;
+  --color-ok: #2f7d32;
+  --color-bad: #b5413a;
   --color-warn: #a8650f;
-  --color-on-dark: #b4c4c3;
+  --color-on-dark: #e8d9c4;
   --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --shadow-window: 0 1px 2px rgb(15 42 45 / 0.06), 0 28px 56px -24px rgb(15 42 45 / 0.32);
+  --shadow-window: 0 1px 2px rgb(58 29 18 / 0.06), 0 28px 56px -24px rgb(58 29 18 / 0.32);
+  --shadow-card: 0 1px 2px rgb(122 80 30 / 0.06), 0 12px 28px -16px rgb(122 80 30 / 0.3);
   --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
   /* lg starts just above 960px: desktop nav, sticky showcase and multi-column layouts */
   --breakpoint-lg: 61.0625rem;
+}
+
+/* The loaded web fonts (see layout.tsx) sit in front of the system fallbacks. */
+:root {
+  --font-display: var(--font-playfair), "Iowan Old Style", Palatino, Georgia, serif;
+  --font-sans: var(--font-nunito), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Page and sidebar backgrounds used by the app shell. */
+.bg-page {
+  background: linear-gradient(160deg, #fbf3e4 0%, #f3e6cf 100%);
+  background-attachment: fixed;
+}
+.bg-sidebar {
+  background:
+    radial-gradient(120% 40% at 0% 0%, rgb(217 165 58 / 0.28), transparent 60%),
+    radial-gradient(120% 30% at 0% 100%, rgb(217 165 58 / 0.22), transparent 65%),
+    linear-gradient(180deg, #3a1d12, #2a140c);
 }
 
 @layer base {
@@ -33,7 +54,7 @@
   }
   body {
     background: var(--color-paper);
-    color: #16282b;
+    color: #2b1a12;
     font-family: var(--font-sans);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;

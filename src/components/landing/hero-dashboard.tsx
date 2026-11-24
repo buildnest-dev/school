@@ -6,7 +6,7 @@ import { AppWindow, DateRow, HBars, Panel, Pill, Tag } from "@/components/mockup
 import { CAMPUSES, SCHOOLS, type SchoolKey } from "@/lib/data/schools";
 import { cn } from "@/lib/utils";
 
-const ACCENTS: Record<SchoolKey, string> = { northfield: "#b8501e", riverstone: "#2b5fa8" };
+const ACCENTS: Record<SchoolKey, string> = { northfield: "#4e9a1f", riverstone: "#2b5fa8" };
 
 /**
  * Illustrative admin dashboard. The workspace switcher and group view are a visual demonstration

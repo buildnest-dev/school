@@ -2,7 +2,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const control =
-  "min-h-11 w-full rounded-md border border-[#bdb5a4] bg-white px-3 text-[0.95rem] text-[#16282b] transition-colors placeholder:text-muted/70 hover:border-ink focus-visible:border-accent aria-[invalid=true]:border-bad disabled:bg-paper-2 disabled:text-muted";
+  "min-h-11 w-full rounded-md border border-[#bdb5a4] bg-white px-3 text-[0.95rem] text-[#2b1a12] transition-colors placeholder:text-muted/70 hover:border-ink focus-visible:border-accent aria-[invalid=true]:border-bad disabled:bg-paper-2 disabled:text-muted";
 
 export function Input({ className, ...props }: ComponentPropsWithoutRef<"input">) {
   return <input className={cn(control, className)} {...props} />;

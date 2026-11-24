@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BarList, PageHeader, StatGrid } from "@/components/shared/blocks";
+import { WelcomeBanner, greeting } from "@/components/shared/welcome-banner";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -48,11 +49,11 @@ export function SchoolHome() {
   const showAttendance = role === "school_owner" || role === "principal";
   return (
     <>
-      <PageHeader
-        title={`Welcome, ${firstName(user?.name ?? "")}`}
-        description="Here is what needs your attention today."
+      <WelcomeBanner
+        title={`${greeting()}, ${firstName(user?.name ?? "")}!`}
+        subtitle="Here is what needs your attention today."
         actions={(QUICK[role] ?? []).map((q) => (
-          <Button key={q.href} asChild variant="ghost" size="sm">
+          <Button key={q.href} asChild variant="light" size="sm">
             <Link href={q.href}>{q.label}</Link>
           </Button>
         ))}
@@ -129,9 +130,10 @@ export function PlatformHome() {
   const total = data.tenantsByStatus.reduce((n, x) => n + x.count, 0) || 1;
   return (
     <>
-      <PageHeader
+      <WelcomeBanner
         title="Platform overview"
-        description="All schools on the platform. This view belongs to the software provider, not to any one school."
+        subtitle="All schools on the platform. This view belongs to the software provider, not to any one school."
+        badge="ZAQSA team"
       />
       <StatGrid stats={data.stats} />
       <div className="mt-6 grid gap-5 lg:grid-cols-2">

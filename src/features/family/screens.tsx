@@ -40,6 +40,7 @@ export function FamilyHome() {
   const isParent = user?.role === "parent";
   return (
     <ChildPage
+      banner
       title={
         isParent ? `Hello, ${firstName(user?.name ?? "")}` : `Hi, ${a.child.name.split(" ")[0]}`
       }

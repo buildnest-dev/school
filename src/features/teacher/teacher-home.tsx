@@ -2,7 +2,7 @@
 
 import { ArrowRight, ClipboardList, Pencil, Plane } from "lucide-react";
 import Link from "next/link";
-import { PageHeader } from "@/components/shared/blocks";
+import { WelcomeBanner } from "@/components/shared/welcome-banner";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
@@ -28,10 +28,10 @@ export function TeacherHome() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={todayLabel(todayIso())}
-        title={`${greeting()}, ${h.greetingName}.`}
-        description={`You have ${h.classesToday} classes today.`}
+      <WelcomeBanner
+        title={`${greeting()}, ${h.greetingName}!`}
+        subtitle={`${todayLabel(todayIso())}. You have ${h.classesToday} classes today.`}
+        badge="Teacher workspace"
       />
 
       {next ? (

@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { PageHeader } from "@/components/shared/blocks";
+import { WelcomeBanner } from "@/components/shared/welcome-banner";
 import { Select } from "@/components/ui/field";
 import { LoadingBlock, ErrorState } from "@/components/ui/states";
 import { useAsync } from "@/hooks/use-async";
@@ -56,10 +57,13 @@ export function useActiveChild() {
 export function ChildPage({
   title,
   description,
+  banner,
   children,
 }: {
   title: string;
   description?: string;
+  /** Show the welcome banner (home pages) instead of the plain page title. */
+  banner?: boolean;
   children: (childId: string) => React.ReactNode;
 }) {
   const a = useActiveChild();
@@ -87,11 +91,22 @@ export function ChildPage({
     ) : null;
   return (
     <>
-      <PageHeader
-        title={title}
-        description={`${description ?? ""} ${a.child.name}, Class ${a.child.classSection}.`.trim()}
-        actions={picker}
-      />
+      {banner ? (
+        <>
+          <WelcomeBanner
+            title={`${title}!`}
+            subtitle={`${description ?? ""} ${a.child.name}, Class ${a.child.classSection}.`.trim()}
+            badge="Parent and student portal"
+          />
+          {picker ? <div className="mb-6">{picker}</div> : null}
+        </>
+      ) : (
+        <PageHeader
+          title={title}
+          description={`${description ?? ""} ${a.child.name}, Class ${a.child.classSection}.`.trim()}
+          actions={picker}
+        />
+      )}
       {children(a.child.id)}
     </>
   );

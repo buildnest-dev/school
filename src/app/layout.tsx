@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Nunito_Sans, Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 import { BRAND } from "@/lib/site";
 import "./globals.css";
+
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair", display: "swap" });
+const nunito = Nunito_Sans({ subsets: ["latin"], variable: "--font-nunito", display: "swap" });
 
 export const metadata: Metadata = {
   title: {
@@ -14,7 +18,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "School", statusBarStyle: "default" },
 };
 
-export const viewport: Viewport = { themeColor: "#0f2a2d", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#3a1d12", width: "device-width", initialScale: 1 };
 
 /**
  * Runs before first paint. `.js` enables the animation "before" states in globals.css; if the app
@@ -24,7 +28,7 @@ const MOTION_GATE = `document.documentElement.classList.add('js');setTimeout(fun
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${playfair.variable} ${nunito.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: MOTION_GATE }} />
       </head>

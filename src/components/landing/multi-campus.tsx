@@ -46,17 +46,17 @@ function CampusDiagram() {
       aria-label="Diagram: a group overview connected to three separate campus workspaces, each inside its own boundary."
       className="h-auto max-h-[520px] w-full"
     >
-      <g fill="none" stroke="#f2a766" strokeWidth="1.5">
+      <g fill="none" stroke="#c8f169" strokeWidth="1.5">
         <path className="diagram-line" pathLength={1} d="M240 112 C240 190 80 190 80 262" />
         <path className="diagram-line" pathLength={1} d="M240 112 L240 262" />
         <path className="diagram-line" pathLength={1} d="M240 112 C240 190 400 190 400 262" />
       </g>
       <g>
-        <rect x="140" y="40" width="200" height="72" rx="6" fill="#17383c" stroke="#f2a766" />
+        <rect x="140" y="40" width="200" height="72" rx="6" fill="#4a2a1c" stroke="#c8f169" />
         <text x="240" y="70" textAnchor="middle" fill="#fff" fontSize="15" fontWeight="600">
           Group overview
         </text>
-        <text x="240" y="92" textAnchor="middle" fill="#b4c4c3" fontSize="12.5">
+        <text x="240" y="92" textAnchor="middle" fill="#e8d9c4" fontSize="12.5">
           2,520 students · sample
         </text>
       </g>
@@ -75,15 +75,15 @@ function CampusDiagram() {
           <text x={c.x + 64} y="294" textAnchor="middle" fill="#fff" fontSize="15" fontWeight="600">
             {c.name}
           </text>
-          <text x={c.x + 64} y="316" textAnchor="middle" fill="#b4c4c3" fontSize="12.5">
+          <text x={c.x + 64} y="316" textAnchor="middle" fill="#e8d9c4" fontSize="12.5">
             Own workspace
           </text>
-          <text x={c.x + 64} y="352" textAnchor="middle" fill="#b4c4c3" fontSize="12.5">
+          <text x={c.x + 64} y="352" textAnchor="middle" fill="#e8d9c4" fontSize="12.5">
             {c.metric}
           </text>
         </g>
       ))}
-      <text x="240" y="408" textAnchor="middle" fill="#b4c4c3" fontSize="12.5">
+      <text x="240" y="408" textAnchor="middle" fill="#e8d9c4" fontSize="12.5">
         Dashed outline = workspace boundary
       </text>
     </svg>

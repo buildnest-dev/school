@@ -222,7 +222,7 @@ export function Rollover() {
                 <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
                   <input
                     type="checkbox"
-                    className="size-5 accent-[#0f2a2d]"
+                    className="size-5 accent-[#3a1d12]"
                     checked={rules.conditionalPromotion}
                     onChange={(e) => setRules({ ...rules, conditionalPromotion: e.target.checked })}
                   />
@@ -418,7 +418,7 @@ export function Rollover() {
                 <label className="mb-4 flex min-h-11 items-start gap-3 text-sm font-semibold">
                   <input
                     type="checkbox"
-                    className="mt-0.5 size-5 accent-[#0f2a2d]"
+                    className="mt-0.5 size-5 accent-[#3a1d12]"
                     checked={ack}
                     onChange={(e) => setAck(e.target.checked)}
                   />

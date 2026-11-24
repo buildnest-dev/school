@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export function Card({ className, ...props }: ComponentPropsWithoutRef<"section">) {
   return (
-    <section className={cn("border-line bg-surface rounded-lg border p-5", className)} {...props} />
+    <section className={cn("border-line bg-surface/90 shadow-card rounded-2xl border p-5 transition-[border-color,transform] duration-200 hover:border-gold/60", className)} {...props} />
   );
 }
 

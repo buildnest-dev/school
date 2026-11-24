@@ -5,9 +5,9 @@ import { Reveal, Stagger } from "@/components/motion/reveal";
 import { FLOW_STEPS } from "@/lib/data/content";
 
 const WORKSPACES = [
-  { name: "Northfield Academy", color: "#b8501e" },
+  { name: "Northfield Academy", color: "#4e9a1f" },
   { name: "Riverstone Public School", color: "#2b5fa8" },
-  { name: "Lakeview Junior Campus", color: "#2d7556" },
+  { name: "Lakeview Junior Campus", color: "#2f7d32" },
 ];
 const chip = "rounded-full border bg-surface px-3 py-2 text-[0.82rem] font-semibold text-ink";
 

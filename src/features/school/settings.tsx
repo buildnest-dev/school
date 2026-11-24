@@ -128,7 +128,7 @@ export function Settings() {
                 hint="Used on certificates and the parent portal"
               >
                 {(a) => (
-                  <Input type="color" defaultValue="#b8501e" className="h-12 w-24 p-1" {...a} />
+                  <Input type="color" defaultValue="#4e9a1f" className="h-12 w-24 p-1" {...a} />
                 )}
               </Field>
               <div>

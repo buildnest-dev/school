@@ -22,7 +22,7 @@ const GHOSTS = [
   },
   {
     name: "Lakeview Junior Campus",
-    color: "#2d7556",
+    color: "#2f7d32",
     inset: "left-[calc(1.5rem+270px)] w-[230px]",
     top: "-top-8",
     depth: -0.045,
