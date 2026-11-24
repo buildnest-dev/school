@@ -131,7 +131,8 @@ function NavList({
                     className={cn(
                       "flex items-center gap-3 rounded-full px-3 text-white/85 transition-colors hover:bg-white/10 hover:text-white",
                       large ? "min-h-12 text-base" : "min-h-10 text-sm",
-                      active && "bg-accent-light hover:bg-accent-light font-semibold text-ink hover:text-ink",
+                      active &&
+                        "bg-accent-light hover:bg-accent-light text-ink hover:text-ink font-semibold",
                     )}
                   >
                     <Icon className="size-[18px] flex-none" aria-hidden="true" />
@@ -204,7 +205,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   );
 
   return (
-    <div className="bg-page min-h-screen lg:grid lg:grid-cols-[264px_1fr]">
+    <div className="bg-page min-h-screen lg:grid lg:grid-cols-[230px_1fr]">
       <a
         href="#app-main"
         className="bg-ink fixed top-[-60px] left-4 z-[100] rounded-sm px-4 py-2.5 text-white focus:top-3"
@@ -239,7 +240,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
           </div>
         ) : null}
 
-        <header className="border-line bg-paper/90 sticky top-0 z-30 flex min-h-14 items-center justify-between gap-3 border-b px-4 lg:px-8">
+        <header className="border-line bg-paper/90 sticky top-0 z-30 flex min-h-[72px] items-center justify-between gap-3 border-b px-4 backdrop-blur lg:px-8">
           <div className="flex items-center gap-3">
             <Dialog.Root open={open} onOpenChange={setOpen}>
               <Dialog.Trigger
@@ -278,17 +279,17 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
             </Dialog.Root>
             <Breadcrumbs area={area} pathname={pathname} role={user.role} />
           </div>
-          <div className="text-muted hidden items-center gap-2 text-sm sm:flex">
-            {user.tenantName ? (
-              <span className="border-line bg-surface rounded-full border px-3 py-1 text-xs font-semibold">
-                {user.tenantName}
+          <div className="hidden items-center gap-3 text-sm sm:flex">
+            <span className="border-line bg-surface text-ink rounded-full border px-3 py-1 text-xs font-semibold">
+              {user.tenantName ?? "Platform"}
+            </span>
+            <span className="border-line bg-surface shadow-card flex items-center gap-2.5 rounded-full border py-1.5 pr-4 pl-1.5">
+              <Avatar name={user.name} className="bg-deep-green text-accent-light size-9" />
+              <span className="leading-tight">
+                <span className="text-ink block text-sm font-bold">{user.name}</span>
+                <span className="text-muted block text-xs">{ROLE_LABEL[user.role]}</span>
               </span>
-            ) : (
-              <span className="border-line bg-surface rounded-full border px-3 py-1 text-xs font-semibold">
-                Platform
-              </span>
-            )}
-            <span>{user.name}</span>
+            </span>
           </div>
         </header>
 

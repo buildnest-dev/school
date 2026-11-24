@@ -17,13 +17,13 @@ export function BrandLogo({ onDark = false, className }: { onDark?: boolean; cla
       <span
         aria-hidden="true"
         className={cn(
-          "font-display grid size-8 place-items-center rounded-[2px] text-xl font-semibold",
-          onDark ? "bg-accent-light text-ink" : "bg-ink text-accent-light",
+          "font-display grid size-9 place-items-center rounded-xl border text-xl font-bold",
+          onDark ? "border-gold text-gold bg-white/5" : "border-gold bg-ink text-accent-light",
         )}
       >
         {BRAND.charAt(0)}
       </span>
-      <span className="font-display text-[1.35rem] font-semibold tracking-tight">{BRAND}</span>
+      <span className="font-display text-[1.375rem] font-bold tracking-tight">{BRAND}</span>
     </Link>
   );
 }

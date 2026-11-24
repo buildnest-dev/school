@@ -22,7 +22,11 @@
   --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --shadow-window: 0 1px 2px rgb(58 29 18 / 0.06), 0 28px 56px -24px rgb(58 29 18 / 0.32);
-  --shadow-card: 0 1px 2px rgb(122 80 30 / 0.06), 0 12px 28px -16px rgb(122 80 30 / 0.3);
+  --shadow-card: 0 6px 22px rgb(90 60 20 / 0.08), 0 1px 2px rgb(90 60 20 / 0.06);
+  --shadow-hover: 0 12px 28px rgb(90 60 20 / 0.14);
+  --color-surface-muted: #f8efdc;
+  --color-deep-green: #1f4d1a;
+  --color-banner-title: #f6d89a;
   --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
   /* lg starts just above 960px: desktop nav, sticky showcase and multi-column layouts */
   --breakpoint-lg: 61.0625rem;
@@ -34,6 +38,14 @@
   --font-sans: var(--font-nunito), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
+/* Playfair draws old-style numerals by default; data wants lining ones. */
+.font-display,
+h1,
+h2,
+h3 {
+  font-feature-settings: "lnum" 1;
+}
+
 /* Page and sidebar backgrounds used by the app shell. */
 .bg-page {
   background: linear-gradient(160deg, #fbf3e4 0%, #f3e6cf 100%);
@@ -41,8 +53,8 @@
 }
 .bg-sidebar {
   background:
-    radial-gradient(120% 40% at 0% 0%, rgb(217 165 58 / 0.28), transparent 60%),
-    radial-gradient(120% 30% at 0% 100%, rgb(217 165 58 / 0.22), transparent 65%),
+    radial-gradient(90% 26% at 100% 0%, rgb(217 165 58 / 0.3), transparent 62%),
+    radial-gradient(90% 26% at 0% 100%, rgb(217 165 58 / 0.26), transparent 65%),
     linear-gradient(180deg, #3a1d12, #2a140c);
 }
 

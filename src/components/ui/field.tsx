@@ -2,13 +2,13 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const control =
-  "min-h-11 w-full rounded-md border border-[#bdb5a4] bg-white px-3 text-[0.95rem] text-[#2b1a12] transition-colors placeholder:text-muted/70 hover:border-ink focus-visible:border-accent aria-[invalid=true]:border-bad disabled:bg-paper-2 disabled:text-muted";
+  "min-h-11 w-full rounded-full border border-[#8c7b60] bg-white px-4 text-[0.95rem] text-[#2b1a12] transition-colors placeholder:text-muted/70 hover:border-ink focus-visible:border-accent aria-[invalid=true]:border-bad disabled:bg-paper-2 disabled:text-muted";
 
 export function Input({ className, ...props }: ComponentPropsWithoutRef<"input">) {
   return <input className={cn(control, className)} {...props} />;
 }
 export function Textarea({ className, ...props }: ComponentPropsWithoutRef<"textarea">) {
-  return <textarea className={cn(control, "min-h-24 py-2.5", className)} {...props} />;
+  return <textarea className={cn(control, "min-h-24 rounded-2xl py-2.5", className)} {...props} />;
 }
 export function Select({ className, children, ...props }: ComponentPropsWithoutRef<"select">) {
   return (

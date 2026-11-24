@@ -38,7 +38,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="text-[clamp(1.6rem,3vw,2.1rem)] leading-tight">{title}</h1>
+        <h1 className="text-[clamp(1.7rem,3vw,1.875rem)] leading-tight font-semibold">{title}</h1>
         {description ? <p className="text-muted mt-1 max-w-[62ch]">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
@@ -73,18 +73,30 @@ export function StatGrid({ stats }: { stats: Stat[] }) {
               gold ? "bg-[#fdf3dc]" : "bg-[#f1f8e2]",
             )}
           >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 200 24"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-5 w-full"
+            >
+              <path
+                d="M0 14 C30 4 60 22 100 12 C140 2 170 20 200 10 L200 24 L0 24 Z"
+                fill={gold ? "#f4dca5" : "#cfe99a"}
+                opacity="0.45"
+              />
+            </svg>
             <span
               aria-hidden="true"
               className={cn(
-                "grid size-12 flex-none place-items-center rounded-xl",
+                "relative grid size-12 flex-none place-items-center rounded-xl",
                 gold ? "bg-[#f7dc9c] text-[#8a5a0c]" : "bg-[#d6efa4] text-[#2f6b12]",
               )}
             >
               <Icon className="size-6" />
             </span>
-            <div className="min-w-0">
-              <dt className="text-ink text-sm font-semibold">{s.label}</dt>
-              <dd className="font-display text-ink text-[1.75rem] leading-tight tabular-nums">
+            <div className="relative min-w-0">
+              <dt className="text-muted text-sm font-semibold">{s.label}</dt>
+              <dd className="font-display text-ink text-[1.875rem] leading-tight font-bold tabular-nums">
                 {s.value}
               </dd>
               {s.hint ? <dd className="text-muted text-xs">{s.hint}</dd> : null}

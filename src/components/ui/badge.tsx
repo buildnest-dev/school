@@ -14,11 +14,11 @@ import { cn } from "@/lib/utils";
 type Tone = "ok" | "warn" | "bad" | "info" | "neutral";
 
 const TONE: Record<Tone, { cls: string; Icon: LucideIcon }> = {
-  ok: { cls: "bg-[#e3f1ea] text-[#1d5a41]", Icon: CheckCircle2 },
-  warn: { cls: "bg-[#f8ebd2] text-[#7d4a08]", Icon: Clock },
-  bad: { cls: "bg-[#f6dede] text-[#8a2b2b]", Icon: XCircle },
-  info: { cls: "bg-[#e1e9ee] text-[#1f4a63]", Icon: Info },
-  neutral: { cls: "bg-paper-2 text-[#4a5a5b]", Icon: Circle },
+  ok: { cls: "bg-[#eef7ec] text-[#2f7d32]", Icon: CheckCircle2 },
+  warn: { cls: "bg-[#fef5e4] text-[#8f5509]", Icon: Clock },
+  bad: { cls: "bg-[#fdeeec] text-[#b5413a]", Icon: XCircle },
+  info: { cls: "bg-[#e8f0fc] text-[#2459b8]", Icon: Info },
+  neutral: { cls: "bg-paper-2 text-[#5c4d40]", Icon: Circle },
 };
 
 /** Status vocabulary shared across screens: [label, tone, optional icon override]. */

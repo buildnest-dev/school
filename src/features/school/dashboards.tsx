@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  BookOpen,
+  Bus,
+  CalendarCheck,
+  ChartColumn,
+  ClipboardCheck,
+  Coins,
+  Library,
+  Megaphone,
+  RefreshCw,
+  Route,
+  BookText,
+  Undo2,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { BarList, PageHeader, StatGrid } from "@/components/shared/blocks";
 import { WelcomeBanner, greeting } from "@/components/shared/welcome-banner";
@@ -10,7 +25,23 @@ import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { useSession } from "@/hooks/use-session";
-import { firstName, fmtDate } from "../shared/format";
+import { todayIso } from "@/config/env";
+import { firstName, fmtDate, todayLabel } from "../shared/format";
+
+const QUICK_ICON: Record<string, LucideIcon> = {
+  "/school/approvals": ClipboardCheck,
+  "/school/reports": ChartColumn,
+  "/school/rollover": RefreshCw,
+  "/school/notices/new": Megaphone,
+  "/school/attendance": CalendarCheck,
+  "/school/fees": Coins,
+  "/school/fees/ledger": BookText,
+  "/school/fees/refunds": Undo2,
+  "/school/library": Library,
+  "/school/library/loans": BookOpen,
+  "/school/transport": Bus,
+  "/school/transport/routes": Route,
+};
 
 const QUICK: Record<string, { href: string; label: string }[]> = {
   school_owner: [
@@ -50,6 +81,7 @@ export function SchoolHome() {
   return (
     <>
       <WelcomeBanner
+        eyebrow={todayLabel(todayIso())}
         title={`${greeting()}, ${firstName(user?.name ?? "")}!`}
         subtitle="Here is what needs your attention today."
         actions={(QUICK[role] ?? []).map((q) => (
@@ -103,6 +135,35 @@ export function SchoolHome() {
             )}
           </Card>
         ) : null}
+        <Card className="lg:col-span-2">
+          <CardHeader title="Quick actions" />
+          <ul className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+            {(QUICK[role] ?? []).map((q, i) => {
+              const Icon = QUICK_ICON[q.href] ?? ClipboardCheck;
+              const gold = i % 2 === 1;
+              return (
+                <li key={q.href}>
+                  <Link
+                    href={q.href}
+                    className="border-line bg-surface hover:border-gold flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border p-3 text-center text-sm font-semibold transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-hover)]"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={
+                        gold
+                          ? "grid size-10 place-items-center rounded-xl bg-[#f7dc9c] text-[#8a5a0c]"
+                          : "grid size-10 place-items-center rounded-xl bg-[#d6efa4] text-[#2f6b12]"
+                      }
+                    >
+                      <Icon className="size-5" />
+                    </span>
+                    {q.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
         <Card className={showAttendance ? "lg:col-span-2" : ""}>
           <CardHeader title="Coming up" />
           <ul className="grid gap-2 text-sm sm:grid-cols-2">

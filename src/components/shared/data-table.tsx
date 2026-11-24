@@ -194,11 +194,11 @@ export function DataTable<T extends { id: string }>({
           className={cn(state.loading && "opacity-60 transition-opacity")}
           aria-busy={state.loading}
         >
-          <div className="border-line bg-surface hidden overflow-x-auto rounded-lg border md:block">
+          <div className="border-line bg-surface shadow-card hidden overflow-x-auto rounded-2xl border md:block">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">{caption}</caption>
               <thead>
-                <tr className="border-line bg-paper text-muted border-b text-xs tracking-wider uppercase">
+                <tr className="border-line bg-surface-muted text-muted border-b text-xs tracking-wider uppercase">
                   {columns.map((c) => (
                     <th
                       key={c.key}
