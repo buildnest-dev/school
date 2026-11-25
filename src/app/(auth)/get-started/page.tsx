@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { GetStartedForm } from "@/components/app/get-started-form";
+import { AuthShell } from "@/components/layout/auth-shell";
 
 export const metadata: Metadata = { title: "Get started", robots: { index: false } };
 
-/** Entry point for school registration and onboarding. Not implemented yet. */
+/** Sign-up: a request to the ZAQSA team, who set the school up. */
 export default function GetStartedPage() {
   return (
-    <main id="main">
-      <PlaceholderPage title="Get started">
-        School registration and workspace onboarding are placeholders. For now, use the demo request
-        form on the home page.
-      </PlaceholderPage>
-    </main>
+    <AuthShell>
+      <GetStartedForm />
+    </AuthShell>
   );
 }

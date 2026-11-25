@@ -115,8 +115,10 @@ function NavList({
     <div className="grid gap-5">
       {groups.map(([group, items]) => (
         <div key={group}>
-          <p className="text-on-dark/70 mb-1.5 px-3 text-[0.68rem] font-bold tracking-[0.12em] uppercase">
+          <p className="text-on-dark/70 mb-2 flex items-center gap-2 px-3 text-[0.68rem] font-bold tracking-[0.12em] uppercase">
+            <span aria-hidden="true" className="bg-gold size-1.5 rounded-full" />
             {group}
+            <span aria-hidden="true" className="h-px flex-1 bg-white/10" />
           </p>
           <ul className="grid gap-0.5">
             {items.map((s) => {
@@ -129,14 +131,24 @@ function NavList({
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-full px-3 text-white/85 transition-colors hover:bg-white/10 hover:text-white",
-                      large ? "min-h-12 text-base" : "min-h-10 text-sm",
+                      "group/nav flex items-center gap-3 rounded-full py-1 pr-3 pl-1.5 text-white/85 transition-[background-color,color,transform] duration-200 hover:translate-x-0.5 hover:bg-white/10 hover:text-white",
+                      large ? "min-h-12 text-base" : "min-h-11 text-sm",
                       active &&
-                        "bg-accent-light hover:bg-accent-light text-ink hover:text-ink font-semibold",
+                        "bg-accent-light hover:bg-accent-light text-ink hover:text-ink font-semibold shadow-[0_6px_16px_rgb(0_0_0/0.25)] hover:translate-x-0",
                     )}
                   >
-                    <Icon className="size-[18px] flex-none" aria-hidden="true" />
-                    {s.title}
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "grid size-8 flex-none place-items-center rounded-full transition-colors",
+                        active
+                          ? "bg-deep-green text-accent-light"
+                          : "bg-white/[0.07] group-hover/nav:bg-white/15",
+                      )}
+                    >
+                      <Icon className="size-[17px]" />
+                    </span>
+                    <span className="leading-tight">{s.title}</span>
                   </Link>
                 </li>
               );
@@ -173,21 +185,21 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   const bottom = nav.items.filter((s) => s.nav?.group === nav.groups[0]?.[0]).slice(0, 5);
 
   const userCard = (
-    <div className="border-ink-line mt-6 border-t pt-4">
-      <div className="flex items-center gap-3 px-1">
+    <div className="border-ink-line sticky bottom-0 z-10 -mx-4 mt-auto -mb-5 border-t bg-[#2a140c]/95 px-4 pt-4 pb-5 backdrop-blur">
+      <div className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-2.5">
         <Avatar name={user.name} className="bg-accent-light text-ink" />
         <div className="min-w-0 text-sm">
           <p className="truncate font-semibold text-white">{user.name}</p>
           <p className="text-on-dark truncate text-xs">{ROLE_LABEL[user.role]}</p>
         </div>
       </div>
-      <div className="mt-3 grid gap-1">
+      <div className="mt-2 grid grid-cols-2 gap-1">
         {env.dataSource === "mock" ? (
           <Link
             href="/sign-in"
-            className="text-on-dark flex min-h-10 items-center gap-2 rounded-md px-3 text-sm hover:bg-white/10 hover:text-white"
+            className="text-on-dark flex min-h-9 items-center justify-center gap-1.5 rounded-full px-2 text-xs whitespace-nowrap hover:bg-white/10 hover:text-white"
           >
-            <FlaskConical className="size-4" aria-hidden="true" /> Switch dev role
+            <FlaskConical className="size-3.5" aria-hidden="true" /> Dev role
           </Link>
         ) : null}
         <button
@@ -196,9 +208,9 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
             signOut();
             router.push("/sign-in");
           }}
-          className="text-on-dark flex min-h-10 items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-white/10 hover:text-white"
+          className="text-on-dark flex min-h-9 items-center justify-center gap-1.5 rounded-full px-2 text-xs whitespace-nowrap hover:bg-white/10 hover:text-white"
         >
-          <LogOut className="size-4" aria-hidden="true" /> Sign out
+          <LogOut className="size-3.5" aria-hidden="true" /> Sign out
         </button>
       </div>
     </div>
@@ -222,8 +234,10 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
         aria-label={`${AREA_LABEL[area]} navigation`}
       >
         <BrandLogo onDark className="mb-1 px-1" />
-        <p className="text-on-dark mb-6 px-1 text-xs">{AREA_LABEL[area]}</p>
-        <nav aria-label="Main">
+        <p className="text-gold mb-6 px-1 text-xs font-semibold tracking-wide">
+          {AREA_LABEL[area]}
+        </p>
+        <nav aria-label="Main" className="pb-6">
           <NavList groups={nav.groups} pathname={pathname} large={comfortable} />
         </nav>
         {userCard}

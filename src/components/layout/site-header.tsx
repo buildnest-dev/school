@@ -10,7 +10,7 @@ import { NAV_LINKS, ROUTES } from "@/lib/site";
 import { BrandLogo } from "./brand-logo";
 
 const linkClass =
-  "relative inline-block py-2 text-[0.95rem] font-medium after:absolute after:inset-x-0 after:bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 hover:after:scale-x-100 focus-visible:after:scale-x-100";
+  "relative inline-block py-2 text-[0.95rem] font-medium after:absolute after:inset-x-0 after:bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-gold after:transition-transform after:duration-300 hover:after:scale-x-100 focus-visible:after:scale-x-100";
 
 /**
  * Transparent over the hero, solid once scrolled, with a thin reading-progress line.
@@ -66,7 +66,7 @@ export function SiteHeader() {
       ref={ref}
       data-nav-state="pending"
       data-solid="false"
-      className="group/header data-[solid=true]:border-line data-[solid=true]:bg-paper sticky top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-300"
+      className="group/header data-[solid=true]:border-line data-[solid=true]:bg-paper/90 data-[solid=true]:shadow-card sticky top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-300 data-[solid=true]:backdrop-blur"
     >
       <div className="mx-auto flex h-18 w-full max-w-[1200px] items-center justify-between gap-6 px-6">
         <span data-nav-item>
@@ -100,7 +100,7 @@ export function SiteHeader() {
             <button
               type="button"
               data-nav-item
-              className="border-ink text-ink inline-flex min-h-11 items-center gap-2.5 rounded-sm border px-3.5 text-sm font-semibold lg:hidden"
+              className="border-ink text-ink inline-flex min-h-11 items-center gap-2.5 rounded-full border px-4 text-sm font-semibold lg:hidden"
             >
               Menu <Menu className="size-4" aria-hidden="true" />
             </button>
@@ -114,7 +114,7 @@ export function SiteHeader() {
               <Dialog.Title className="sr-only">Site navigation</Dialog.Title>
               <div className="flex h-14 items-center justify-between">
                 <BrandLogo />
-                <Dialog.Close className="border-ink text-ink inline-flex min-h-11 items-center gap-2.5 rounded-sm border px-3.5 text-sm font-semibold">
+                <Dialog.Close className="border-ink text-ink inline-flex min-h-11 items-center gap-2.5 rounded-full border px-4 text-sm font-semibold">
                   Close <X className="size-4" aria-hidden="true" />
                 </Dialog.Close>
               </div>
