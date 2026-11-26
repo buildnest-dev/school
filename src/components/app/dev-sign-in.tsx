@@ -1,7 +1,7 @@
 "use client";
 
 import { FlaskConical } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/components/layout/auth-shell";
@@ -15,6 +15,9 @@ import { useSession } from "@/hooks/use-session";
 import { ApiError } from "@/lib/api/client";
 import { PERSONAS } from "@/mocks/data";
 
+/** The address never changes while the page is open. */
+const noChange = () => () => {};
+
 /**
  * Sign-in entry point. In mock mode it is a DEVELOPMENT role picker: no credentials, no real
  * authentication. In API mode the backend owns sign-in; this screen only explains that.
@@ -26,7 +29,12 @@ export function DevSignIn() {
   /** Set for ZAQSA team sign-in: the request is waiting for an admin to approve it. */
   const [waiting, setWaiting] = useState<string | null>(null);
   const [remember, setRemember] = useState(false);
-  const onTeamHost = typeof window !== "undefined" && window.location.hostname.startsWith("team.");
+  // The server cannot see the address, so the first render matches it and the browser corrects it.
+  const onTeamHost = useSyncExternalStore(
+    noChange,
+    () => window.location.hostname.startsWith("team."),
+    () => false,
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
