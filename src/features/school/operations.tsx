@@ -7,7 +7,7 @@ import { DataTable } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/dialog";
+import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/field";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,10 +16,12 @@ import { env, todayIso } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { useSession } from "@/hooks/use-session";
-import type { Approval, Student } from "@/types";
+import type { Approval, Invoice, Student } from "@/types";
 import { fmtDate, rupees } from "../shared/format";
 import type { ScreenProps } from "../shared/planned-screen";
 import { ApiAction, QuickAdd } from "../shared/quick-add";
+import { FeeReminders, RecordPayment, RequestRefund } from "./fee-actions";
+import { StudentManage } from "./student-actions";
 
 /** Approve / reject routine requests, with confirmation. The backend must record and enforce the decision. */
 export function ApprovalInbox() {
@@ -207,6 +209,11 @@ export function StudentDetail({ params }: ScreenProps) {
           </div>
         }
       />
+      {env.dataSource === "api" && (role === "school_owner" || role === "principal") ? (
+        <div className="mb-4">
+          <StudentManage student={stu} done={st.reload} />
+        </div>
+      ) : null}
       <Tabs defaultValue="overview">
         <TabsList aria-label="Student sections">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -337,13 +344,32 @@ export function FeesOverview() {
   const s = useServices();
   const svc = s.resource("invoices");
   const d = useAsync(() => s.dashboards.school("accountant"), [s]);
+  const role = useSession().user?.role;
+  const live =
+    env.dataSource === "api" &&
+    (role === "school_owner" || role === "principal" || role === "accountant");
+  const [open, setOpen] = useState<{ id: string; student: string; balance: number } | null>(null);
+  const [reload, setReload] = useState(0);
   return (
     <>
-      <PageHeader title="Fee collection" description="Collection summary and invoices." />
+      <PageHeader
+        title="Fee collection"
+        description={
+          live
+            ? "Collection summary and invoices. Open an unpaid invoice to record a payment."
+            : "Collection summary and invoices."
+        }
+        actions={live ? <FeeReminders /> : null}
+      />
       {d.data ? <StatGrid stats={d.data.stats} /> : null}
       <div className="mt-6">
         <DataTable
           caption="Invoices"
+          reloadKey={reload}
+          onRowClick={(r: Invoice) => {
+            if (live && r.amount > r.paid)
+              setOpen({ id: r.id, student: r.studentName, balance: r.amount - r.paid });
+          }}
           searchPlaceholder="Search invoices"
           load={(p) => svc.list(p)}
           filters={[
@@ -373,13 +399,31 @@ export function FeesOverview() {
           ]}
         />
       </div>
-      <div className="mt-4">
-        <DevNote>
-          Recording payments, issuing receipts and refunds need the backend and a payment gateway.
-          They are not available in this build, and no payment is ever confirmed by the screen
-          alone.
-        </DevNote>
-      </div>
+      <Dialog
+        open={open !== null}
+        onOpenChange={(v) => !v && setOpen(null)}
+        title={open?.student ?? "Invoice"}
+        description="Unpaid invoice"
+      >
+        {open ? (
+          <RecordPayment
+            invoiceId={open.id}
+            balance={open.balance}
+            done={() => {
+              setOpen(null);
+              setReload((k) => k + 1);
+              d.reload();
+            }}
+          />
+        ) : null}
+      </Dialog>
+      {live ? null : (
+        <div className="mt-4">
+          <DevNote>
+            In the live app, payments are recorded here. No online payment gateway is connected.
+          </DevNote>
+        </div>
+      )}
     </>
   );
 }
@@ -421,14 +465,32 @@ export function FeeLedger() {
       ) : !ledger.data ? (
         <LoadingBlock rows={3} />
       ) : (
-        <LedgerTable rows={ledger.data} />
+        <>
+          <LedgerTable rows={ledger.data} />
+          {env.dataSource === "api" ? (
+            <ul className="mt-4 grid max-w-xl gap-2">
+              {ledger.data
+                .filter((r) => r.description.startsWith("Payment"))
+                .map((r) => (
+                  <li
+                    key={r.id}
+                    className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                  >
+                    <span>
+                      {fmtDate(r.date)} · {r.description} · {rupees(r.credit)}
+                    </span>
+                    <span className="flex gap-2">
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/school/print/receipt/${r.id}`}>Receipt</Link>
+                      </Button>
+                      <RequestRefund paymentId={r.id} done={ledger.reload} />
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          ) : null}
+        </>
       )}
-      <div className="mt-4">
-        <DevNote>
-          Carried-forward balances must link back to the year they came from. This sample ledger
-          shows one year only.
-        </DevNote>
-      </div>
     </>
   );
 }

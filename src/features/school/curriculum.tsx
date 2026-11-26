@@ -7,20 +7,26 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
 import { ErrorState, LoadingBlock } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
+import { env } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
+import { useSession } from "@/hooks/use-session";
 import { apiRequest } from "@/lib/api/client";
+import { ClassTeachers } from "./class-teachers";
 
 interface ClassRow {
   id: string;
   name: string;
   stage: string;
-  sections: { id: string; name: string }[];
+  sections: { id: string; name: string; classTeacherId: string | null }[];
   subjects: { id: string; name: string }[];
 }
 
 /** Classes with their sections and subjects; subjects can be added to a class. */
 export function Curriculum() {
   const { toast } = useToast();
+  const role = useSession().user?.role;
+  const picksTeachers =
+    env.dataSource === "api" && (role === "school_owner" || role === "principal");
   const classes = useAsync(() => apiRequest<ClassRow[]>("/classes"), []);
   const [busy, setBusy] = useState<string | null>(null);
   const [text, setText] = useState<Record<string, string>>({});
@@ -105,6 +111,9 @@ export function Curriculum() {
                   <span className="text-muted">No subjects yet.</span>
                 )}
               </p>
+              {picksTeachers ? (
+                <ClassTeachers className={c.name} sections={c.sections} onSaved={classes.reload} />
+              ) : null}
               <form
                 onSubmit={(e) => addSubjects(e, c)}
                 className="flex flex-wrap items-center gap-2"

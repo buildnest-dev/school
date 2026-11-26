@@ -28,6 +28,7 @@ export const GET = handle(async () => {
         id: s.id,
         name: s.name,
         students: inSection.get(s.id) ?? 0,
+        classTeacherId: s.classTeacherId,
       })),
       subjects: c.subjects.map((s) => ({ id: s.id, name: s.name })),
     })),

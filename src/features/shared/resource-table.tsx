@@ -17,8 +17,17 @@ import { NewSchool } from "../platform/new-school";
 import { SchoolActions } from "../platform/school-actions";
 import { AddStudent } from "../school/add-student";
 import { EnquiryActions } from "../school/admit";
+import { StaffManage } from "../school/staff-actions";
 import { BusRequests } from "../school/bus-requests";
+import { AddBook, BookActions, LIBRARY_ROLES, LoanActions } from "../school/library-actions";
 import { CertificateActions } from "../school/certificate-actions";
+import {
+  AddRoute,
+  AddVehicle,
+  RouteActions,
+  TRANSPORT_ROLES,
+  VehicleActions,
+} from "../school/transport-actions";
 import { fmtDate, fmtDateTime, prettyKey, rupees } from "./format";
 import { ApiAction, QuickAdd } from "./quick-add";
 import type { ScreenProps } from "./planned-screen";
@@ -312,34 +321,40 @@ export const TABLES: Record<string, TableConfig> = {
           ]}
         />
       ) : null,
-    detailActions: (row, done, role) =>
-      env.dataSource === "api" &&
-      SCHOOL_ADMIN.includes(role) &&
-      !row.hasLogin &&
-      row.status === "active" &&
-      WITH_LOGIN.includes(String(row.role)) ? (
-        <QuickAdd
-          label="Create login"
-          title={`Login for ${String(row.name)}`}
-          description="An invite is e-mailed. They choose their own password. Use an email that no one else at the school uses."
-          endpoint={`/staff/${row.id}/login`}
-          onCreated={done}
-          fields={[{ key: "email", label: "Their email" }]}
-        />
-      ) : row.hasLogin ? (
-        <div className="mt-4 grid gap-2">
-          <p className="text-muted text-sm">This person already has a login.</p>
-          {env.dataSource === "api" && SCHOOL_ADMIN.includes(role) ? (
-            <ApiAction
-              label="Resend invite"
-              method="POST"
-              endpoint={`/staff/${row.id}/invite`}
-              success="Invite sent again by e-mail."
-              onDone={done}
-            />
-          ) : null}
-        </div>
-      ) : null,
+    detailActions: (row, done, role) => (
+      <>
+        {(SCHOOL_ADMIN.includes(role) || role === "hr") && env.dataSource === "api" ? (
+          <StaffManage row={row} done={done} />
+        ) : null}
+        {env.dataSource === "api" &&
+        SCHOOL_ADMIN.includes(role) &&
+        !row.hasLogin &&
+        row.status === "active" &&
+        WITH_LOGIN.includes(String(row.role)) ? (
+          <QuickAdd
+            label="Create login"
+            title={`Login for ${String(row.name)}`}
+            description="An invite is e-mailed. They choose their own password. Use an email that no one else at the school uses."
+            endpoint={`/staff/${row.id}/login`}
+            onCreated={done}
+            fields={[{ key: "email", label: "Their email" }]}
+          />
+        ) : row.hasLogin ? (
+          <div className="mt-4 grid gap-2">
+            <p className="text-muted text-sm">This person already has a login.</p>
+            {env.dataSource === "api" && SCHOOL_ADMIN.includes(role) ? (
+              <ApiAction
+                label="Resend invite"
+                method="POST"
+                endpoint={`/staff/${row.id}/invite`}
+                success="Invite sent again by e-mail."
+                onDone={done}
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </>
+    ),
     columns: [
       { key: "name", header: "Name", sortable: true },
       { key: "role", header: "Role", sortable: true },
@@ -616,6 +631,14 @@ export const TABLES: Record<string, TableConfig> = {
   "school-library": {
     resource: "books",
     searchPlaceholder: "Search by title, author or ISBN",
+    actions: (role, reload) =>
+      LIBRARY_ROLES.includes(role) && env.dataSource === "api" ? (
+        <AddBook onCreated={reload} />
+      ) : null,
+    detailActions: (row, done, role) =>
+      LIBRARY_ROLES.includes(role) && env.dataSource === "api" ? (
+        <BookActions row={row} done={done} />
+      ) : null,
     columns: [
       { key: "title", header: "Title", sortable: true },
       { key: "author", header: "Author", sortable: true },
@@ -632,6 +655,10 @@ export const TABLES: Record<string, TableConfig> = {
   "school-library-loans": {
     resource: "loans",
     searchPlaceholder: "Search loans",
+    detailActions: (row, done, role) =>
+      LIBRARY_ROLES.includes(role) && env.dataSource === "api" ? (
+        <LoanActions row={row} done={done} role={role} />
+      ) : null,
     columns: [
       { key: "book", header: "Book", sortable: true },
       { key: "member", header: "Member" },
@@ -644,6 +671,14 @@ export const TABLES: Record<string, TableConfig> = {
   "school-transport": {
     resource: "vehicles",
     searchPlaceholder: "Search vehicles",
+    actions: (role, reload) =>
+      TRANSPORT_ROLES.includes(role) && env.dataSource === "api" ? (
+        <AddVehicle onCreated={reload} />
+      ) : null,
+    detailActions: (row, done, role) =>
+      TRANSPORT_ROLES.includes(role) && env.dataSource === "api" ? (
+        <VehicleActions row={row} done={done} />
+      ) : null,
     columns: [
       { key: "regNo", header: "Registration", sortable: true },
       { key: "route", header: "Route" },
@@ -656,8 +691,15 @@ export const TABLES: Record<string, TableConfig> = {
     resource: "routes",
     searchPlaceholder: "Search routes",
     actions: (role, reload) =>
-      (SCHOOL_ADMIN.includes(role) || role === "transport") && env.dataSource === "api" ? (
-        <BusRequests onChanged={reload} />
+      TRANSPORT_ROLES.includes(role) && env.dataSource === "api" ? (
+        <div className="flex flex-wrap gap-2">
+          <AddRoute onCreated={reload} />
+          <BusRequests onChanged={reload} />
+        </div>
+      ) : null,
+    detailActions: (row, done, role) =>
+      TRANSPORT_ROLES.includes(role) && env.dataSource === "api" ? (
+        <RouteActions row={row} done={done} />
       ) : null,
     columns: [
       { key: "name", header: "Route", sortable: true },

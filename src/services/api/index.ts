@@ -91,6 +91,8 @@ const ADAPT: Partial<
       issued: r.issuedOn,
       due: r.dueOn,
       status: r.returnedOn ? "returned" : r.status === "overdue" ? "overdue" : "issued",
+      fine: num(r.fine),
+      fineStatus: str(r.fineStatus),
     }),
   },
   vehicles: {
@@ -100,7 +102,7 @@ const ADAPT: Partial<
       route: str(obj(r.route).name),
       driver: str(r.driver),
       capacity: num(r.capacity),
-      status: r.status === "maintenance" ? "maintenance" : "active",
+      status: r.status === "maintenance" || r.status === "inactive" ? r.status : "active",
     }),
   },
   routes: {

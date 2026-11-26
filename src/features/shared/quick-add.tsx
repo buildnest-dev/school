@@ -29,7 +29,13 @@ export function QuickAdd({
   onCreated,
   method = "POST",
   variant,
+  values,
+  toBody,
 }: {
+  /** Reshape the form's values when the server expects them nested. */
+  toBody?: (body: Record<string, unknown>) => unknown;
+  /** Current values, so the same form can edit a record. */
+  values?: Record<string, string>;
   method?: "POST" | "PATCH";
   variant?: "ghost" | "primary";
   label: string;
@@ -42,7 +48,10 @@ export function QuickAdd({
   const { toast } = useToast();
   const initial = () =>
     Object.fromEntries(
-      fields.map((f) => [f.key, f.type === "select" ? (f.options?.[0]?.value ?? "") : ""]),
+      fields.map((f) => [
+        f.key,
+        values?.[f.key] ?? (f.type === "select" ? (f.options?.[0]?.value ?? "") : ""),
+      ]),
     );
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(initial);
@@ -60,7 +69,7 @@ export function QuickAdd({
           .filter((f) => f.required !== false || f.type === "number" || form[f.key] !== "")
           .map((f) => [f.key, f.type === "number" ? Number(form[f.key] || 0) : form[f.key]]),
       );
-      await apiRequest(endpoint, { method, body });
+      await apiRequest(endpoint, { method, body: toBody ? toBody(body) : body });
       toast({ title: "Saved", description: title });
       setOpen(false);
       setForm(initial());
