@@ -34,7 +34,94 @@ interface Week {
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-/** The weekly timetable of any class, as a grid of days and periods. */
+/** One colour for each subject, so the week can be read at a glance. */
+const TINTS = [
+  "bg-[#eef7d9] border-[#cfe6a0]",
+  "bg-[#fdf0d5] border-[#f2d79a]",
+  "bg-[#e3f0fb] border-[#bcd9f2]",
+  "bg-[#fbe6ec] border-[#f0c2d0]",
+  "bg-[#eee9fb] border-[#d3c8f3]",
+  "bg-[#ddf3ee] border-[#b2e0d5]",
+];
+
+function WeekBlocks({ week, onPick }: { week: Week; onPick?: () => void }) {
+  const subjects = [...new Set(week.periods.map((p) => p.subject))].sort();
+  return (
+    <Card className="overflow-x-auto p-3">
+      <table className="w-full min-w-[46rem] table-fixed border-separate border-spacing-1.5 text-sm">
+        <caption className="sr-only">Timetable of {week.classSection}</caption>
+        <thead>
+          <tr>
+            <th scope="col" className="w-28 px-2 py-1 text-left">
+              Period
+            </th>
+            {DAYS.map((d) => (
+              <th key={d} scope="col" className="bg-paper rounded-lg px-2 py-2 text-center">
+                {d}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {week.bell.map((b) => (
+            <tr key={b.slot}>
+              <th scope="row" className="px-2 py-1 text-left font-semibold">
+                {b.label}
+                <span className="text-muted block text-xs font-normal">
+                  {b.startsAt}–{b.endsAt}
+                </span>
+              </th>
+              {b.isBreak ? (
+                <td
+                  colSpan={DAYS.length}
+                  className="border-line text-muted rounded-xl border border-dashed py-2 text-center"
+                >
+                  {b.label}
+                </td>
+              ) : (
+                DAYS.map((d, i) => {
+                  const p = week.periods.find((x) => x.day === i + 1 && x.slot === b.slot);
+                  const look = p
+                    ? TINTS[subjects.indexOf(p.subject) % TINTS.length]
+                    : "border-line text-muted border-dashed";
+                  const box = `grid h-16 w-full content-center rounded-xl border px-1 text-center ${look}`;
+                  const inside = p ? (
+                    <>
+                      <span className="truncate font-semibold">{p.subject}</span>
+                      <span className="text-muted truncate text-xs">
+                        {[p.teacher, p.room].filter(Boolean).join(" · ")}
+                      </span>
+                    </>
+                  ) : (
+                    <span>{onPick ? "+" : "Free"}</span>
+                  );
+                  return (
+                    <td key={d}>
+                      {onPick ? (
+                        <button
+                          type="button"
+                          className={`${box} hover:shadow-card cursor-pointer`}
+                          aria-label={`${d} ${b.label}: ${p ? p.subject : "free"}. Edit`}
+                          onClick={onPick}
+                        >
+                          {inside}
+                        </button>
+                      ) : (
+                        <div className={box}>{inside}</div>
+                      )}
+                    </td>
+                  );
+                })
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
+/** The weekly timetable of any class, as blocks of days and periods. */
 export function SchoolTimetable() {
   const classes = useAsync(() => apiRequest<ClassRow[]>("/classes"), []);
   const [sectionId, setSectionId] = useState("");
@@ -114,65 +201,20 @@ export function SchoolTimetable() {
             ) : (
               <p className="text-sm">Set the period timings first.</p>
             )
-          ) : week.data.periods.length === 0 ? (
+          ) : week.data.bell.length === 0 ? (
             <Card className="max-w-xl">
-              <p className="text-sm">No timetable has been set for {week.data.classSection} yet.</p>
+              <p className="text-sm">Set the period timings first.</p>
             </Card>
           ) : (
-            <Card className="overflow-x-auto p-0">
-              <table className="w-full min-w-[40rem] border-collapse text-sm">
-                <caption className="sr-only">Timetable of {week.data.classSection}</caption>
-                <thead>
-                  <tr className="border-line border-b text-left">
-                    <th scope="col" className="px-3 py-2">
-                      Period
-                    </th>
-                    {DAYS.map((d) => (
-                      <th key={d} scope="col" className="px-3 py-2">
-                        {d}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {week.data.bell.map((b) => (
-                    <tr key={b.slot} className="border-line border-b align-top last:border-0">
-                      <th scope="row" className="px-3 py-2 text-left font-medium">
-                        {b.label}
-                        <span className="text-muted block text-xs font-normal">
-                          {b.startsAt}–{b.endsAt}
-                        </span>
-                      </th>
-                      {b.isBreak ? (
-                        <td colSpan={DAYS.length} className="text-muted px-3 py-2 text-center">
-                          Break
-                        </td>
-                      ) : (
-                        DAYS.map((_, i) => {
-                          const p = week.data!.periods.find(
-                            (x) => x.day === i + 1 && x.slot === b.slot,
-                          );
-                          return (
-                            <td key={i} className="px-3 py-2">
-                              {p ? (
-                                <>
-                                  <span className="font-medium">{p.subject}</span>
-                                  <span className="text-muted block text-xs">
-                                    {[p.teacher, p.room].filter(Boolean).join(" · ")}
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-muted">–</span>
-                              )}
-                            </td>
-                          );
-                        })
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
+            <>
+              {week.data.periods.length === 0 ? (
+                <p className="text-muted text-sm">
+                  Nothing is filled in for {week.data.classSection} yet.
+                  {canEdit ? " Press any block to start." : ""}
+                </p>
+              ) : null}
+              <WeekBlocks week={week.data} onPick={canEdit ? () => setEditing(true) : undefined} />
+            </>
           )}
         </div>
       )}

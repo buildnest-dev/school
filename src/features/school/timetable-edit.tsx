@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
-import { Select, Textarea } from "@/components/ui/field";
+import { Input, Select } from "@/components/ui/field";
 import { LoadingBlock } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { useAsync } from "@/hooks/use-async";
@@ -42,31 +42,39 @@ function useSave() {
   return { save, busy };
 }
 
-/** The school's periods and breaks, one on each line. */
+const toMinutes = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
+};
+const toTime = (n: number) =>
+  `${String(Math.floor(n / 60) % 24).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`;
+
+/** The school's periods and breaks, one block for each, with clock pickers. */
 export function BellScheduleButton({ bell, onSaved }: { bell: BellSlot[]; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
+  const [rows, setRows] = useState<BellSlot[]>([]);
   const { save, busy } = useSave();
   const start = () => {
-    setText(
-      bell
-        .map((b) => [b.label, b.startsAt, b.endsAt, ...(b.isBreak ? ["break"] : [])].join(", "))
-        .join("\n"),
-    );
+    setRows(bell.map((b) => ({ ...b })));
     setOpen(true);
   };
+  const change = (i: number, part: Partial<BellSlot>) =>
+    setRows((r) => r.map((row, n) => (n === i ? { ...row, ...part } : row)));
+  // A new block starts when the last one ends.
+  const add = (isBreak: boolean) =>
+    setRows((r) => {
+      const from = r.at(-1)?.endsAt || "08:00";
+      const label = isBreak ? "Break" : `Period ${r.filter((x) => !x.isBreak).length + 1}`;
+      const endsAt = toTime(toMinutes(from) + (isBreak ? 20 : 40));
+      // Blocks keep their number, because lessons already in the timetable point to it.
+      const slot = (r.at(-1)?.slot ?? 0) + 1;
+      return [...r, { slot, label, startsAt: from, endsAt, isBreak }];
+    });
   const submit = () => {
-    const slots = text
-      .split("\n")
-      .map((line) => line.split(",").map((p) => p.trim()))
-      .filter((p) => p[0])
-      .map(([label, startsAt, endsAt, kind], i) => ({
-        slot: i + 1,
-        label,
-        startsAt: startsAt ?? "",
-        endsAt: endsAt ?? "",
-        isBreak: kind?.toLowerCase() === "break",
-      }));
+    // Renumber only if a number would pass the limit of 12.
+    const slots = rows.some((r) => r.slot > 12)
+      ? rows.map((r, i) => ({ ...r, slot: i + 1 }))
+      : rows;
     save("/timetable/bell-schedule", { slots }, () => {
       setOpen(false);
       onSaved();
@@ -79,17 +87,78 @@ export function BellScheduleButton({ bell, onSaved }: { bell: BellSlot[]; onSave
       </Button>
       <Dialog open={open} onOpenChange={(o) => !busy && setOpen(o)} title="Period timings">
         <div className="grid gap-3">
-          <label className="grid gap-1.5 text-sm font-semibold">
-            One on each line: name, start, end. Add “break” for a break.
-            <Textarea
-              rows={9}
-              value={text}
-              placeholder={"Period 1, 08:00, 08:45\nTiffin, 08:45, 09:00, break"}
-              onChange={(e) => setText(e.target.value)}
-            />
-          </label>
+          <ol className="grid max-h-[55vh] gap-2 overflow-y-auto">
+            {rows.map((row, i) => (
+              <li
+                key={i}
+                className={`grid gap-2 rounded-xl border p-3 ${
+                  row.isBreak ? "border-[#f2d79a] bg-[#fdf0d5]" : "border-[#cfe6a0] bg-[#eef7d9]"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Input
+                    aria-label={`Name of block ${i + 1}`}
+                    value={row.label}
+                    onChange={(e) => change(i, { label: e.target.value })}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Remove ${row.label}`}
+                    onClick={() => setRows((r) => r.filter((_, n) => n !== i))}
+                  >
+                    Remove
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="grid gap-1 text-xs font-semibold">
+                    Starts
+                    <Input
+                      type="time"
+                      value={row.startsAt}
+                      onChange={(e) => change(i, { startsAt: e.target.value })}
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-semibold">
+                    Ends
+                    <Input
+                      type="time"
+                      value={row.endsAt}
+                      onChange={(e) => change(i, { endsAt: e.target.value })}
+                    />
+                  </label>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={row.isBreak}
+                    onChange={(e) => change(i, { isBreak: e.target.checked })}
+                  />
+                  This is a break
+                </label>
+              </li>
+            ))}
+          </ol>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => add(false)}
+              disabled={rows.length >= 12}
+            >
+              Add period
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => add(true)}
+              disabled={rows.length >= 12}
+            >
+              Add break
+            </Button>
+          </div>
           <div>
-            <Button onClick={submit} disabled={busy || !text.trim()}>
+            <Button onClick={submit} disabled={busy || !rows.length}>
               {busy ? "Saving…" : "Save timings"}
             </Button>
           </div>
