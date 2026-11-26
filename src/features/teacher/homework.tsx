@@ -12,10 +12,11 @@ import { Card } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
-import { todayIso } from "@/config/env";
+import { env, todayIso } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { fmtDate } from "../shared/format";
+import { HomeworkCheck } from "./homework-check";
 import { homeworkSchema, type HomeworkForm } from "./schemas";
 
 export function HomeworkList() {
@@ -62,9 +63,14 @@ export function HomeworkList() {
                 </div>
                 <p className="text-sm">{h.instructions}</p>
                 {h.status === "published" ? (
-                  <p className="text-muted text-sm">
-                    {h.submitted} of {h.total} students have handed in
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-muted text-sm">
+                      {h.submitted} of {h.total} students have handed in
+                    </p>
+                    {env.dataSource === "api" ? (
+                      <HomeworkCheck id={h.id} title={h.title} onSaved={list.reload} />
+                    ) : null}
+                  </div>
                 ) : (
                   <p className="text-muted text-sm">Draft: students can’t see this yet.</p>
                 )}

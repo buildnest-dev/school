@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/shared/blocks";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Select } from "@/components/ui/field";
 import { ErrorState, LoadingBlock } from "@/components/ui/states";
+import { env } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
+import { useSession } from "@/hooks/use-session";
 import { apiRequest } from "@/lib/api/client";
+import { BellScheduleButton, TimetableEditor } from "./timetable-edit";
 
 interface ClassRow {
   id: string;
@@ -16,6 +20,8 @@ interface ClassRow {
 interface Period {
   day: number;
   slot: number;
+  subjectId: string;
+  staffId: string | null;
   subject: string;
   teacher: string | null;
   room: string | null;
@@ -32,6 +38,11 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export function SchoolTimetable() {
   const classes = useAsync(() => apiRequest<ClassRow[]>("/classes"), []);
   const [sectionId, setSectionId] = useState("");
+  const [editing, setEditing] = useState(false);
+  const role = useSession().user?.role;
+  const canEdit =
+    env.dataSource === "api" &&
+    (role === "school_owner" || role === "principal" || role === "vice_principal");
   const options = (classes.data ?? []).flatMap((c) =>
     c.sections.map((s) => ({ id: s.id, label: `${c.name} · ${s.name}` })),
   );
@@ -59,7 +70,14 @@ export function SchoolTimetable() {
         <div className="grid gap-4">
           <Field id="tt-section" label="Class" className="max-w-xs">
             {(a) => (
-              <Select {...a} value={current} onChange={(e) => setSectionId(e.target.value)}>
+              <Select
+                {...a}
+                value={current}
+                onChange={(e) => {
+                  setSectionId(e.target.value);
+                  setEditing(false);
+                }}
+              >
                 {options.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.label}
@@ -68,10 +86,33 @@ export function SchoolTimetable() {
               </Select>
             )}
           </Field>
+          {canEdit && week.data ? (
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setEditing((v) => !v)}>
+                {editing ? "Close editing" : "Edit timetable"}
+              </Button>
+              <BellScheduleButton bell={week.data.bell} onSaved={week.reload} />
+            </div>
+          ) : null}
           {week.error ? (
             <ErrorState message={week.error.message} onRetry={week.reload} />
           ) : !week.data ? (
             <LoadingBlock />
+          ) : editing && !week.loading ? (
+            week.data.bell.some((b) => !b.isBreak) ? (
+              <TimetableEditor
+                key={current}
+                sectionId={current}
+                bell={week.data.bell}
+                periods={week.data.periods}
+                done={() => {
+                  setEditing(false);
+                  week.reload();
+                }}
+              />
+            ) : (
+              <p className="text-sm">Set the period timings first.</p>
+            )
           ) : week.data.periods.length === 0 ? (
             <Card className="max-w-xl">
               <p className="text-sm">No timetable has been set for {week.data.classSection} yet.</p>

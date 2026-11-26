@@ -18,6 +18,7 @@ import { SchoolActions } from "../platform/school-actions";
 import { AddStudent } from "../school/add-student";
 import { EnquiryActions } from "../school/admit";
 import { StaffManage } from "../school/staff-actions";
+import { ImportStudents } from "../school/student-import";
 import { BusRequests } from "../school/bus-requests";
 import { AddBook, BookActions, LIBRARY_ROLES, LoanActions } from "../school/library-actions";
 import { CertificateActions } from "../school/certificate-actions";
@@ -224,7 +225,10 @@ export const TABLES: Record<string, TableConfig> = {
     searchPlaceholder: "Search by name, class or guardian",
     actions: (role, reload) =>
       SCHOOL_ADMIN.includes(role) && env.dataSource === "api" ? (
-        <AddStudent onCreated={reload} />
+        <div className="flex flex-wrap gap-2">
+          <ImportStudents onImported={reload} />
+          <AddStudent onCreated={reload} />
+        </div>
       ) : null,
     rowHref: (r) => `/school/students/${r.id}`,
     columns: [

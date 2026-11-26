@@ -5,8 +5,10 @@ import { StatusBadge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { useAsync } from "@/hooks/use-async";
+import { useSession } from "@/hooks/use-session";
 import { apiRequest } from "@/lib/api/client";
 import { fmtDate } from "../shared/format";
+import { ApiAction, QuickAdd } from "../shared/quick-add";
 
 interface ResultsData {
   exams: {
@@ -25,11 +27,30 @@ interface ResultsData {
 /** Every exam with its state, average and pass rate, and how the latest published exam is spread. */
 export function LiveResults() {
   const d = useAsync(() => apiRequest<ResultsData>("/results/overview"), []);
+  const role = useSession().user?.role;
+  const manages = role === "school_owner" || role === "principal" || role === "vice_principal";
   return (
     <>
       <PageHeader
         title="Results overview"
         description="Publication status, averages and the spread of marks, from the marks entered."
+        actions={
+          manages ? (
+            <QuickAdd
+              label="New exam"
+              title="Create an exam"
+              description="Teachers can then enter marks for it."
+              endpoint="/exams"
+              fields={[
+                { key: "name", label: "Exam name", placeholder: "Half yearly" },
+                { key: "maxMarks", label: "Full marks", type: "number" },
+                { key: "passPercent", label: "Pass percentage", type: "number" },
+              ]}
+              values={{ maxMarks: "100", passPercent: "33" }}
+              onCreated={d.reload}
+            />
+          ) : null
+        }
       />
       {d.error ? (
         <ErrorState message={d.error.message} onRetry={d.reload} />
@@ -54,13 +75,37 @@ export function LiveResults() {
                   <span className="text-muted">
                     {x.entries} marks entered · average {x.avgPct}% · pass rate {x.passPct}%
                   </span>
+                  {manages ? (
+                    <div className="flex flex-wrap gap-2">
+                      {x.published ? null : (
+                        <ApiAction
+                          label={x.approved ? "Remove approval" : "Approve marks"}
+                          method="POST"
+                          endpoint={`/exams/${x.id}/approve`}
+                          body={{ approved: !x.approved }}
+                          onDone={d.reload}
+                        />
+                      )}
+                      {x.approved || x.published ? (
+                        <ApiAction
+                          label={x.published ? "Hide results" : "Publish results"}
+                          method="POST"
+                          endpoint={`/exams/${x.id}/publish`}
+                          body={{ published: !x.published }}
+                          onDone={d.reload}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
           </Card>
           <Card>
             <CardHeader
-              title={d.data.spreadExam ? `Spread of marks · ${d.data.spreadExam}` : "Spread of marks"}
+              title={
+                d.data.spreadExam ? `Spread of marks · ${d.data.spreadExam}` : "Spread of marks"
+              }
             />
             {d.data.spread.length ? (
               <BarList
