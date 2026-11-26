@@ -4,7 +4,9 @@ import { PageHeader } from "@/components/shared/blocks";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ErrorState, LoadingBlock } from "@/components/ui/states";
+import { env } from "@/config/env";
 import { prettyKey } from "../shared/format";
+import { MailAndProducts } from "./desk";
 import { useData } from "../shared/use-data";
 
 interface Config {
@@ -74,6 +76,7 @@ export function PlatformConfig() {
           </ul>
         </Card>
       </div>
+      {env.dataSource === "api" ? <MailAndProducts /> : null}
     </>
   );
 }

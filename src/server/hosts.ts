@@ -87,6 +87,8 @@ export function pathAllowed(h: HostInfo, pathname: string): boolean {
   // The pages the sign-in screen and the e-mailed links lead to.
   if (["/sign-in", "/forgot-password", "/reset-password"].includes(first))
     return h.kind !== "public";
+  // Public forms of a school: the admission enquiry and the certificate check.
+  if (["/apply", "/verify"].includes(first)) return h.kind !== "public" && h.kind !== "team";
   if (first === "/api")
     return h.kind !== "public" || pathname === "/api/public" || pathname.startsWith("/api/public/");
   switch (h.kind) {

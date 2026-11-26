@@ -247,3 +247,69 @@ export function TimetableEditor({
     </div>
   );
 }
+
+function TeacherWeek() {
+  const teachers = useAsync(
+    () =>
+      apiRequest<{ items: { id: string; name: string }[] }>("/staff", {
+        query: { role: "teacher", status: "active" },
+      }),
+    [],
+  );
+  const [id, setId] = useState("");
+  const week = useAsync(
+    () =>
+      id
+        ? apiRequest<{
+            periods: {
+              id: string;
+              day: number;
+              slot: number;
+              subject: string;
+              classSection: string;
+            }[];
+          }>(`/timetable/staff/${id}`)
+        : Promise.resolve(undefined),
+    [id],
+  );
+  return (
+    <div className="grid max-h-[65vh] gap-3 overflow-y-auto text-sm">
+      <Select aria-label="Teacher" value={id} onChange={(e) => setId(e.target.value)}>
+        <option value="">Choose a teacher</option>
+        {teachers.data?.items.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </Select>
+      {week.data ? (
+        week.data.periods.length ? (
+          <ul className="grid gap-1.5">
+            {week.data.periods.map((p) => (
+              <li key={p.id}>
+                {DAYS[p.day - 1] ?? "Sun"} · period slot {p.slot} · {p.subject} · {p.classSection}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No periods for this teacher yet.</p>
+        )
+      ) : null}
+    </div>
+  );
+}
+
+/** Any teacher's week, for the principal. */
+export function TeacherWeekButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="ghost" onClick={() => setOpen(true)}>
+        A teacher’s week
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen} title="A teacher’s week">
+        {open ? <TeacherWeek /> : null}
+      </Dialog>
+    </>
+  );
+}

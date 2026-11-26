@@ -4,8 +4,10 @@ import { BarList, PageHeader } from "@/components/shared/blocks";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
+import { Select } from "@/components/ui/field";
 import { useAsync } from "@/hooks/use-async";
 import { useSession } from "@/hooks/use-session";
+import { useState } from "react";
 import { apiRequest } from "@/lib/api/client";
 import { fmtDate } from "../shared/format";
 import { ApiAction, QuickAdd } from "../shared/quick-add";
@@ -121,6 +123,7 @@ export function LiveResults() {
           </Card>
         </div>
       )}
+      {d.data?.exams.length ? <ClassSheet exams={d.data.exams} /> : null}
     </>
   );
 }
@@ -207,5 +210,109 @@ export function LiveReports() {
         </div>
       )}
     </>
+  );
+}
+
+interface Sheet {
+  summary: { students: number; complete: number; passed: number; averagePercent: number | null };
+  rows: {
+    studentId: string;
+    rollNo: number;
+    name: string;
+    total: number | null;
+    maxTotal: number | null;
+    percent: number | null;
+    grade: string | null;
+    result: string;
+    rank: number | null;
+  }[];
+}
+
+/** Every student of one class in one exam: total, percentage, grade, result and rank. */
+function ClassSheet({ exams }: { exams: { id: string; name: string }[] }) {
+  const classes = useAsync(
+    () => apiRequest<{ name: string; sections: { id: string; name: string }[] }[]>("/classes"),
+    [],
+  );
+  const [exam, setExam] = useState("");
+  const [section, setSection] = useState("");
+  const examId = exam || exams[0]?.id || "";
+  const sheet = useAsync(
+    () =>
+      section && examId
+        ? apiRequest<Sheet>(`/report-cards/classes/${section}`, { query: { examId } })
+        : Promise.resolve(undefined),
+    [section, examId],
+  );
+  return (
+    <Card className="mt-5 grid gap-3">
+      <CardHeader title="Class result sheet" />
+      <div className="flex flex-wrap gap-3">
+        <Select
+          aria-label="Exam"
+          className="max-w-xs"
+          value={examId}
+          onChange={(e) => setExam(e.target.value)}
+        >
+          {exams.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.name}
+            </option>
+          ))}
+        </Select>
+        <Select
+          aria-label="Class for the result sheet"
+          className="max-w-xs"
+          value={section}
+          onChange={(e) => setSection(e.target.value)}
+        >
+          <option value="">Choose a class</option>
+          {classes.data?.flatMap((c) =>
+            c.sections.map((s) => (
+              <option key={s.id} value={s.id}>
+                {c.name} · {s.name}
+              </option>
+            )),
+          )}
+        </Select>
+      </div>
+      {sheet.error ? (
+        <ErrorState message={sheet.error.message} onRetry={sheet.reload} />
+      ) : sheet.data ? (
+        <div className="overflow-x-auto">
+          <p className="text-muted mb-2 text-sm">
+            {sheet.data.summary.complete} of {sheet.data.summary.students} complete ·{" "}
+            {sheet.data.summary.passed} passed
+          </p>
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Class result sheet</caption>
+            <thead>
+              <tr className="border-line border-b">
+                {["Roll", "Student", "Total", "%", "Grade", "Result", "Rank"].map((h) => (
+                  <th key={h} scope="col" className="px-2 py-2">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.data.rows.map((r) => (
+                <tr key={r.studentId} className="border-line border-b last:border-0">
+                  <td className="px-2 py-1.5">{r.rollNo}</td>
+                  <td className="px-2 py-1.5">{r.name}</td>
+                  <td className="px-2 py-1.5">
+                    {r.total === null ? "-" : `${r.total}/${r.maxTotal}`}
+                  </td>
+                  <td className="px-2 py-1.5">{r.percent ?? "-"}</td>
+                  <td className="px-2 py-1.5">{r.grade ?? "-"}</td>
+                  <td className="px-2 py-1.5">{r.result}</td>
+                  <td className="px-2 py-1.5">{r.rank ?? "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </Card>
   );
 }

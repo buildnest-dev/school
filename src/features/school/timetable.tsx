@@ -10,7 +10,7 @@ import { env } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useSession } from "@/hooks/use-session";
 import { apiRequest } from "@/lib/api/client";
-import { BellScheduleButton, TimetableEditor } from "./timetable-edit";
+import { BellScheduleButton, TeacherWeekButton, TimetableEditor } from "./timetable-edit";
 
 interface ClassRow {
   id: string;
@@ -92,6 +92,7 @@ export function SchoolTimetable() {
                 {editing ? "Close editing" : "Edit timetable"}
               </Button>
               <BellScheduleButton bell={week.data.bell} onSaved={week.reload} />
+              <TeacherWeekButton />
             </div>
           ) : null}
           {week.error ? (

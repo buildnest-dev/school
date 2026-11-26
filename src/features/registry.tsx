@@ -30,6 +30,7 @@ import { env } from "@/config/env";
 import { FeeStructure } from "./school/fee-structure";
 import { OpeningBalances } from "./school/opening-balances";
 import { PaymentDetails } from "./school/payment-details";
+import { LiveSettings } from "./school/live-settings";
 import { PaymentProofs } from "./school/payment-proofs";
 import { Refunds } from "./school/refunds";
 import { Rollover } from "./school/rollover";
@@ -120,7 +121,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-reports": plain(env.dataSource === "api" ? LiveReports : Reports),
   "school-curriculum": plain(Curriculum),
   "school-timetable": plain(SchoolTimetable),
-  "school-settings": plain(Settings),
+  "school-settings": plain(env.dataSource === "api" ? LiveSettings : Settings),
   "school-ptm": plain(PtmAdmin),
 
   "teacher-home": plain(TeacherHome),

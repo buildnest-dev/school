@@ -36,7 +36,7 @@ export function QuickAdd({
   toBody?: (body: Record<string, unknown>) => unknown;
   /** Current values, so the same form can edit a record. */
   values?: Record<string, string>;
-  method?: "POST" | "PATCH";
+  method?: "POST" | "PUT" | "PATCH";
   variant?: "ghost" | "primary";
   label: string;
   title: string;
@@ -166,7 +166,7 @@ export function ApiAction({
 }: {
   success?: string;
   label: string;
-  method: "PATCH" | "POST" | "DELETE";
+  method: "PATCH" | "POST" | "PUT" | "DELETE";
   endpoint: string;
   body?: unknown;
   variant?: "ghost" | "primary";

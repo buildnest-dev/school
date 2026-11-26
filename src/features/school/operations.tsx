@@ -161,7 +161,30 @@ export function CalendarScreen({ screen }: ScreenProps) {
       ) : !d.data ? (
         <LoadingBlock />
       ) : (
-        <MonthCalendar events={d.data.items} initial={todayIso()} />
+        <>
+          <MonthCalendar events={d.data.items} initial={todayIso()} />
+          {env.dataSource === "api" && screen.area === "school" && canAdd ? (
+            <details className="mt-5 text-sm">
+              <summary className="cursor-pointer font-semibold">Remove an event</summary>
+              <ul className="mt-3 grid max-w-xl gap-2">
+                {d.data.items.map((e) => (
+                  <li key={e.id} className="flex items-center justify-between gap-3">
+                    <span>
+                      {fmtDate(e.date)} · {e.title}
+                    </span>
+                    <ApiAction
+                      label="Remove"
+                      method="DELETE"
+                      endpoint={`/calendar/events/${e.id}`}
+                      success="Removed"
+                      onDone={d.reload}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </>
       )}
     </>
   );

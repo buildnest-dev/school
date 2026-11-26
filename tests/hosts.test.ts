@@ -90,6 +90,15 @@ describe("hostAllows", () => {
 });
 
 describe("pathAllowed", () => {
+  it("opens the public school forms on school and parents addresses only", () => {
+    for (const path of ["/apply", "/verify"]) {
+      expect(pathAllowed({ kind: "school", slug: "a" }, path)).toBe(true);
+      expect(pathAllowed({ kind: "parents", slug: "a" }, path)).toBe(true);
+      expect(pathAllowed({ kind: "other" }, path)).toBe(true);
+      expect(pathAllowed({ kind: "public" }, path)).toBe(false);
+      expect(pathAllowed({ kind: "team" }, path)).toBe(false);
+    }
+  });
   it("public address: home, get-started and the public API only", () => {
     const h = { kind: "public" } as const;
     expect(pathAllowed(h, "/")).toBe(true);

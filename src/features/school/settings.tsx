@@ -25,7 +25,7 @@ const SCHOOL_ROLES: Role[] = [
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /** Derived from config/screens.ts, so the matrix always matches what the menus show. The backend must enforce the same rules. */
-function PermissionMatrix() {
+export function PermissionMatrix() {
   const rows = SCREENS.filter(
     (s) => (s.area === "school" || s.nav) && s.area !== "platform" && !s.path.includes(":"),
   );

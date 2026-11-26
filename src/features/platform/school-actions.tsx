@@ -3,7 +3,7 @@
 import { Check, Circle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api/client";
-import { ApiAction } from "../shared/quick-add";
+import { ApiAction, QuickAdd } from "../shared/quick-add";
 
 type Detail = {
   status: string;
@@ -27,7 +27,8 @@ export function SchoolActions({ id, onDone }: { id: string; onDone: () => void }
     };
   }, [id]);
 
-  if (failed) return <p className="text-muted mt-4 text-sm">Could not load the go-live checklist.</p>;
+  if (failed)
+    return <p className="text-muted mt-4 text-sm">Could not load the go-live checklist.</p>;
   if (!d) return <p className="text-muted mt-4 text-sm">Loading the checklist…</p>;
   const endpoint = `/platform/schools/${id}`;
   const open = d.checklist.filter((c) => !c.ok).length;
@@ -84,6 +85,41 @@ export function SchoolActions({ id, onDone }: { id: string; onDone: () => void }
             onDone={onDone}
           />
         )}
+        <QuickAdd
+          label="Invite another owner"
+          title="Invite an owner"
+          description="They get an e-mail with a link to set a password."
+          variant="ghost"
+          endpoint={`${endpoint}/owner`}
+          onCreated={onDone}
+          fields={[
+            { key: "ownerName", label: "Name" },
+            { key: "ownerEmail", label: "Email" },
+          ]}
+        />
+        <QuickAdd
+          label="Bank account"
+          title="School’s bank account"
+          description="The account number is stored encrypted and is not shown again."
+          variant="ghost"
+          method="PUT"
+          endpoint={`${endpoint}/bank`}
+          onCreated={onDone}
+          fields={[
+            { key: "holderName", label: "Account holder" },
+            { key: "bankName", label: "Bank" },
+            { key: "ifsc", label: "IFSC code" },
+            { key: "accountNumber", label: "Account number" },
+          ]}
+        />
+        <ApiAction
+          label="Add web addresses again"
+          method="POST"
+          endpoint={`${endpoint}/domains`}
+          body={{}}
+          success="Web addresses requested"
+          onDone={onDone}
+        />
       </div>
     </div>
   );

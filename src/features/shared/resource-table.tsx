@@ -19,6 +19,8 @@ import { AddStudent } from "../school/add-student";
 import { EnquiryActions } from "../school/admit";
 import { StaffManage } from "../school/staff-actions";
 import { ImportStudents } from "../school/student-import";
+import { SalesDesk } from "../platform/desk";
+import { TicketThread } from "./support";
 import { BusRequests } from "../school/bus-requests";
 import { AddBook, BookActions, LIBRARY_ROLES, LoanActions } from "../school/library-actions";
 import { CertificateActions } from "../school/certificate-actions";
@@ -138,6 +140,8 @@ export const TABLES: Record<string, TableConfig> = {
   "platform-onboarding": {
     resource: "onboarding",
     searchPlaceholder: "Search onboarding",
+    actions: (role) =>
+      role === "platform_admin" && env.dataSource === "api" ? <SalesDesk /> : null,
     columns: [
       { key: "tenant", header: "School", sortable: true },
       { key: "stage", header: "Current stage" },
@@ -182,6 +186,8 @@ export const TABLES: Record<string, TableConfig> = {
   },
   "platform-support": {
     resource: "support",
+    detailActions: (row, done) =>
+      env.dataSource === "api" ? <TicketThread id={String(row.id)} team onChanged={done} /> : null,
     searchPlaceholder: "Search requests",
     columns: [
       { key: "subject", header: "Request", sortable: true },

@@ -25,6 +25,7 @@ export function ImportStudents({ onImported }: { onImported: () => void }) {
   const [csv, setCsv] = useState("");
   const [check, setCheck] = useState<Check | null>(null);
   const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState("");
 
   const run = async (work: () => Promise<void>) => {
     setBusy(true);
@@ -32,7 +33,7 @@ export function ImportStudents({ onImported }: { onImported: () => void }) {
       await work();
     } catch (e) {
       toast({
-        title: "Couldn’t read the file",
+        title: "That didn’t work",
         description: e instanceof Error ? e.message : "Please try again.",
         tone: "error",
       });
@@ -51,14 +52,31 @@ export function ImportStudents({ onImported }: { onImported: () => void }) {
         body: {},
       });
       toast({ title: r.message });
+      setLast(check!.batchId);
       setOpen(false);
       setCsv("");
       setCheck(null);
       onImported();
     });
 
+  const undo = () =>
+    run(async () => {
+      const r = await apiRequest<{ removed: number }>(`/imports/${last}/undo`, {
+        method: "POST",
+        body: {},
+      });
+      toast({ title: `${r.removed} students removed` });
+      setLast("");
+      onImported();
+    });
+
   return (
     <>
+      {last ? (
+        <Button variant="ghost" onClick={undo} disabled={busy}>
+          Undo last file
+        </Button>
+      ) : null}
       <Button variant="ghost" onClick={() => setOpen(true)}>
         Add from file
       </Button>
