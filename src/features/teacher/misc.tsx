@@ -17,6 +17,7 @@ import { useServices } from "@/hooks/use-services";
 import type { RosterStudent } from "@/types";
 import { fmtDate, todayLabel } from "../shared/format";
 import { LEAVE_TYPES, leaveSchema, type LeaveForm } from "./schemas";
+import { PeriodBadge } from "../shared/period-badge";
 
 export function TeacherToday() {
   const s = useServices();
@@ -37,9 +38,7 @@ export function TeacherToday() {
           {t.data.map((p) => (
             <li key={p.period}>
               <Card className="flex items-center gap-4">
-                <span className="bg-paper-2 text-ink grid size-14 flex-none place-items-center rounded-lg text-lg font-bold">
-                  {p.period}
-                </span>
+                <PeriodBadge label={p.period} />
                 <span className="grow">
                   <span className="block text-lg font-semibold">
                     {p.subject}

@@ -24,6 +24,7 @@ import { firstName, fmtDate, rupees } from "../shared/format";
 import { ChildPage, useActiveChild } from "./child";
 import { PayCard } from "./pay-card";
 import { ProofUpload } from "./proof-upload";
+import { PeriodBadge } from "../shared/period-badge";
 
 const ICON = { homework: Pencil, fee: IndianRupee, notice: Bell, event: CalendarDays } as const;
 
@@ -269,9 +270,7 @@ function TimetableBody({ id, s }: { id: string; s: ReturnType<typeof useServices
       {d.data.map((p) => (
         <li key={p.period}>
           <Card className="flex items-center gap-4">
-            <span className="bg-paper-2 grid size-12 flex-none place-items-center rounded-lg font-bold">
-              {p.period}
-            </span>
+            <PeriodBadge label={p.period} />
             <span>
               <span className="block text-lg font-semibold">{p.subject}</span>
               <span className="text-muted text-sm">
