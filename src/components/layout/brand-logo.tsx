@@ -1,29 +1,24 @@
+import Image from "next/image";
 import Link from "next/link";
 import { BRAND } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-/** Text placeholder logo. Replace the mark/wordmark here once the real brand exists. */
+/** The ZAQSA School logo. `onDark` uses the version with white letters. */
 export function BrandLogo({ onDark = false, className }: { onDark?: boolean; className?: string }) {
   return (
     <Link
       href="/"
       aria-label={`${BRAND} home`}
-      className={cn(
-        "inline-flex items-center gap-2.5 no-underline",
-        onDark ? "text-white" : "text-ink",
-        className,
-      )}
+      className={cn("inline-flex w-fit items-center no-underline", className)}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "font-display grid size-9 place-items-center rounded-xl border text-xl font-bold",
-          onDark ? "border-gold text-gold bg-white/5" : "border-gold bg-ink text-accent-light",
-        )}
-      >
-        {BRAND.charAt(0)}
-      </span>
-      <span className="font-display text-[1.375rem] font-bold tracking-tight">{BRAND}</span>
+      <Image
+        src={onDark ? "/brand/logo-light.png" : "/brand/logo.png"}
+        alt=""
+        width={600}
+        height={198}
+        priority
+        className="h-14 w-auto sm:h-16"
+      />
     </Link>
   );
 }

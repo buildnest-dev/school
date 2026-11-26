@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore, type FormEvent } from "react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -31,6 +32,7 @@ function Shell({
   return (
     <main id="main" className="mx-auto grid min-h-dvh w-full max-w-lg content-center p-4">
       <Card className="grid gap-4">
+        <BrandLogo />
         <CardHeader title={title} hint={hint} />
         {children}
       </Card>

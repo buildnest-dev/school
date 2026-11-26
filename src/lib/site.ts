@@ -1,5 +1,5 @@
-/** Temporary product name: change it here and it updates everywhere. */
-export const BRAND = "SchoolOS";
+/** Product name: change it here and it updates everywhere. */
+export const BRAND = "ZAQSA School";
 
 export const NAV_LINKS = [
   { label: "Platform", href: "/#concept" },
