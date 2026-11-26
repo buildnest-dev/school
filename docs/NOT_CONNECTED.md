@@ -14,6 +14,8 @@ with sample data. Some features are deliberately narrow:
 | Registers | One shared form-and-stages screen for each record type; no special calculations. |
 | Platform configuration | Read-only view of the server's settings. |
 | Parent profile | A parent changes their phone number and password only. |
+| School settings | Boards, grading scales, data download and help requests. School name, logo and colour are changed by the ZAQSA team, not on this screen. |
+| Public forms | `/apply` (admission enquiry) and `/verify` (certificate check) on a school's own address. |
 | New admission alerts | Sent inside the app, and to a phone where notifications are switched on. No SMS or e-mail. A desk with no login is not told, and the person admitting is shown which. |
 | Feature switches | Switched per school by the ZAQSA team. Plans do not choose them yet. A home page or the daily briefing may still show a line from records saved before a feature was switched off. |
 
@@ -28,7 +30,7 @@ report cards, teacher workspace, family views, school bank details, payment scre
 balances, phone notifications, the ZAQSA team screens, school calendar, staff leave and the
 approval inbox, vendors, events, parent queries, exam datesheet, year-end rollover, parent-teacher
 meeting slots, reports, report builder, students to check on, syllabus progress, lesson plans,
-achievements, staff invites, staff attendance, cover lessons, exam seating, online tests, polls,
+achievements, timetable editing, student import from a file, exam creation and publishing, support requests, staff invites, staff attendance, cover lessons, exam seating, online tests, polls,
 notice read receipts, stock, payroll, new admission alerts, bus requests, feature switches, and the registers (visitors, gate passes, health, clubs,
 purchases, repairs and the rest listed in `src/config/modules.ts`).
 
