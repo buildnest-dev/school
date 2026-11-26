@@ -63,7 +63,11 @@ export const PUT = handle(async (req: Request, ctx: Ctx) => {
   if (!student) throw new HttpError(404, "not_found", "Student not found.");
 
   if (body.routeId === null) {
-    await prisma.studentTransport.deleteMany({ where: { studentId, tenantId } });
+    // Taking a student off the bus also closes the request, so they do not return to the waiting list.
+    await prisma.$transaction([
+      prisma.studentTransport.deleteMany({ where: { studentId, tenantId } }),
+      prisma.student.update({ where: { id: studentId }, data: { needsBus: false } }),
+    ]);
   } else {
     const route = await prisma.transportRoute.findFirst({
       where: { id: body.routeId, tenantId },

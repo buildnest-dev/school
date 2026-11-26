@@ -8,8 +8,8 @@ export const NAV_LINKS = [
   { label: "Resources", href: "/#resources" },
 ] as const;
 
-/** Destinations that do not exist yet. They route to a clearly marked placeholder page. */
-export const PLACEHOLDER_PAGES = {
+/** The plain information pages linked from the footer. Their text is in lib/data/info-pages.ts. */
+export const INFO_TITLES = {
   guides: "Guides",
   faq: "FAQ",
   help: "Help centre",
@@ -17,7 +17,7 @@ export const PLACEHOLDER_PAGES = {
   privacy: "Privacy Policy",
   terms: "Terms of Service",
 } as const;
-export type PlaceholderSlug = keyof typeof PLACEHOLDER_PAGES;
-export const placeholderHref = (slug: PlaceholderSlug) => `/placeholder/${slug}`;
+export type InfoSlug = keyof typeof INFO_TITLES;
+export const infoHref = (slug: InfoSlug) => `/info/${slug}`;
 
 export const ROUTES = { signIn: "/sign-in", getStarted: "/get-started", demo: "/#demo" } as const;

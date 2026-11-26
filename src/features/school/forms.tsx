@@ -319,7 +319,7 @@ export function CertificateVerify() {
           id="verify-no"
           label="Certificate number"
           error={fieldErr}
-          hint="Try NA/BON/2026/0142 (sample)"
+          hint={env.dataSource === "api" ? undefined : "Try NA/BON/2026/0142 (sample)"}
         >
           {(a) => <Input value={no} onChange={(e) => setNo(e.target.value)} {...a} />}
         </Field>

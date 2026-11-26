@@ -140,12 +140,12 @@ Tables are created with `prisma db push`; there is no migration history yet, so 
 
 Base domain: `ZAQSA_BASE_DOMAIN` (default `zaqsa.com`). The shared rules are in `src/server/hosts.ts`; `src/proxy.ts` applies them to pages and `src/server/auth.ts` applies them to every sign-in and every request.
 
-| Address                 | Serves                                 | Who may sign in                     |
-| ----------------------- | -------------------------------------- | ----------------------------------- |
-| `school.<base>`         | public product site, demo request form | nobody (no sign-in); indexable      |
-| `team.schools.<base>`   | the ZAQSA platform                     | platform users only                 |
-| `<slug>.school.<base>`  | one school's staff and teachers        | staff and teachers of that school   |
-| `<slug>.parents.<base>` | that school's parents and students     | parents and students of that school |
+| Address                 | Serves                             | Who may sign in                     |
+| ----------------------- | ---------------------------------- | ----------------------------------- |
+| `schoool.<base>`        | main site (three o's)              | any role; the session decides       |
+| `team.schools.<base>`   | the ZAQSA platform                 | platform users only                 |
+| `<slug>.school.<base>`  | one school's staff and teachers    | staff and teachers of that school   |
+| `<slug>.parents.<base>` | that school's parents and students | parents and students of that school |
 
 - The session's school must equal the address's school, checked on every request, not only at sign-in. A wrong address looks the same as a wrong password.
 - On the public address only `/`, `/get-started` and `/api/public/*` exist (the demo form posts to `/api/public/leads`: rate limited, honeypot, creates a lead). Everything else is 404 or redirected.
@@ -153,7 +153,7 @@ Base domain: `ZAQSA_BASE_DOMAIN` (default `zaqsa.com`). The shared rules are in 
 - Reserved school names (cannot be taken): team, schools, school, parents, admin, www, api, app, mail, static, support, help, billing, status, demo, test. `admin.<base>` is the separate website editor and is not part of School OS.
 - Any other address (localhost, Vercel preview addresses, tests) is unrestricted: the session's role decides what is shown.
 - Platform users must use the authenticator app: on the team address and on every production deployment. Until it is turned on, the only things such a session can reach are `/api/me`, `/api/auth/mfa/*` and sign-out; the app shows a setup screen (`src/components/app/mfa-gate.tsx`).
-- DNS (done in the DNS/Vercel dashboards, not in code): `school`, `team.schools`, `*.school` and `*.parents` under the base domain, all pointing at the Vercel project.
+- DNS (done in the DNS/Vercel dashboards, not in code): `schoool` (main site), `team.schools`, `*.school` and `*.parents` under the base domain, all pointing at the Vercel project. `school.<base>` itself points at the e-mail service (Brevo), not at Vercel; the code still treats it as a public-only site if it is ever pointed back.
 
 ## Paying the school: QR and screenshot
 

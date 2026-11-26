@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { cookies, headers } from "next/headers";
+import { featureOfPath, readOff } from "@/config/features";
 import type { Role, SessionUser } from "@/types";
-import { isWrite } from "./context";
+import { currentPath, isWrite } from "./context";
 import { prisma } from "./db";
 import { classifyHost, hostAllows, type HostInfo } from "./hosts";
 import { decryptSecret } from "./secret";
@@ -163,6 +164,7 @@ export async function getAuth(): Promise<Auth | null> {
       tenantId: m.tenantId,
       tenantName: m.tenant.name,
       title: role.replace(/_/g, " "),
+      disabledFeatures: readOff(m.tenant.disabledFeatures),
     },
   };
 }
@@ -197,6 +199,13 @@ export async function requireTenant(roles?: Role[]) {
   const a = await requireAuth(roles);
   if (!a.user.tenantId)
     throw new HttpError(403, "forbidden", "This action needs a school account.");
+  const feature = featureOfPath(currentPath());
+  if (feature && a.user.disabledFeatures?.includes(feature))
+    throw new HttpError(
+      403,
+      "feature_off",
+      "This feature is not switched on for your school. Please ask ZAQSA.",
+    );
   // Changes are blocked while a school is suspended or its subscription has lapsed; reading stays open.
   if (isWrite() && a.tenant) {
     if (a.tenant.status === "suspended")

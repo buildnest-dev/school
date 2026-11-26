@@ -26,7 +26,7 @@ function keyBytes(b64: string) {
 
 /**
  * Makes the site behave like an app: registers the service worker, offers "Install app", and (for
- * parents) offers to turn on notifications such as "your child was absent today".
+ * parents and staff) offers to turn on notifications such as "your child was absent today".
  * iPhones only allow notifications once the app is added to the Home Screen, so that comes first.
  */
 export function AppBanner() {
@@ -39,6 +39,8 @@ export function AppBanner() {
   const [hidden, setHidden] = useState(true);
   const [note, setNote] = useState<string | null>(null);
   const isParent = user?.role === "parent";
+  // Families and school staff get messages; students and the ZAQSA team are not offered them.
+  const getsAlerts = !!user && user.role !== "student" && user.role !== "platform_admin";
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
@@ -101,7 +103,11 @@ export function AppBanner() {
   if (env.dataSource !== "api" || !user || hidden) return null;
   const needInstall = !standalone && (installEvent || ios);
   const canNotify =
-    isParent && perm !== "unsupported" && perm !== "denied" && !subscribed && (standalone || !ios);
+    getsAlerts &&
+    perm !== "unsupported" &&
+    perm !== "denied" &&
+    !subscribed &&
+    (standalone || !ios);
   if (!needInstall && !canNotify) return null;
 
   return (
@@ -117,7 +123,7 @@ export function AppBanner() {
             : "Install this app on your phone for quick access."
           : isParent
             ? "Get a notification when your child is marked absent."
-            : null}
+            : "Get a notification about new admissions and other school updates."}
         {note ? <span className="text-bad block">{note}</span> : null}
       </p>
       {needInstall && installEvent ? (

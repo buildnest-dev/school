@@ -14,7 +14,6 @@ export function createServices(): Services {
   return {
     ...api,
     resource: (key) => (NOT_BUILT.has(key) ? mock.resource(key) : api.resource(key)),
-    certificates: { ...api.certificates, verify: mock.certificates.verify },
     rollover: mock.rollover,
   };
 }

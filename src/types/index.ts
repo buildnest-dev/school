@@ -63,6 +63,8 @@ export interface SessionUser {
   title: string;
   /** Child ids a guardian may see. Only meaningful for parents. */
   childIds?: string[];
+  /** Features ZAQSA has switched off for this school. */
+  disabledFeatures?: string[];
   /** Platform users must turn on the authenticator app before anything else is open to them. */
   mfaSetupRequired?: boolean;
 }

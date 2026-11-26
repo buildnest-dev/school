@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { announceAdmission, informedText } from "@/server/admission-alerts";
 import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
 import { sectionOr404 } from "@/server/lib";
 import { assertRoomForStudents, nextAdmissionNo } from "@/server/students";
 
-const Body = z.object({ sectionId: z.string().min(1) });
+const Body = z.object({ sectionId: z.string().min(1), needsBus: z.boolean().default(false) });
 
 /**
  * Enrols an enquiry that has reached "decision": creates the guardian and student, links them,
@@ -21,7 +22,7 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
     "admission_officer",
   ]);
   const { id } = await ctx.params;
-  const { sectionId } = Body.parse(await req.json());
+  const { sectionId, needsBus } = Body.parse(await req.json());
   await sectionOr404(tenantId, sectionId);
 
   await assertRoomForStudents(tenantId);
@@ -56,6 +57,7 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
         dob: a.dob,
         gender: a.gender,
         sectionId,
+        needsBus,
         guardianId: g.id,
       },
     });
@@ -71,13 +73,15 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
     });
     return s;
   });
+  const told = await announceAdmission(tenantId, student.id);
   return NextResponse.json(
     {
       ok: true,
       mode: "api",
       id: student.id,
       admissionNo: student.admissionNo,
-      message: "Student enrolled.",
+      message: `Student enrolled. ${informedText(told)}`,
+      ...told,
     },
     { status: 201 },
   );

@@ -29,9 +29,14 @@ export const GET = handle(async () => {
     "accountant",
     "librarian",
     "transport",
+    "vice_principal",
+    "admission_officer",
+    "hr",
+    "reception",
   ]);
   const role = user.role;
   const leader = role === "school_owner" || role === "principal";
+  const academic = leader || role === "vice_principal";
   const money = leader || role === "accountant";
   const today = parseDay(istToday());
   const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
@@ -47,7 +52,7 @@ export const GET = handle(async () => {
     status: "pending";
   }[] = [];
 
-  if (leader) {
+  if (academic) {
     const [students, staff, marks] = await Promise.all([
       prisma.student.count({ where: { tenantId, status: "active" } }),
       prisma.staff.count({ where: { tenantId, status: "active" } }),
@@ -142,6 +147,30 @@ export const GET = handle(async () => {
       });
   }
 
+  if (role === "admission_officer" || role === "reception") {
+    const [fresh, open, students] = await Promise.all([
+      prisma.admission.count({ where: { tenantId, stage: "new" } }),
+      prisma.admission.count({ where: { tenantId, stage: { notIn: ["enrolled", "declined"] } } }),
+      prisma.student.count({ where: { tenantId, status: "active" } }),
+    ]);
+    stats.push(
+      { label: "New enquiries", value: String(fresh), hint: "Not looked at yet" },
+      { label: "Open enquiries", value: String(open), hint: "Not yet enrolled or declined" },
+      { label: "Students", value: String(students), hint: "Enrolled now" },
+    );
+  }
+  if (role === "hr") {
+    const [staff, teachers, leave] = await Promise.all([
+      prisma.staff.count({ where: { tenantId, status: "active" } }),
+      prisma.staff.count({ where: { tenantId, status: "active", role: "teacher" } }),
+      prisma.leaveRequest.count({ where: { tenantId, status: "pending" } }),
+    ]);
+    stats.push(
+      { label: "Staff", value: String(staff), hint: "Active" },
+      { label: "Teachers", value: String(teachers) },
+      { label: "Leave requests", value: String(leave), hint: "Waiting for a decision" },
+    );
+  }
   if (role === "librarian") {
     const [books, onLoan, overdue] = await Promise.all([
       prisma.book.count({ where: { tenantId } }),

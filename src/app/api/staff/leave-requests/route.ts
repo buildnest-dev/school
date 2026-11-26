@@ -9,7 +9,7 @@ import { assertSameOrigin, handle } from "@/server/http";
 export const GET = handle(async (req: Request) => {
   const { tenantId, user } = await requireTenant([...STAFF_ROLES]);
   const status = new URL(req.url).searchParams.get("filter[status]");
-  const all = (ADMIN as readonly string[]).includes(user.role);
+  const all = (ADMIN as readonly string[]).includes(user.role) || user.role === "hr";
   const rows = await prisma.leaveRequest.findMany({
     where: { tenantId, ...(all ? {} : { userId: user.id }), ...(status ? { status } : {}) },
     orderBy: { createdAt: "desc" },

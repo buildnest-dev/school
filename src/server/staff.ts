@@ -33,6 +33,12 @@ export const staffFields = z.object({
   joinedOn: day.optional(),
 });
 
+/** HR keeps staff records, but a principal's record belongs to the owner and principal. */
+export function assertMayManage(byRole: string, staffRole: string | undefined) {
+  if (byRole === "hr" && staffRole === "principal")
+    throw new HttpError(403, "forbidden", "HR cannot add or change a principal.");
+}
+
 /** Next employee number for the school: EMP-<year>-<0001...>. The unique index guards against races. */
 export async function nextEmployeeNo(tenantId: string) {
   const prefix = `EMP-${new Date().getUTCFullYear()}-`;

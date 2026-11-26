@@ -1,6 +1,7 @@
 "use client";
 
 import { AppBanner } from "@/components/app/app-banner";
+import { NotificationBell } from "@/components/app/notification-bell";
 import * as Dialog from "@radix-ui/react-dialog";
 import { FlaskConical, LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "@/components/shared/blocks";
 import { isDemoHost } from "@/config/demo";
+import { screenOn } from "@/config/features";
 import {
   AREA_ROOT,
   ROLE_LABEL,
@@ -37,13 +39,14 @@ const AREA_LABEL: Record<Area, string> = {
   student: "Student portal",
 };
 
-function useNav(area: Area, role: Role | undefined) {
+function useNav(area: Area, role: Role | undefined, off: string[] | undefined) {
   return useMemo(() => {
     const items = screensFor(area).filter(
       (s) =>
         s.nav &&
         role !== undefined &&
         canAccess(role, s) &&
+        screenOn(s.id, off) &&
         // A screen that is not built yet is not offered in the menu of the live app.
         !(env.dataSource === "api" && s.status === "planned") &&
         !(env.dataSource === "api" && NO_BACKEND_YET.has(s.id) && !isDemoHost()),
@@ -54,7 +57,7 @@ function useNav(area: Area, role: Role | undefined) {
       groups.set(g, [...(groups.get(g) ?? []), s]);
     }
     return { items, groups: [...groups.entries()] };
-  }, [area, role]);
+  }, [area, role, off]);
 }
 
 function isActive(pathname: string, s: ScreenDef) {
@@ -167,7 +170,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const nav = useNav(area, user?.role);
+  const nav = useNav(area, user?.role, user?.disabledFeatures);
   const asideRef = useRef<HTMLElement>(null);
   const signedIn = !!user;
   // The menu is drawn again on every page, so it would jump back to the top. Keep where it was
@@ -217,7 +220,7 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
   );
 
   return (
-    <div className="bg-page min-h-screen lg:grid lg:grid-cols-[230px_1fr]">
+    <div className="app-shell bg-page min-h-screen lg:grid lg:grid-cols-[230px_1fr]">
       <a
         href="#app-main"
         className="bg-ink fixed top-[-60px] left-4 z-[100] rounded-sm px-4 py-2.5 text-white focus:top-3"
@@ -293,11 +296,12 @@ export function AppShell({ area, children }: { area: Area; children: ReactNode }
             </Dialog.Root>
             <Breadcrumbs area={area} pathname={pathname} role={user.role} />
           </div>
-          <div className="hidden items-center gap-3 text-sm sm:flex">
-            <span className="border-line bg-surface text-ink rounded-full border px-3 py-1 text-xs font-semibold">
+          <div className="ml-auto flex items-center gap-3 text-sm">
+            <NotificationBell userId={user.id} role={user.role} />
+            <span className="border-line bg-surface text-ink hidden rounded-full border px-3 py-1 text-xs font-semibold sm:inline-block">
               {user.tenantName ?? "Platform"}
             </span>
-            <span className="border-line bg-surface shadow-card flex items-center gap-2.5 rounded-full border py-1.5 pr-4 pl-1.5">
+            <span className="border-line bg-surface shadow-card hidden items-center gap-2.5 rounded-full border py-1.5 pr-4 pl-1.5 sm:flex">
               <Avatar name={user.name} className="bg-deep-green text-accent-light size-9" />
               <span className="leading-tight">
                 <span className="text-ink block text-sm font-bold">{user.name}</span>

@@ -1,4 +1,4 @@
-import { classifyHost } from "./hosts";
+import { classifyHost, mainSiteOrigin } from "./hosts";
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -165,6 +165,29 @@ export async function createLogin(
 }
 
 /**
+ * E-mails a fresh "set your password" link to someone who already has a login at this school. The
+ * link only ever goes to the account's own address.
+ */
+export async function resendInvite(
+  tenantId: string,
+  schoolName: string,
+  userId: string,
+  origin: string,
+) {
+  const user = await prisma.user.findFirst({
+    where: { id: userId, memberships: { some: { tenantId } } },
+  });
+  if (!user) throw new HttpError(404, "no_login", "This person has no login at this school yet.");
+  const token = await createToken(user.id, "invite", 48);
+  await sendMail({
+    tenantId,
+    to: user.email,
+    subject: `Your ${schoolName} account`,
+    body: `Hello ${user.name},\n\nHere is a new link to set your password for ${schoolName} (valid for 48 hours):\n${origin}/reset-password?token=${token}\n`,
+  });
+}
+
+/**
  * The address a link in an e-mail should point to. In production it must be one of our own
  * addresses (never a Host header an attacker chose); anywhere else the request's own address is used.
  */
@@ -174,7 +197,7 @@ export const originOf = (req: Request) => {
   if (process.env.NODE_ENV === "production" && classifyHost(host).kind === "other") {
     const fallback = process.env.APP_ORIGIN;
     if (fallback) return fallback.replace(/\/$/, "");
-    return `https://school.${process.env.ZAQSA_BASE_DOMAIN ?? "zaqsa.com"}`;
+    return mainSiteOrigin();
   }
   return `${u.protocol}//${host.split(",")[0]!.trim()}`;
 };

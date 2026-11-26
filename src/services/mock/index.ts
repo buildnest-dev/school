@@ -260,15 +260,43 @@ export function createMockServices(): Services {
                     { label: "Fees collected", value: "₹38.6L", hint: "of ₹52.0L due" },
                     { label: "Pending approvals", value: String(pending.length) },
                   ];
+        // Roles without money access: the same shape as the server's answer for them.
+        const open = rows.enquiries.filter((e) => e.stage !== "enrolled" && e.stage !== "declined");
+        const enquiryStats: Stat[] = [
+          {
+            label: "New enquiries",
+            value: String(rows.enquiries.filter((e) => e.stage === "new").length),
+            hint: "Not looked at yet",
+          },
+          { label: "Open enquiries", value: String(open.length) },
+          { label: "Enrollment", value: "1,248", hint: "+36 this term" },
+        ];
+        const limited: Partial<Record<Role, Stat[]>> = {
+          vice_principal: [
+            { label: "Enrollment", value: "1,248", hint: "+36 this term" },
+            { label: "Staff", value: String(rows.staff.length) },
+            { label: "Present today", value: "94.2%", hint: "4 classes pending" },
+          ],
+          admission_officer: enquiryStats,
+          reception: enquiryStats,
+          hr: [
+            { label: "Staff", value: String(rows.staff.length) },
+            {
+              label: "Leave requests",
+              value: String(rows.leaves.filter((l) => l.status === "pending").length),
+              hint: "Waiting for a decision",
+            },
+          ],
+        };
         return wait({
-          stats,
+          stats: limited[role] ?? stats,
           attendanceByWing: [
             { label: "Primary", pct: 96 },
             { label: "Middle", pct: 93 },
             { label: "Secondary", pct: 91 },
             { label: "Sr. Secondary", pct: 95 },
           ],
-          pendingApprovals: clone(pending).slice(0, 4),
+          pendingApprovals: limited[role] ? [] : clone(pending).slice(0, 4),
           upcoming: clone(rows.calendar.filter((c) => c.date >= today)).slice(0, 4),
         });
       },

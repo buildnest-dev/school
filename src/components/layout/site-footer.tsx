@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BRAND, PLACEHOLDER_PAGES, placeholderHref, type PlaceholderSlug } from "@/lib/site";
+import { BRAND, INFO_TITLES, infoHref, type InfoSlug } from "@/lib/site";
 import { Container } from "@/components/ui/primitives";
 import { BrandLogo } from "./brand-logo";
 
@@ -27,11 +27,11 @@ const COLUMNS = [
   },
 ] as const;
 
-const RESOURCE_SLUGS: PlaceholderSlug[] = ["guides", "faq", "help", "contact"];
+const RESOURCE_SLUGS: InfoSlug[] = ["guides", "faq", "help", "contact"];
 
 export function SiteFooter() {
   return (
-    <footer className="on-dark text-on-dark bg-[#0a1f21] pt-18 text-[0.92rem]">
+    <footer className="on-dark text-on-dark bg-sidebar pt-18 text-[0.92rem]">
       <Container className="grid gap-8 pb-12 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
         <div className="sm:col-span-2 lg:col-span-1">
           <BrandLogo onDark />
@@ -40,10 +40,9 @@ export function SiteFooter() {
             separate workspace for every institution.
           </p>
           <p className="mt-4">
-            Contact:{" "}
-            <span className="border-on-dark border-b border-dashed text-white">
-              [email address to be added]
-            </span>
+            <Link href={infoHref("contact")} className={linkClass}>
+              Contact us
+            </Link>
           </p>
         </div>
         {COLUMNS.map((col) => (
@@ -69,8 +68,8 @@ export function SiteFooter() {
           <ul>
             {RESOURCE_SLUGS.map((slug) => (
               <li key={slug}>
-                <Link href={placeholderHref(slug)} className={linkClass}>
-                  {PLACEHOLDER_PAGES[slug]}
+                <Link href={infoHref(slug)} className={linkClass}>
+                  {INFO_TITLES[slug]}
                 </Link>
               </li>
             ))}
@@ -84,8 +83,8 @@ export function SiteFooter() {
         <ul className="flex gap-6">
           {(["privacy", "terms"] as const).map((slug) => (
             <li key={slug}>
-              <Link href={placeholderHref(slug)} className={linkClass}>
-                {PLACEHOLDER_PAGES[slug]}
+              <Link href={infoHref(slug)} className={linkClass}>
+                {INFO_TITLES[slug]}
               </Link>
             </li>
           ))}

@@ -41,7 +41,9 @@ export function QuickAdd({
 }) {
   const { toast } = useToast();
   const initial = () =>
-    Object.fromEntries(fields.map((f) => [f.key, f.type === "select" ? (f.options?.[0]?.value ?? "") : ""]));
+    Object.fromEntries(
+      fields.map((f) => [f.key, f.type === "select" ? (f.options?.[0]?.value ?? "") : ""]),
+    );
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(initial);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -151,7 +153,9 @@ export function ApiAction({
   body,
   variant = "ghost",
   onDone,
+  success,
 }: {
+  success?: string;
   label: string;
   method: "PATCH" | "POST" | "DELETE";
   endpoint: string;
@@ -165,6 +169,7 @@ export function ApiAction({
     setBusy(true);
     try {
       await apiRequest(endpoint, { method, body });
+      if (success) toast({ title: success });
       onDone();
     } catch (err) {
       toast({

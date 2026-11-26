@@ -21,7 +21,7 @@ test("home page renders the hero and key sections without console errors", async
 });
 
 test("placeholder destinations resolve instead of 404ing", async ({ page }) => {
-  for (const path of ["/sign-in", "/get-started", "/placeholder/privacy"]) {
+  for (const path of ["/sign-in", "/get-started", "/info/privacy"]) {
     const res = await page.goto(path);
     expect(res?.status()).toBe(200);
   }
@@ -49,7 +49,8 @@ test("teacher can mark attendance end to end and is kept out of school admin", a
   await page.getByRole("button", { name: "Yes, submit" }).click();
   await expect(page.getByText("Attendance has been recorded.")).toBeVisible();
   await page.goto("/school");
-  await expect(page.getByRole("heading", { name: /don’t have access/ })).toBeVisible();
+  // A page the role may not use is not shown: the person is sent to their own home.
+  await page.waitForURL("**/teacher");
 });
 
 test("signed-out visitors are sent to sign-in", async ({ page }) => {

@@ -55,6 +55,8 @@ model Tenant {
   graceDays    Int       @default(7)
   wentLiveAt   DateTime?
   maxStudents  Int? // plan limit on active students; null = no limit
+  /// Comma-separated feature keys ZAQSA has switched off (src/config/features.ts). Empty = all on.
+  disabledFeatures String @default("")
   udiseCode    String? // optional UDISE+ school code
   phone        String?
   email        String?
@@ -100,6 +102,24 @@ model Tenant {
   examSlots         ExamSlot[]
   ptmSlots          PtmSlot[]
   syllabus          SyllabusProgress[]
+  materials         StudyMaterial[]
+  lessonPlans       LessonPlan[]
+  teacherMessages   TeacherMessage[]
+  achievements      Achievement[]
+  schoolRecords SchoolRecord[]
+  staffAttendance StaffAttendance[]
+  substitutions Substitution[]
+  homeworkSubmissions HomeworkSubmission[]
+  quizzes Quiz[]
+  quizAttempts QuizAttempt[]
+  polls Poll[]
+  pollVotes PollVote[]
+  noticeAcks NoticeAck[]
+  attachments Attachment[]
+  stockItems StockItem[]
+  stockMoves StockMove[]
+  salaryStructures SalaryStructure[]
+  payslips Payslip[]
 }
 
 model TenantBoard {
@@ -258,6 +278,7 @@ model Student {
   status        String            @default("active") // active | alumni | transferred
   userId        String? // login of the student, when they have one
   importBatchId String? // set when the student came from a bulk import (allows undo)
+  needsBus      Boolean           @default(false) // asked for the school bus at admission
   tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   section       Section?          @relation(fields: [sectionId], references: [id])
   guardian      Guardian?         @relation(fields: [guardianId], references: [id])
@@ -1121,4 +1142,277 @@ model SyllabusProgress {
 
   @@unique([sectionId, subjectId])
   @@index([tenantId])
+}
+
+// ---------- Teaching: material, lesson plans, messages, achievements ----------
+
+model StudyMaterial {
+  id          String   @id @default(cuid())
+  tenantId    String
+  sectionId   String
+  subjectId   String
+  title       String
+  description String   @default("")
+  link        String   @default("") // https link to the file or page
+  createdById String // User.id of the author
+  authorName  String
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, sectionId])
+}
+
+model LessonPlan {
+  id          String   @id @default(cuid())
+  tenantId    String
+  sectionId   String
+  subjectId   String
+  title       String
+  objectives  String   @default("")
+  plannedOn   DateTime
+  status      String   @default("planned") // planned | taught
+  createdById String
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdById, plannedOn])
+}
+
+model TeacherMessage {
+  id           String   @id @default(cuid())
+  tenantId     String
+  studentId    String
+  senderUserId String
+  senderName   String
+  body         String
+  sentAt       DateTime @default(now())
+  reply        String    @default("")
+  repliedAt    DateTime?
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, studentId, sentAt])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  title       String
+  category    String // academic | sports | arts | service | other
+  awardedOn   DateTime
+  note        String   @default("")
+  createdById String
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, studentId])
+}
+
+// ---------- Registers, staff day, learning, uploads, stock, pay ----------
+
+model SchoolRecord {
+  id       String @id @default(cuid())
+  tenantId String
+  module        String
+  title         String
+  status        String
+  data          String    @default("{}") // JSON: the register's own fields
+  studentId     String?
+  staffId       String?
+  onDate        DateTime?
+  createdById   String
+  createdByName String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, module, createdAt])
+  @@index([tenantId, studentId])
+}
+
+model StaffAttendance {
+  id       String @id @default(cuid())
+  tenantId String
+  staffId String
+  date    DateTime
+  status  String // present | absent | late | half_day | leave
+  markedBy String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, date])
+  @@index([tenantId, date])
+}
+
+model Substitution {
+  id       String @id @default(cuid())
+  tenantId String
+  date          DateTime
+  sectionId     String
+  slot          Int
+  absentStaffId String
+  coverStaffId  String
+  createdBy     String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, date, slot])
+  @@index([tenantId, date])
+}
+
+model HomeworkSubmission {
+  id       String @id @default(cuid())
+  tenantId String
+  homeworkId  String
+  studentId   String
+  text        String    @default("")
+  link        String    @default("")
+  submittedAt DateTime  @default(now())
+  grade       String    @default("")
+  feedback    String    @default("")
+  checkedAt   DateTime?
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([homeworkId, studentId])
+  @@index([tenantId, studentId])
+}
+
+model Quiz {
+  id       String @id @default(cuid())
+  tenantId String
+  sectionId     String
+  subjectId     String
+  title         String
+  questions     String // JSON [{ text, options[], answer, marks }]
+  durationMin   Int      @default(15)
+  status        String   @default("draft") // draft | open | closed
+  createdById   String
+  createdByName String
+  createdAt     DateTime @default(now())
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, sectionId])
+}
+
+model QuizAttempt {
+  id       String @id @default(cuid())
+  tenantId String
+  quizId      String
+  studentId   String
+  answers     String    @default("[]")
+  score       Int       @default(0)
+  total       Int       @default(0)
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, studentId])
+  @@index([tenantId, studentId])
+}
+
+model Poll {
+  id       String @id @default(cuid())
+  tenantId String
+  question    String
+  options     String // JSON string[]
+  audience    String   @default("all") // all | staff | parents | students
+  status      String   @default("open") // open | closed
+  createdById String
+  createdAt   DateTime @default(now())
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+}
+
+model PollVote {
+  id       String @id @default(cuid())
+  tenantId String
+  pollId String
+  userId String
+  choice Int
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([tenantId])
+}
+
+model NoticeAck {
+  id       String @id @default(cuid())
+  tenantId String
+  noticeId String
+  userId   String
+  userName String
+  at       DateTime @default(now())
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeId, userId])
+  @@index([tenantId])
+}
+
+model Attachment {
+  id       String @id @default(cuid())
+  tenantId String
+  entity       String // student | material | homework
+  entityId     String
+  name         String
+  mime         String
+  size         Int
+  bytes        Bytes // small files only; moves to object storage later
+  uploadedById String
+  createdAt    DateTime @default(now())
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, entity, entityId])
+}
+
+model StockItem {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  category String
+  unit     String @default("pcs")
+  qty      Int    @default(0)
+  minQty   Int    @default(0)
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+}
+
+model StockMove {
+  id       String @id @default(cuid())
+  tenantId String
+  itemId String
+  change Int
+  note   String   @default("")
+  byName String
+  at     DateTime @default(now())
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, itemId, at])
+}
+
+model SalaryStructure {
+  id       String @id @default(cuid())
+  tenantId String
+  staffId    String @unique
+  earnings   String // JSON [{ label, rupees }]
+  deductions String // JSON [{ label, rupees }]
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Payslip {
+  id       String @id @default(cuid())
+  tenantId String
+  staffId    String
+  month      String // YYYY-MM
+  earnings   String
+  deductions String
+  netPaise   Int
+  status     String    @default("draft") // draft | paid
+  paidOn     DateTime?
+  createdAt  DateTime  @default(now())
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, month])
+  @@index([tenantId, month])
 }

@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { env, todayIso } from "@/config/env";
+import { linkOn } from "@/config/features";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
+import { useSession } from "@/hooks/use-session";
 import { todayLabel } from "../shared/format";
 
 const greeting = () => {
@@ -17,6 +19,7 @@ const greeting = () => {
 };
 
 export function TeacherHome() {
+  const off = useSession().user?.disabledFeatures;
   const s = useServices();
   const home = useAsync(() => s.teacher.home(), [s]);
   const classes = useAsync(() => s.teacher.classes(), [s]);
@@ -78,21 +81,23 @@ export function TeacherHome() {
                   hint: "Ask for time off",
                 },
               ]),
-        ].map(({ href, icon: I, title, hint }) => (
-          <Link
-            key={href}
-            href={href}
-            className="border-line bg-surface hover:border-ink flex min-h-20 items-center gap-4 rounded-lg border p-4 transition-colors"
-          >
-            <span className="bg-paper-2 text-ink grid size-12 flex-none place-items-center rounded-lg">
-              <I className="size-6" aria-hidden="true" />
-            </span>
-            <span>
-              <span className="block text-lg font-semibold">{title}</span>
-              <span className="text-muted text-sm">{hint}</span>
-            </span>
-          </Link>
-        ))}
+        ]
+          .filter((t) => linkOn(t.href, off))
+          .map(({ href, icon: I, title, hint }) => (
+            <Link
+              key={href}
+              href={href}
+              className="border-line bg-surface hover:border-ink flex min-h-20 items-center gap-4 rounded-lg border p-4 transition-colors"
+            >
+              <span className="bg-paper-2 text-ink grid size-12 flex-none place-items-center rounded-lg">
+                <I className="size-6" aria-hidden="true" />
+              </span>
+              <span>
+                <span className="block text-lg font-semibold">{title}</span>
+                <span className="text-muted text-sm">{hint}</span>
+              </span>
+            </Link>
+          ))}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">

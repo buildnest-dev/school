@@ -1,4 +1,5 @@
 import { env } from "@/config/env";
+import { sampleResponse } from "@/mocks/live-samples";
 import type { ApiErrorBody } from "@/types";
 
 /** Error thrown for any non-2xx response. `fieldErrors` is populated for HTTP 422 validation errors. */
@@ -42,6 +43,10 @@ function buildUrl(path: string, query?: Query) {
  * - JSON in, JSON out. Errors follow `ApiErrorBody`.
  */
 export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+  if (env.dataSource === "mock") {
+    const sample = sampleResponse(path, opts.method ?? "GET");
+    if (sample !== undefined) return sample as T;
+  }
   if (!env.apiBaseUrl) {
     throw new ApiError(0, {
       code: "not_configured",

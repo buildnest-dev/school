@@ -14,6 +14,7 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { env } from "@/config/env";
+import { linkOn } from "@/config/features";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { useSession } from "@/hooks/use-session";
@@ -38,6 +39,7 @@ export function FamilyHome() {
   if (a.error) return <ErrorState message={a.error.message} onRetry={a.reload} />;
   if (!a.child || !briefing.data) return <LoadingBlock />;
   const isParent = user?.role === "parent";
+  const off = user?.disabledFeatures;
   return (
     <ChildPage
       banner
@@ -81,16 +83,18 @@ export function FamilyHome() {
                   ...(env.dataSource === "api" ? [] : [["/student/exams", "Exams"]]),
                   ["/student/results", "Results"],
                 ]
-            ).map(([href, label]) => (
-              <Link
-                key={href}
-                href={href!}
-                className="border-line bg-surface hover:border-ink flex min-h-14 items-center justify-between rounded-lg border px-4 text-lg font-semibold"
-              >
-                {label}
-                <span aria-hidden="true">›</span>
-              </Link>
-            ))}
+            )
+              .filter(([href]) => linkOn(href!, off))
+              .map(([href, label]) => (
+                <Link
+                  key={href}
+                  href={href!}
+                  className="border-line bg-surface hover:border-ink flex min-h-14 items-center justify-between rounded-lg border px-4 text-lg font-semibold"
+                >
+                  {label}
+                  <span aria-hidden="true">›</span>
+                </Link>
+              ))}
           </div>
         </div>
       )}

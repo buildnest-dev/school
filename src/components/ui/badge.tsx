@@ -55,6 +55,7 @@ const STATUS: Record<string, [string, Tone, LucideIcon?]> = {
   enrolled: ["Enrolled", "ok"],
   declined: ["Declined", "bad"],
   planned: ["Planned", "neutral"],
+  taught: ["Taught", "ok"],
   planning: ["Planning", "info"],
   confirmed: ["Confirmed", "ok"],
   done: ["Done", "ok"],

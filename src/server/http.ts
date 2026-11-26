@@ -10,7 +10,9 @@ export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response
     try {
       const first = args[0];
       const method = first instanceof Request ? first.method : "GET";
-      return await requestContext.run({ method }, () => fn(...args));
+      const path =
+        first instanceof Request ? new URL(first.url).pathname.replace(/^\/api/, "") : "";
+      return await requestContext.run({ method, path }, () => fn(...args));
     } catch (e) {
       if (e instanceof HttpError)
         return NextResponse.json({ code: e.code, message: e.message }, { status: e.status });

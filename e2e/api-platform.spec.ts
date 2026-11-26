@@ -209,7 +209,7 @@ test("families cannot sign in until the school is live", async () => {
       await anon.post("/api/auth/reset-password", { data: { token, password: NEW_PASSWORD } })
     ).status(),
   ).toBe(200);
-  expect(await loginStatus(parentMail, NEW_PASSWORD)).toBe(401); // school still provisioned
+  expect(await loginStatus(parentMail, NEW_PASSWORD)).toBe(403); // school still provisioned: the parent is told it is not live yet
 
   const host = (h: string) => anon.get(`/api/public/resolve-host?host=${h}`);
   expect(await (await host(`${slug}.parents.zaqsa.com`)).json()).toMatchObject({

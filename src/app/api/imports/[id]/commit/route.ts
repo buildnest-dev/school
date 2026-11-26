@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { announceImport } from "@/server/admission-alerts";
 import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
@@ -60,6 +61,10 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
       return rows.length;
     },
     { timeout: 60_000 },
+  );
+  await announceImport(
+    tenantId,
+    rows.map((r) => r.sectionId),
   );
   return NextResponse.json({
     ok: true,

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
+import { linkOn } from "@/config/features";
+import { useSession } from "@/hooks/use-session";
 import { ApiError, apiRequest } from "@/lib/api/client";
 
 interface ClassRow {
@@ -23,6 +25,7 @@ const empty = () => ({
   phone: "",
   email: "",
   login: true,
+  bus: false,
 });
 
 /**
@@ -31,6 +34,8 @@ const empty = () => ({
  */
 export function AddStudent({ onCreated }: { onCreated: () => void }) {
   const { toast } = useToast();
+  const { user } = useSession();
+  const hasBus = linkOn("/school/transport", user?.disabledFeatures);
   const [open, setOpen] = useState(false);
   const [classes, setClasses] = useState<ClassRow[] | null>(null);
   const [form, setForm] = useState(empty);
@@ -49,7 +54,7 @@ export function AddStudent({ onCreated }: { onCreated: () => void }) {
 
   const set = (k: keyof ReturnType<typeof empty>, v: string | boolean) =>
     setForm((f) => ({ ...f, [k]: v }));
-  const bind = (k: Exclude<keyof ReturnType<typeof empty>, "login">) => ({
+  const bind = (k: Exclude<keyof ReturnType<typeof empty>, "login" | "bus">) => ({
     value: form[k],
     onChange: (e: { target: { value: string } }) => set(k, e.target.value),
   });
@@ -77,13 +82,14 @@ export function AddStudent({ onCreated }: { onCreated: () => void }) {
     setErrors({});
     try {
       const email = form.email.trim();
-      const r = await apiRequest<{ id: string }>("/students", {
+      const r = await apiRequest<{ id: string; message: string }>("/students", {
         method: "POST",
         body: {
           name: form.name,
           dob: form.dob,
           gender: form.gender,
           sectionId: form.sectionId,
+          needsBus: form.bus,
           guardian: {
             name: form.guardianName,
             relation: form.relation,
@@ -92,13 +98,13 @@ export function AddStudent({ onCreated }: { onCreated: () => void }) {
           },
         },
       });
-      let note = "Student added.";
+      let note = r.message;
       if (form.login && email) {
         try {
           await apiRequest(`/students/${r.id}/guardian-login`, { method: "POST", body: {} });
-          note = `Student added. A password link was e-mailed to ${email}.`;
+          note = `${r.message} A password link was e-mailed to ${email}.`;
         } catch (err) {
-          note = `Student added, but the parent login failed: ${err instanceof Error ? err.message : "try again from the student page"}`;
+          note = `${r.message} But the parent login failed: ${err instanceof Error ? err.message : "try again from the student page"}`;
         }
       }
       toast({ title: "Done", description: note });
@@ -195,6 +201,16 @@ export function AddStudent({ onCreated }: { onCreated: () => void }) {
             <Field id="as-email" label="Guardian's e-mail" error={fe("email")}>
               {(a) => <Input {...a} type="email" autoComplete="off" {...bind("email")} />}
             </Field>
+            {hasBus ? (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.bus}
+                  onChange={(e) => set("bus", e.target.checked)}
+                />
+                Will use the school bus
+              </label>
+            ) : null}
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"

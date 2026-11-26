@@ -4,7 +4,13 @@ import { like, prisma } from "@/server/db";
 import { adminRow, EnquiryBody, STAGES } from "@/server/admissions";
 import { assertSameOrigin, handle } from "@/server/http";
 
-const ROLES = ["school_owner", "principal", "vice_principal", "admission_officer"] as const;
+const ROLES = [
+  "school_owner",
+  "principal",
+  "vice_principal",
+  "admission_officer",
+  "reception",
+] as const;
 
 export const GET = handle(async (req: Request) => {
   const { tenantId } = await requireTenant([...ROLES]);

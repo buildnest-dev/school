@@ -282,9 +282,7 @@ function listService<K extends ResourceKey>(key: K): ListService<ResourceMap[K]>
         };
       // The rows that mention the words come first, the closest match at the very top. Lists the
       // server does not search come back whole, so the rows that do not match are dropped here.
-      const scored = shaped
-        .map((r, i) => ({ r, i, ...matchScore(r, words) }))
-        .filter((x) => x.hit);
+      const scored = shaped.map((r, i) => ({ r, i, ...matchScore(r, words) })).filter((x) => x.hit);
       scored.sort((x, y) => x.score - y.score || x.i - y.i);
       const items = scored.map((x) => x.r);
       // Only rows that really show what was typed are listed, even when the server sent more.
@@ -410,7 +408,8 @@ export function createApiServices(): Services {
           type: input.type.toLowerCase(),
           purpose: input.purpose,
         }),
-      verify: () => notBuilt(),
+      verify: (certNo) =>
+        apiRequest(`/certificates/verify?serial=${encodeURIComponent(certNo.trim())}`),
     },
     rollover: {
       checks: () => notBuilt(),

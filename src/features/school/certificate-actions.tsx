@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -79,9 +80,14 @@ export function CertificateActions({ row, onDone }: { row: Row; onDone: () => vo
               </Button>
             </>
           ) : (
-            <Button size="sm" variant="ghost" onClick={() => setMode("cancel")}>
-              Cancel certificate
-            </Button>
+            <>
+              <Button asChild size="sm">
+                <Link href={`/school/print/certificate/${id}`}>View and print</Link>
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setMode("cancel")}>
+                Cancel certificate
+              </Button>
+            </>
           )}
         </div>
       ) : null}

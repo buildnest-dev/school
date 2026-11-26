@@ -16,6 +16,8 @@ import type { Role } from "@/types";
 import { NewSchool } from "../platform/new-school";
 import { SchoolActions } from "../platform/school-actions";
 import { AddStudent } from "../school/add-student";
+import { EnquiryActions } from "../school/admit";
+import { BusRequests } from "../school/bus-requests";
 import { CertificateActions } from "../school/certificate-actions";
 import { fmtDate, fmtDateTime, prettyKey, rupees } from "./format";
 import { ApiAction, QuickAdd } from "./quick-add";
@@ -33,7 +35,7 @@ export interface TableConfig {
   actions?: (role: Role, reload: () => void) => ReactNode;
   emptyHint?: string;
   /** Buttons under the details dialog; call done() after a change to reload the table. */
-  detailActions?: (row: Record<string, unknown>, done: () => void) => ReactNode;
+  detailActions?: (row: Record<string, unknown>, done: () => void, role: Role) => ReactNode;
   initialSort?: { key: string; order: "asc" | "desc" };
 }
 
@@ -47,9 +49,24 @@ const opts = (...v: string[]): FilterDef["options"] =>
 
 const SCHOOL_ADMIN: Role[] = ["school_owner", "principal"];
 
-/** Staff kinds the school can add here; the first four can also be given a login. */
+/** Staff kinds the school can add here. Drivers and "other" get no login. */
+const WITH_LOGIN = [
+  "principal",
+  "vice_principal",
+  "admission_officer",
+  "hr",
+  "reception",
+  "teacher",
+  "accountant",
+  "librarian",
+  "admin",
+];
 const STAFF_LOGIN_ROLES = [
   { value: "principal", label: "Principal" },
+  { value: "vice_principal", label: "Vice principal" },
+  { value: "admission_officer", label: "Admission officer" },
+  { value: "hr", label: "HR" },
+  { value: "reception", label: "Reception" },
   { value: "teacher", label: "Teacher" },
   { value: "accountant", label: "Accountant" },
   { value: "librarian", label: "Librarian" },
@@ -76,7 +93,9 @@ export const TABLES: Record<string, TableConfig> = {
         key: "status",
         header: "Status",
         // "Trial" is a plan; a school that is not live yet is still being set up.
-        render: (r) => <StatusBadge status={r.status === "trial" ? "setting_up" : String(r.status)} />,
+        render: (r) => (
+          <StatusBadge status={r.status === "trial" ? "setting_up" : String(r.status)} />
+        ),
       },
       { key: "campuses", header: "Campuses", sortable: true },
       {
@@ -222,7 +241,31 @@ export const TABLES: Record<string, TableConfig> = {
   },
   "school-admissions": {
     resource: "enquiries",
+    actions: (_role, reload) =>
+      env.dataSource === "api" ? (
+        <QuickAdd
+          label="Add enquiry"
+          title="Add an admission enquiry"
+          endpoint="/admissions/enquiries"
+          onCreated={reload}
+          fields={[
+            { key: "studentName", label: "Child's name" },
+            { key: "guardianName", label: "Parent's name" },
+            { key: "guardianPhone", label: "Phone (10 digits)" },
+            { key: "guardianEmail", label: "Email", required: false },
+            {
+              key: "source",
+              label: "How they reached you",
+              type: "select",
+              options: opts("walk-in", "phone", "website", "referral", "other"),
+            },
+            { key: "notes", label: "Notes", type: "textarea", required: false },
+          ]}
+        />
+      ) : null,
     searchPlaceholder: "Search enquiries",
+    detailActions: (row, done, role) =>
+      env.dataSource === "api" ? <EnquiryActions row={row} done={done} role={role} /> : null,
     columns: [
       { key: "studentName", header: "Child", sortable: true },
       { key: "applyingFor", header: "Applying for", sortable: true },
@@ -244,7 +287,7 @@ export const TABLES: Record<string, TableConfig> = {
     resource: "staff",
     searchPlaceholder: "Search staff",
     actions: (role, reload) =>
-      SCHOOL_ADMIN.includes(role) && env.dataSource === "api" ? (
+      (SCHOOL_ADMIN.includes(role) || role === "hr") && env.dataSource === "api" ? (
         <QuickAdd
           label="Add staff"
           title="Add a staff member"
@@ -257,7 +300,11 @@ export const TABLES: Record<string, TableConfig> = {
               key: "role",
               label: "Role",
               type: "select",
-              options: STAFF_LOGIN_ROLES,
+              // HR keeps staff records but cannot add a principal (the server refuses it too).
+              options:
+                role === "hr"
+                  ? STAFF_LOGIN_ROLES.filter((o) => o.value !== "principal")
+                  : STAFF_LOGIN_ROLES,
             },
             { key: "phone", label: "Phone (10 digits)", required: false },
             { key: "email", label: "Email", required: false },
@@ -265,11 +312,12 @@ export const TABLES: Record<string, TableConfig> = {
           ]}
         />
       ) : null,
-    detailActions: (row, done) =>
+    detailActions: (row, done, role) =>
       env.dataSource === "api" &&
+      SCHOOL_ADMIN.includes(role) &&
       !row.hasLogin &&
       row.status === "active" &&
-      ["principal", "teacher", "accountant", "librarian", "admin"].includes(String(row.role)) ? (
+      WITH_LOGIN.includes(String(row.role)) ? (
         <QuickAdd
           label="Create login"
           title={`Login for ${String(row.name)}`}
@@ -279,7 +327,18 @@ export const TABLES: Record<string, TableConfig> = {
           fields={[{ key: "email", label: "Their email" }]}
         />
       ) : row.hasLogin ? (
-        <p className="text-muted mt-4 text-sm">This person already has a login.</p>
+        <div className="mt-4 grid gap-2">
+          <p className="text-muted text-sm">This person already has a login.</p>
+          {env.dataSource === "api" && SCHOOL_ADMIN.includes(role) ? (
+            <ApiAction
+              label="Resend invite"
+              method="POST"
+              endpoint={`/staff/${row.id}/invite`}
+              success="Invite sent again by e-mail."
+              onDone={done}
+            />
+          ) : null}
+        </div>
       ) : null,
     columns: [
       { key: "name", header: "Name", sortable: true },
@@ -596,6 +655,10 @@ export const TABLES: Record<string, TableConfig> = {
   "school-routes": {
     resource: "routes",
     searchPlaceholder: "Search routes",
+    actions: (role, reload) =>
+      (SCHOOL_ADMIN.includes(role) || role === "transport") && env.dataSource === "api" ? (
+        <BusRequests onChanged={reload} />
+      ) : null,
     columns: [
       { key: "name", header: "Route", sortable: true },
       { key: "stops", header: "Stops", sortable: true },
@@ -681,10 +744,14 @@ export function ResourceTableScreen({ screen }: ScreenProps) {
             : null}
         </dl>
         {detail
-          ? cfg.detailActions?.(detail, () => {
-              setDetail(null);
-              setReloadKey((k) => k + 1);
-            })
+          ? cfg.detailActions?.(
+              detail,
+              () => {
+                setDetail(null);
+                setReloadKey((k) => k + 1);
+              },
+              user.role,
+            )
           : null}
       </Dialog>
     </>

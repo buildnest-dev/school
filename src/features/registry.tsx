@@ -1,5 +1,6 @@
 "use client";
 
+import { PlatformFeatures } from "./platform/features";
 import type { ComponentType } from "react";
 import {
   FamilyAttendance,
@@ -32,6 +33,17 @@ import { PaymentDetails } from "./school/payment-details";
 import { PaymentProofs } from "./school/payment-proofs";
 import { Refunds } from "./school/refunds";
 import { Rollover } from "./school/rollover";
+import { LiveRollover } from "./school/live-rollover";
+import { StaffAchievements } from "./school/achievements";
+import { PlatformConfig } from "./platform/config";
+import {
+  FamilyAchievements,
+  FamilyMaterials,
+  ParentDocuments,
+  ParentMessages,
+  ParentProfile,
+} from "./family/extras";
+import { TeacherLessons, TeacherMaterials, TeacherMessages } from "./teacher/classwork";
 import { Curriculum } from "./school/curriculum";
 import { LiveReports, LiveResults } from "./school/live-reports";
 import { PtmAdmin } from "./school/ptm-admin";
@@ -39,10 +51,21 @@ import { LiveSyllabus } from "./teacher/live-syllabus";
 import { Settings } from "./school/settings";
 import { SchoolTimetable } from "./school/timetable";
 import { ResourceTableScreen, TABLES } from "./shared/resource-table";
-import { PlannedScreen, type ScreenProps } from "./shared/planned-screen";
+import type { ScreenProps } from "./shared/planned-screen";
 import { AttendanceClass, AttendancePick } from "./teacher/attendance";
 import { HomeworkList, HomeworkNew } from "./teacher/homework";
 import { MarksClass, MarksPick } from "./teacher/marks";
+import { RegisterHub, RegisterPage } from "./shared/registers";
+import { CoverPage, StaffAttendancePage, TeacherCovers } from "./school/staff-day";
+import { EarlyWarning, ReportBuilder } from "./school/insights";
+import { MyPayslips, PayrollPage } from "./school/payroll";
+import { SeatingPage } from "./school/seating";
+import { StockPage } from "./school/stock";
+import { FamilyAnswers, FamilyQuizzes } from "./family/learning";
+import { TeacherQuizzes, TeacherSubmissions } from "./teacher/learning";
+import { PollsPage } from "./shared/community";
+import { StudentFiles } from "./shared/files";
+import { PrintCentre, PrintScreen } from "./shared/print";
 import { LeavePage, Syllabus, TeacherClasses, TeacherToday } from "./teacher/misc";
 import { TeacherHome } from "./teacher/teacher-home";
 
@@ -53,7 +76,7 @@ const plain = (Comp: ComponentType): C =>
   };
 
 /**
- * screen id (config/screens.ts) → component. Screens with status "planned" have no entry and render
+ * screen id (config/screens.ts) → component. A screen with no entry renders
  * <PlannedScreen/>. List-style screens are configured in shared/resource-table.tsx (TABLES).
  */
 export const SCREEN_COMPONENTS: Record<string, C> = {
@@ -80,28 +103,25 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "school-notice-new": plain(NoticeNew),
   "school-certificate-new": plain(CertificateNew),
   "school-certificate-verify": plain(CertificateVerify),
-  "school-rollover": plain(Rollover),
+  "school-rollover": plain(env.dataSource === "api" ? LiveRollover : Rollover),
+  "school-achievements": plain(StaffAchievements),
+  "platform-config": plain(PlatformConfig),
+  "platform-features": plain(PlatformFeatures),
+  "teacher-materials": plain(TeacherMaterials),
+  "teacher-lessons": plain(TeacherLessons),
+  "teacher-messages": plain(TeacherMessages),
+  "teacher-achievements": plain(StaffAchievements),
+  "parent-documents": plain(ParentDocuments),
+  "parent-messages": plain(ParentMessages),
+  "parent-achievements": plain(FamilyAchievements),
+  "parent-profile": plain(ParentProfile),
+  "student-materials": plain(FamilyMaterials),
+  "student-achievements": plain(FamilyAchievements),
   "school-reports": plain(env.dataSource === "api" ? LiveReports : Reports),
-  // Real timetable with the live backend; the sample build keeps the placeholder.
-  "school-curriculum":
-    env.dataSource === "api"
-      ? plain(Curriculum)
-      : function Placeholder(p: ScreenProps) {
-          return <PlannedScreen screen={p.screen} />;
-        },
-  "school-timetable":
-    env.dataSource === "api"
-      ? plain(SchoolTimetable)
-      : function Placeholder(p: ScreenProps) {
-          return <PlannedScreen screen={p.screen} />;
-        },
+  "school-curriculum": plain(Curriculum),
+  "school-timetable": plain(SchoolTimetable),
   "school-settings": plain(Settings),
-  "school-ptm":
-    env.dataSource === "api"
-      ? plain(PtmAdmin)
-      : function Placeholder(p: ScreenProps) {
-          return <PlannedScreen screen={p.screen} />;
-        },
+  "school-ptm": plain(PtmAdmin),
 
   "teacher-home": plain(TeacherHome),
   "teacher-today": plain(TeacherToday),
@@ -123,12 +143,7 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "parent-calendar": CalendarScreen,
   "parent-timetable": plain(FamilyTimetable),
   "parent-ptm": plain(ParentPtm),
-  "parent-queries":
-    env.dataSource === "api"
-      ? plain(AskSchool)
-      : function Placeholder(p: ScreenProps) {
-          return <PlannedScreen screen={p.screen} />;
-        },
+  "parent-queries": plain(AskSchool),
   "parent-certificates": plain(ParentCertificates),
 
   "student-home": plain(FamilyHome),
@@ -138,4 +153,35 @@ export const SCREEN_COMPONENTS: Record<string, C> = {
   "student-results": plain(FamilyResults),
   "student-attendance": plain(FamilyAttendance),
   "student-calendar": CalendarScreen,
+  "school-staff-attendance": plain(StaffAttendancePage),
+  "school-cover": plain(CoverPage),
+  "school-student-files": plain(StudentFiles),
+  "school-stock": plain(StockPage),
+  "school-payroll": plain(PayrollPage),
+  "school-payslips": plain(MyPayslips),
+  "school-seating": plain(SeatingPage),
+  "school-report-builder": plain(ReportBuilder),
+  "school-early-warning": plain(EarlyWarning),
+  "school-polls": plain(PollsPage),
+  "school-print-centre": plain(PrintCentre),
+  "school-print": PrintScreen,
+  "teacher-covers": plain(TeacherCovers),
+  "teacher-submissions": plain(TeacherSubmissions),
+  "teacher-quizzes": plain(TeacherQuizzes),
+  "teacher-polls": plain(PollsPage),
+  "teacher-payslips": plain(MyPayslips),
+  "teacher-print": PrintScreen,
+  "parent-answers": plain(FamilyAnswers),
+  "parent-quizzes": plain(FamilyQuizzes),
+  "parent-polls": plain(PollsPage),
+  "parent-print": PrintScreen,
+  "student-answers": plain(FamilyAnswers),
+  "student-quizzes": plain(FamilyQuizzes),
+  "student-polls": plain(PollsPage),
+  ...Object.fromEntries(
+    ["school", "teacher", "parent", "student"].flatMap((a) => [
+      [`${a}-records`, plain(RegisterHub)],
+      [`${a}-record`, RegisterPage as C],
+    ]),
+  ),
 };

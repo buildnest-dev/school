@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { announceAdmission, informedText } from "@/server/admission-alerts";
 import { HttpError, requireTenant } from "@/server/auth";
 import { like, prisma, tenantDb } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
@@ -25,6 +26,7 @@ const STAFF_ROLES = [
 
 const CreateBody = studentFields.extend({
   guardian: guardianInput,
+  needsBus: z.boolean().optional(),
   /** Set true after the user has seen the "possible duplicate" warning and still wants to add. */
   confirmDuplicate: z.boolean().optional(),
 });
@@ -73,8 +75,16 @@ export const POST = handle(async (req: Request) => {
     });
     return s;
   });
+  const told = await announceAdmission(tenantId, created.id);
   return NextResponse.json(
-    { ok: true, mode: "api", id: created.id, student: studentDetail(created) },
+    {
+      ok: true,
+      mode: "api",
+      id: created.id,
+      student: studentDetail(created),
+      message: `Student added. ${informedText(told)}`,
+      ...told,
+    },
     { status: 201 },
   );
 });

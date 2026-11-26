@@ -6,11 +6,12 @@ import {
   assertStaffContactFree,
   nextEmployeeNo,
   STAFF_ROLES,
+  assertMayManage,
   staffFields,
   staffView,
 } from "@/server/staff";
 
-const MANAGE = ["school_owner", "principal"] as const;
+const MANAGE = ["school_owner", "principal", "hr"] as const;
 
 /** Staff directory of this school. Optional filters: ?role=teacher&status=active. */
 export const GET = handle(async (req: Request) => {
@@ -34,6 +35,7 @@ export const POST = handle(async (req: Request) => {
   assertSameOrigin(req);
   const { tenantId, user } = await requireTenant([...MANAGE]);
   const b = staffFields.parse(await req.json());
+  assertMayManage(user.role, b.role);
   await assertStaffContactFree(tenantId, b);
   // The employee number is derived from the last one; the unique index rejects a race, so retry.
   for (let attempt = 0; attempt < 3; attempt++) {

@@ -15,10 +15,11 @@ import { useToast } from "@/components/ui/toast";
 import { env, todayIso } from "@/config/env";
 import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
+import { useSession } from "@/hooks/use-session";
 import type { Approval, Student } from "@/types";
 import { fmtDate, rupees } from "../shared/format";
 import type { ScreenProps } from "../shared/planned-screen";
-import { QuickAdd } from "../shared/quick-add";
+import { ApiAction, QuickAdd } from "../shared/quick-add";
 
 /** Approve / reject routine requests, with confirmation. The backend must record and enforce the decision. */
 export function ApprovalInbox() {
@@ -113,13 +114,15 @@ export function ApprovalInbox() {
 export function CalendarScreen({ screen }: ScreenProps) {
   const s = useServices();
   const d = useAsync(() => s.resource("calendar").list({ pageSize: 200 }), [s]);
+  const role = useSession().user?.role;
+  const canAdd = role === "school_owner" || role === "principal";
   return (
     <>
       <PageHeader
         title={screen.title}
         description={screen.description}
         actions={
-          env.dataSource === "api" && screen.area === "school" ? (
+          env.dataSource === "api" && screen.area === "school" && canAdd ? (
             <QuickAdd
               label="Add to calendar"
               title="Add to the calendar"
@@ -166,7 +169,12 @@ export function StudentDetail({ params }: ScreenProps) {
   const s = useServices();
   const id = params.id ?? "";
   const st = useAsync(() => s.resource("students").get(id), [s, id]);
-  const ledger = useAsync(() => s.ledger.forStudent(id), [s, id]);
+  const role = useSession().user?.role;
+  const money = role === "school_owner" || role === "principal" || role === "accountant";
+  const ledger = useAsync(
+    () => (money ? s.ledger.forStudent(id) : Promise.resolve([])),
+    [s, id, money],
+  );
   if (st.error) return <ErrorState message={st.error.message} onRetry={st.reload} />;
   if (st.loading && !st.data) return <LoadingBlock />;
   const stu = st.data as Student | null | undefined;
@@ -188,13 +196,22 @@ export function StudentDetail({ params }: ScreenProps) {
         eyebrow={`Admission no. ${stu.admissionNo}`}
         title={stu.name}
         description={stu.classSection}
-        actions={<StatusBadge status={stu.status} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {role === "school_owner" || role === "principal" ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/school/print/reportcard/${id}`}>Report card</Link>
+              </Button>
+            ) : null}
+            <StatusBadge status={stu.status} />
+          </div>
+        }
       />
       <Tabs defaultValue="overview">
         <TabsList aria-label="Student sections">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="guardians">Guardians</TabsTrigger>
-          <TabsTrigger value="fees">Fees</TabsTrigger>
+          {money ? <TabsTrigger value="fees">Fees</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="overview">
           <StatGrid
@@ -216,6 +233,17 @@ export function StudentDetail({ params }: ScreenProps) {
         </TabsContent>
         <TabsContent value="guardians">
           <Card className="max-w-lg">
+            {env.dataSource === "api" && (role === "school_owner" || role === "principal") ? (
+              <div className="mb-4">
+                <ApiAction
+                  label="Resend parent invite"
+                  method="POST"
+                  endpoint={`/students/${id}/guardian-invite`}
+                  success="Invite sent again by e-mail."
+                  onDone={() => {}}
+                />
+              </div>
+            ) : null}
             <dl className="grid gap-2 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted">Guardian</dt>

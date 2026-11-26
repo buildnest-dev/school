@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { readOff } from "@/config/features";
 import { EnquiryBody } from "@/server/admissions";
 import { HttpError } from "@/server/auth";
 import { prisma } from "@/server/db";
@@ -26,9 +27,10 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ slug: s
 
   const tenant = await prisma.tenant.findFirst({
     where: { slug, status: "live" },
-    select: { id: true },
+    select: { id: true, disabledFeatures: true },
   });
-  if (!tenant) throw new HttpError(404, "not_found", "School not found.");
+  if (!tenant || readOff(tenant.disabledFeatures).includes("admissions"))
+    throw new HttpError(404, "not_found", "School not found.");
   if (b.applyingForId) {
     const c = await prisma.classLevel.findFirst({
       where: { id: b.applyingForId, tenantId: tenant.id },

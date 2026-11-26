@@ -8,6 +8,7 @@ import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { LoadingBlock } from "@/components/ui/states";
 import { isDemoHost } from "@/config/demo";
+import { screenOn } from "@/config/features";
 import { env } from "@/config/env";
 import {
   AREA_ROOT,
@@ -135,6 +136,24 @@ export function ScreenHost({ area, slug }: { area: Area; slug: string[] }) {
     return (
       <AppShell area={area}>
         <Unauthorized role={ROLE_LABEL[user.role]} homeHref={AREA_ROOT[area]} inShell />
+      </AppShell>
+    );
+  }
+
+  if (!screenOn(match.screen.id, user.disabledFeatures, match.params)) {
+    return (
+      <AppShell area={area}>
+        <div className="grid max-w-md gap-3" role="alert">
+          <h1 className="text-2xl">This feature is not switched on</h1>
+          <p className="text-muted">
+            {match.screen.title} is not part of your school’s account. Ask ZAQSA to switch it on.
+          </p>
+          <div>
+            <Button asChild variant="ghost">
+              <Link href={AREA_ROOT[area]}>Go to my home</Link>
+            </Button>
+          </div>
+        </div>
       </AppShell>
     );
   }

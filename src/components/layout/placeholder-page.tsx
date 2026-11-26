@@ -15,7 +15,7 @@ export function PlaceholderPage({
     <section className="py-24">
       <Container className="max-w-[720px]">
         <BrandLogo className="mb-10" />
-        <Eyebrow>Placeholder</Eyebrow>
+        <Eyebrow>Error 404</Eyebrow>
         <h1 className="mb-4 text-[clamp(2rem,4vw,3rem)] leading-tight">{title}</h1>
         <p className="text-muted mb-4 text-lg">
           {children ??

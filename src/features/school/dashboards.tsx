@@ -26,6 +26,7 @@ import { useAsync } from "@/hooks/use-async";
 import { useServices } from "@/hooks/use-services";
 import { useSession } from "@/hooks/use-session";
 import { todayIso } from "@/config/env";
+import { linkOn } from "@/config/features";
 import { firstName, fmtDate, todayLabel } from "../shared/format";
 
 const QUICK_ICON: Record<string, LucideIcon> = {
@@ -54,6 +55,26 @@ const QUICK: Record<string, { href: string; label: string }[]> = {
     { href: "/school/notices/new", label: "Compose notice" },
     { href: "/school/attendance", label: "Attendance" },
   ],
+  vice_principal: [
+    { href: "/school/attendance", label: "Attendance" },
+    { href: "/school/timetable", label: "Timetable" },
+    { href: "/school/students", label: "Students" },
+  ],
+  admission_officer: [
+    { href: "/school/admissions", label: "Admissions" },
+    { href: "/school/students", label: "Students" },
+    { href: "/school/calendar", label: "Calendar" },
+  ],
+  hr: [
+    { href: "/school/staff", label: "Staff" },
+    { href: "/school/leave", label: "Staff leave" },
+    { href: "/school/calendar", label: "Calendar" },
+  ],
+  reception: [
+    { href: "/school/admissions", label: "Admissions" },
+    { href: "/school/notices", label: "Notices" },
+    { href: "/school/calendar", label: "Calendar" },
+  ],
   accountant: [
     { href: "/school/fees", label: "Fee collection" },
     { href: "/school/fees/ledger", label: "Student ledger" },
@@ -77,14 +98,18 @@ export function SchoolHome() {
   if (d.error) return <ErrorState message={d.error.message} onRetry={d.reload} />;
   if (!d.data) return <LoadingBlock label="Loading the dashboard" />;
   const data = d.data;
-  const showAttendance = role === "school_owner" || role === "principal";
+  const off = user?.disabledFeatures;
+  const quick = (QUICK[role] ?? []).filter((q) => linkOn(q.href, off));
+  const showAttendance =
+    (role === "school_owner" || role === "principal" || role === "vice_principal") &&
+    linkOn("/school/attendance", off);
   return (
     <>
       <WelcomeBanner
         eyebrow={todayLabel(todayIso())}
         title={`${greeting()}, ${firstName(user?.name ?? "")}!`}
         subtitle="Here is what needs your attention today."
-        actions={(QUICK[role] ?? []).map((q) => (
+        actions={quick.map((q) => (
           <Button key={q.href} asChild variant="light" size="sm">
             <Link href={q.href}>{q.label}</Link>
           </Button>
@@ -98,7 +123,8 @@ export function SchoolHome() {
             <BarList rows={data.attendanceByWing} />
           </Card>
         ) : null}
-        {role === "school_owner" || role === "principal" || role === "accountant" ? (
+        {(role === "school_owner" || role === "principal" || role === "accountant") &&
+        (role !== "accountant" || linkOn("/school/fees", off)) ? (
           <Card>
             <CardHeader
               title="Waiting for a decision"
@@ -138,7 +164,7 @@ export function SchoolHome() {
         <Card className="lg:col-span-2">
           <CardHeader title="Quick actions" />
           <ul className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
-            {(QUICK[role] ?? []).map((q, i) => {
+            {quick.map((q, i) => {
               const Icon = QUICK_ICON[q.href] ?? ClipboardCheck;
               const gold = i % 2 === 1;
               return (

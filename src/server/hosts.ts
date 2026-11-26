@@ -2,13 +2,14 @@
  * Which ZAQSA address a request came to, and who may use it. Plain functions with no database or
  * Node imports, so the proxy and the server share one definition.
  *
- *   school.<base>                  public product site and the demo request form
+ *   schoool.<base> (three o's)     the main site; classed as "other", so sign-in works there
+ *   school.<base>                  the old main address, now used by the e-mail service
  *   team.schools.<base>            the ZAQSA team (platform users only)
  *   <slug>.school.<base>           one school's staff and teachers
  *   <slug>.parents.<base>          that school's parents and students
  *
- * Any other address (localhost, a Vercel preview address, a test run) is "other" and keeps the
- * old behaviour: the role in the session decides what is shown.
+ * Any other address (the main site, localhost, a Vercel preview address, a test run) is "other" and
+ * keeps the old behaviour: the role in the session decides what is shown.
  */
 export type HostInfo =
   | { kind: "public" }
@@ -38,6 +39,9 @@ export const RESERVED_SLUGS = new Set([
 ]);
 
 export const baseDomain = () => (process.env.ZAQSA_BASE_DOMAIN ?? "zaqsa.com").toLowerCase();
+
+/** The main site's address, where e-mailed links point when no school address applies. */
+export const mainSiteOrigin = (base = baseDomain()) => `https://schoool.${base}`;
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

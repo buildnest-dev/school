@@ -8,6 +8,7 @@ export const GET = handle(async () => {
     "school_owner",
     "principal",
     "vice_principal",
+    "admission_officer",
     "teacher",
     "accountant",
   ]);

@@ -17,6 +17,7 @@ export const GET = handle(async (_req: Request, ctx: Ctx) => {
   const { tenantId, user } = await requireTenant([
     "school_owner",
     "principal",
+    "vice_principal",
     "teacher",
     "accountant",
     "parent",

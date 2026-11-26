@@ -214,3 +214,40 @@ h3 {
     display: flex;
   }
 }
+
+/* Printing: only the page content, without menus or buttons. */
+@media print {
+  aside,
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+@media print {
+  /* A page with a sheet on it prints only the sheet. */
+  body:has(.print-sheet) * {
+    visibility: hidden;
+  }
+  body:has(.print-sheet) .print-sheet,
+  body:has(.print-sheet) .print-sheet * {
+    visibility: visible;
+  }
+  /* Without the menu the page takes the whole sheet of paper. */
+  .app-shell {
+    display: block !important;
+  }
+  .print-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}

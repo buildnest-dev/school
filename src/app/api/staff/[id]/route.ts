@@ -3,9 +3,9 @@ import { z } from "zod";
 import { HttpError, requireTenant } from "@/server/auth";
 import { prisma } from "@/server/db";
 import { assertSameOrigin, handle } from "@/server/http";
-import { assertStaffContactFree, staffFields, staffView } from "@/server/staff";
+import { assertMayManage, assertStaffContactFree, staffFields, staffView } from "@/server/staff";
 
-const MANAGE = ["school_owner", "principal"] as const;
+const MANAGE = ["school_owner", "principal", "hr"] as const;
 
 async function load(tenantId: string, id: string) {
   const s = await prisma.staff.findFirst({ where: { id, tenantId } });
@@ -48,6 +48,8 @@ export const PATCH = handle(async (req: Request, ctx: { params: Promise<{ id: st
   const { tenantId, user } = await requireTenant([...MANAGE]);
   const cur = await load(tenantId, (await ctx.params).id);
   const b = Patch.parse(await req.json());
+  assertMayManage(user.role, cur.role);
+  assertMayManage(user.role, b.role);
   await assertStaffContactFree(tenantId, { phone: b.phone, email: b.email }, cur.id);
 
   const deactivating = b.status === "inactive" && cur.status === "active";

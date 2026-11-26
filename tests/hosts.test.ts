@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { classifyHost, hostAllows, pathAllowed } from "../src/server/hosts";
+import { classifyHost, hostAllows, mainSiteOrigin, pathAllowed } from "../src/server/hosts";
 
 const B = "zaqsa.com";
 const c = (h: string) => classifyHost(h, B);
+
+describe("mainSiteOrigin", () => {
+  it("is schoool.<base>, which allows sign-in and the password pages", () => {
+    expect(mainSiteOrigin(B)).toBe("https://schoool.zaqsa.com");
+    expect(c("schoool.zaqsa.com")).toEqual({ kind: "other" });
+    expect(pathAllowed(c("schoool.zaqsa.com"), "/reset-password")).toBe(true);
+  });
+});
 
 describe("classifyHost", () => {
   it("knows the public, team, school and parents addresses", () => {
